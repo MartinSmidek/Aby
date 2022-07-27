@@ -1,0 +1,482 @@
+# Systém FiS - modul Klub.Převody
+# (c) 2008-2010 Martin Šmídek <martin@smidek.eu>
+
+# ================================================================================================== pre - Převody
+const klu_pre_seznam = 12
+const klu_pre_seznam1 = 13
+const klu_pre_form = 313
+
+var rychle: number
+var p_filter: text
+var ok: number
+
+use v: form _p_vypisy [6,0,,]
+use p: form _p_prevody [196,0,,]
+
+use i: form _p_info  [  6,klu_pre_form,,]
+use r: form _p_rok   [  6,klu_pre_form+163,,]
+use c: form _p_clen  [  6,klu_pre_form+55,,]
+use d: form _p_dar   [547,klu_pre_form+55,,]
+use k: form _p_cmd   [105,klu_pre_form+170,,]
+use k2:form _p_cmd2  [396,klu_pre_form+170,,]
+use b: form _p_load  [776,klu_pre_form+170,,]
+
+proc onstart () {
+  r.p_co.set(2); r.p_zbyva.set(1);
+  v._vypisy.set_attrib('group_by','vv.ident HAVING mintyp<9');
+  p_reload
+}
+proc r.p_co.onchange () {
+  p_reload
+}
+proc r.p_zbyva.onchange () {
+  r.p_zbyva.get; v._vypisy.set_attrib('group_by','vv.ident HAVING mintyp<9'); p_reload
+| v._vypisy.set_attrib('group_by','vv.ident'); p_reload
+}
+proc v._vypisy.onchange () {
+  p_reload
+}
+proc p_reload () { var cond:text
+  cond.set(cconc(
+    eq(r.p_co.get,1),'1',
+    eq(r.p_co.get,2),"SUBSTRING(vp.ident,2,2)=SUBSTRING(NOW(),3,2)",
+    eq(r.p_co.get,3),"SUBSTRING(vp.ident,2,2)=SUBSTRING(NOW(),3,2)-1"));
+#     cond.set(conc('ON left(vp.ident,7)=vv.ident AND ',cond));
+#                                         echo('cond=',cond);
+#   v._vypisy.set_attrib('join',cond,1); -- nefunguje
+#   v._vypisy.browse_load(1,'datum DESC');
+  v._vypisy.browse_load(cond,'datum DESC');
+  v._vypisy.raise('onrowclick')
+| p._prevody.browse_init; c.init; d.init; i.init
+}
+proc v._vypisy.onrowclick (vid) {
+# p._prevody.browse_load(conc("ident LIKE '",v._vypisy.ident.get,"%' AND find_in_set(typ,'5,6,7,9')"));
+  p._prevody.browse_load(conc("ident LIKE '",v._vypisy.ident.get,"%' AND typ IN (5,6,7,9)"));
+  p._prevody.browse_count; p._prevody.raise('onrowclick'); p_rychle_off
+| p._prevody.browse_init; c.init; d.init; i.init; p_rychle_off
+}
+proc p._prevody.onrowclick () {
+  i.load(p._prevody.id.get); p_load_clen(p._prevody.clen.get);
+  c.metoda.set(cconc(p._prevody.metoda.get,p._prevody.metoda.get,'se nepodařilo určit'));
+  p_load_dar(p._prevody.dar.get);
+  /*rychle.get; k2.zrus_dar.enable(0); k2.zrus_darce.enable(0);
+  k2.anonym.enable(0); k2.nedar.enable(0); k2.ucty.enable(0); k2.cleni.enable(0); c.pridat.enable(0);
+  d.pridat.enable(0)*/
+  k2.zrus_dar.enable(eq(p._prevody.typ.get,9)); k2.zrus_darce.enable(gt(p._prevody.typ.get,6));
+  k2.anonym.enable(eq(p._prevody.typ.get,5)); k2.nedar.enable(eq(p._prevody.typ.get,5,7));
+  k2.jedar.enable(eq(p._prevody.typ.get,6));
+  k2.ucty.enable(eq(p._prevody.typ.get,5,6,7));
+  k2.jinyvs.enable(eq(p._prevody.typ.get,5,6,7,7))
+}
+//                                                              ruční přidání člena
+proc p_load_clen (clen) {
+  clen; c.load(clen); c.pridat.enable(0)
+| c.init; c.pridat.enable(0)
+}
+proc c.pridat.onclick () {
+  eq(p._prevody.typ.get,5,6,7);
+  ask('klub_clen_prevodem',c.clen.get,p._prevody.ident.get);
+  p_refresh(7,c.clen.get,0);
+}
+proc c._p_clen_clenove.onclick () {
+  var id: number
+  id.set(cle.curr_clen(1)); id; // dál jen, pokud nebyla inicializovaná karta Kontakty
+  p_load_clen(id); c.pridat.enable(1);
+  c.metoda.set('vybraný ručně v Kontakty');
+}
+//                                                              ruční přidání daru
+proc p_load_dar (dar) {
+  dar; d.load(dar); d.pridat.enable(0)
+| d.init; d.pridat.enable(1)
+}
+proc d.pridat.onclick () {
+  c.clen.get;
+  p_refresh(9,c.clen.get,
+    ask('klub_dar_prevodem',c.clen.get,p._prevody.ident.get,p._prevody.vsym.get,p._prevody.vsym2.get));
+  p_load_dar(p._prevody.dar.get);
+| warning("nejprve je třeba přidat dárce")
+}
+# ------------------------------------------------------------- editační cyklus rychlých změn
+proc k.rychle.onclick () {
+  done.set(1);
+  p_rychle_on; p._prevody.browse_next(1); eq(p._prevody.typ.get,5,7);
+  p._prevody.raise('onrowclick',p._prevody.id.get)
+| p_rychle_next2
+}
+var done:number
+proc k.rychle_ano.onclick () {
+  done.get;
+  { eq(p._prevody.typ.get,5,7);   // člen se bere z formuláře Dárce
+    done.set(0);
+    p_refresh(9,c.clen.get,
+      ask('klub_dar_prevodem',c.clen.get,p._prevody.ident.get,p._prevody.vsym.get,p._prevody.vsym2.get));
+    p_rychle_next2;
+    done.set(1)
+  | p_rychle_next2
+  }
+}
+proc k.rychle_ne.onclick () {
+  p_rychle_next2
+}
+proc k.rychle_konec.onclick () {
+  p_rychle_off
+}
+proc p_rychle_on () {
+  rychle.set(1);
+  k.ram.set_css('aktivni','pasivni');
+  k.rychle.enable(0); k.rychle_ano.enable(1);
+  k.rychle_ne.enable(1); k.rychle_konec.enable(1);
+}
+proc p_rychle_next2 () {
+  p._prevody.browse_next; p_rychle_skip; eq(p._prevody.typ.get,5,7);
+  p._prevody.raise('onrowclick',p._prevody.id.get)
+| p_rychle_off
+}
+proc p_rychle_skip () {
+  eq(p._prevody.typ.get,5,7)
+| p._prevody.browse_next; p_rychle_skip
+}
+proc p_rychle_off () {
+  rychle.set(0); k.ram.set_css('pasivni','aktivni'); k.rychle.enable(1); k.rychle_ano.enable(0);
+  k.rychle_ne.enable(0); k.rychle_konec.enable(0); v._vypisy.browse_focus
+}
+// ------------------------------------------------------------ zobrazení po změně
+proc p_refresh (typ,clen,dar) {
+  // změněné položky - typ ovládá barvu
+  p._prevody.typ.let(typ); p._prevody.clen.let(clen); p._prevody.dar.let(dar);
+  // možná změna zabarvení výpisu po změně v převodu
+  v._vypisy.mintyp.let(p._prevody.typ.compute('fis_min_typ',99));
+}
+// příkazy
+proc k2.zrus_dar.onclick () {
+  confirm(conc("Bude odstraněn dar ",d.castka.get," Kč z ",d.dar_dne.get," (beze zbytku)"));
+  ask('klub_zrus_prevodem',7,p._prevody.ident.get); p_refresh(7,p._prevody.clen.get,0);
+}
+proc k2.zrus_darce.onclick () {
+  confirm(conc("Bude odstraněna vazba na ",cconc(p._prevody.dar.get,
+    conc("dar ",d.castka.get," Kč z ",d.dar_dne.get," a na"))," člena ",c.clen.get,
+    ' (',c.jmeno.get,' ',c.prijmeni.get,')'));
+  ask('klub_zrus_prevodem',5,p._prevody.ident.get); p_refresh(5,0,0);
+}
+// modální dialogy pro výběry
+proc k2.ucty.onclick () {
+  pop_ucty.pu_load(p._prevody.protiucet.get,p._prevody.banka.get);
+  ok.set(pop_ucty.modal(20,100));
+  ok.get;
+  c.metoda.set('vyhledán ve starších převodech');
+  p_load_clen(pop_ucty.pu_vybrany.get); c.pridat.enable(1)
+| stop
+}
+# -------------------------------------------------------------------------------------------------- _p_load
+form _p_load [,,186,66] { css:'ae_work'
+  button [2,8,,] { title:'Přidat výpisy', help:'provést import nových bankovních výpisů'
+    proc onclick () {
+      warning('bylo importováno ',ask('bank_import','*',0,1,'vypisy'),' nových výpisů'); p_reload
+  } }
+  button [2,36,,] { title:'Zjistit výpisy', help:'zjistit jaké výpisy budou importovány'
+    proc onclick () { var res:object
+      res.set(ask('bank_import0','*',0,1));
+      { res.err; alert('Nastala chyba: ',res.html);
+      | alert('budou importovány tyto výpisy: ',res.html); p_reload
+      }
+  } }
+  button dopln_prevod [86,8,,] { title:'Doplnit soubor',
+    help:'doplnit převody nastaveného výpisu, případně další výpisy ze stejného souboru',
+    proc onclick () {
+      confirm(conc('Doplnit případné nové výpisy a převody ze souboru ',v._vypisy.soubor.get,
+        ' ze dne ',v._vypisy.datum.get,'?'));
+      warning('bylo doplneno ',ask('bank_import',v._vypisy.soubor.get,1,0,'missing'),' převodů');
+      p_reload
+  } }
+  button oprav_vypis [90,36,,] { skill:'hdpe|hdpe', title:'xV', style:'color:red'
+    help:'odstranit nastavený výpis a provést znovu import', proc onclick () {
+      confirm(conc('Odstranit nastavený výpis ',v._vypisy.ident.get,
+        ' ze dne ',v._vypisy.datum.get,' a znovu importovat ?'));
+      warning('bylo opraveno ',ask('bank_import',v._vypisy.soubor.get,1,0,'vypisy'),
+        ' výpisů (převody zůstaly)'); p_reload
+  } }
+  button oprav_prevod [120,36,,] { skill:'hdpe|hdpe', title:'xP', style:'color:red'
+    help:'odstranit převody nastaveného výpisu a provést znovu import', proc onclick () {
+      confirm(conc('Odstranit převody výpisu ',v._vypisy.ident.get,
+        ' ze dne ',v._vypisy.datum.get,' a znovu importovat?'));
+      warning('bylo opraveno ',ask('bank_import',v._vypisy.soubor.get,1,0,'prevody'),
+        ' výpisů a jejich převodů'); p_reload
+  } }
+  button smaz_soubor [151,36,,] { skill:'hdpe|hdpe', title:'xS', style:'color:red'
+    help:'vymazat výpisy a převody vložené z nastaveného souboru', proc onclick () {
+      confirm(conc('Odstranit výpisy a převody souboru ',v._vypisy.soubor.get,
+        ' ze dne ',v._vypisy.datum.get,'?'));
+      warning(ask('bank_import_remove',v._vypisy.soubor.get,v._vypisy.datum.get)); p_reload
+  } }
+}
+# ================================================================================================== pop_účty
+panel pop_ucty [,,830,230] { title:'Převody ze stejného účtu', type:'popup', css:'dialog'
+  var pu_vybrany: text,
+  use pu: form _pop_prevody [0,0,,],
+  proc pu_load (ucet,bank) {
+    pu.msg.set(''); pu.seznam.display(1);
+    pu.seznam.browse_load(conc("protiucet='",ucet,"' AND banka='",bank,"'"),"splatnost DESC");
+    pu.seznam.raise('onrowclick')
+  | pu.msg.set('Platby z tohoto účtu zatím nebyly svázány s žádným kontaktem'); pu.seznam.display(0)
+  }
+  proc pu.seznam.onrowclick () { pu_vybrany.set(pu.seznam.clen.get); stop}
+  # ----------------------------------------------------------- _pop_prevody
+  form _pop_prevody [,,730,210] {
+    label msg [20,30,400,]
+    view p: table prevod
+    view c: table clen {join:"ON c.id_clen=p.clen AND LEFT(c.deleted,1)!='D'" }
+    browse seznam [5,10,860,200] { rows:11, qry_rows:0, css_rows:'typ,5:pre_5,7:pre_7,9:pre_9'
+      show { data:p.id_prevod },
+      show { data:c.id_clen },
+      show ident3 [,,30,] { title:'přev.', expr:'right(p.ident,3)', format:'r' },
+      show popis [,,150,] { title:'popis', data:p.popis },
+      show clen [,,50,] { title:'člen', data:p.clen, format:'r' },
+      show dar [,,70,] { title:'dar', data:p.dar, format:'r' },
+      show typ [,,10,] { title:'t', data:p.typ },
+      show castka [,,60,] { title:'částka', data:p.castka, format:'r' },
+      show vsym [,,80,] { title:'vs', data:p.vsym },
+      show ssym [,,80,] { title:'ss', data:p.ssym },
+      show ksym [,,35,] { title:'ks', data:p.ksym },
+      show protiucet [,,120,] { title:'protiúčet', data:p.protiucet },
+      show banka [,,30,] { title:'banka', data:p.banka, format:'r' },
+      show splatnost [,,70,] { data:p.splatnost },
+      show id     { data:p.id_prevod },
+      show ident  { data:p.ident },
+      proc onsubmit () { panel.close(1) }
+    }
+    button save [600,220,,] { type:'submit', title:'OK', help:'nalezený starší převod dárce'
+      proc onclick () { panel.close(1) }
+    }
+    button cancel [700,220,,] { title:'Storno', help:'vrátit se zpět'
+      proc onclick () { panel.close(0) }
+    }
+  }
+}
+# ================================================================================================== pop_člen
+panel pop_cleni [,,630,270] { title:'Kontakty Klubu', type:'popup', css:'dialog'
+  var pc_vybrany: text,
+  use pc: form _pop_cleni [0,0,,],
+  proc pc_load () {
+    var cond: text
+    cond.set(ask('klub_tipy',p._prevody.clen.get,p._prevody.popis.get,
+      p._prevody.protiucet.get,p._prevody.banka.get));
+    pc.msg.set(''); pc.seznam.display(1);
+    pc.seznam.browse_load(cond.get);
+    pc.seznam.raise('onrowclick')
+  | pc.msg.set('Nic mně nenapadá'); pc.seznam.display(0);
+  }
+  proc pc.seznam.onrowclick () {
+    pc_vybrany.set(pc.seznam.clen.get); }
+  # ----------------------------------------------------------- _pop_cleni
+  form _pop_cleni [,,630,240] {
+    label msg [20,30,100,]
+    browse seznam [20,30,350,200] { rows:9, qry_rows:1
+      show clen [,,50,] { title:'číslo', data:clen.id_clen, format:'sqr' },
+      show [,,60,] { title:'příjmeni', data:clen.prijmeni, format:'sq' },
+      show [,,60,] { title:'jméno', data:clen.jmeno, format:'sq' },
+      show [,,100,] { title:'ulice', data:clen.ulice, format:'sq' },
+      show [,,50,] { title:'psč', data:clen.psc, format:'sq' },
+      show [,,100,] { title:'obec', data:clen.obec, format:'sq' },
+      show [,,150,] { title:'účet', data:clen.ucet, format:'rsq' },
+      proc onsubmit () { panel.close(1); stop}
+    }
+    button save [200,240,,] { title:'OK', help:'nalezený dárce',
+      proc onclick () { panel.close(1) }
+    }
+    button cancel [300,240,,] { title:'Storno', help:'vrátit se zpět',
+      proc onclick () { panel.close(0) }
+    }
+  }
+}
+# ================================================================================================== Anonym
+panel Anonym [,,440,100] { title:'Anonymní dar', type:'popup', css:'dialog'
+  use anon: form _anon [0,0,,]
+  proc onfocus() {
+    var x: text
+    var y: text
+    x.set(split(replace(trim(p._prevody.popis.get),'  ',' '),' ',0));
+    y.set(split(replace(trim(p._prevody.popis.get),'  ',' '),' ',1));
+    anon.a1.set(x); anon.b1.set(y);
+    anon.a2.set(y); anon.b2.set(x);
+  }
+  # ----------------------------------------------------------- _anonym
+  form _anon [,,480,240] {
+    label [150,4,80,] { title:'příjmení' }
+    label [300,4,80,] { title:'jméno' }
+    field a1 [150,20,130,]
+    field b1 [300,20,130,]
+    button [10,20,,] { title:'Vložit pod jménem:'
+      proc onclick() {
+        var id: number
+        id.set(ask('klub_darce_anonym',anon.a1.get,anon.b1.get,
+          conc(p._prevody.protiucet.get,'/',p._prevody.banka.get)));
+        p_refresh(9,id,
+          ask('klub_dar_prevodem',id,p._prevody.ident.get,p._prevody.vsym.get,p._prevody.vsym2.get));
+        panel.close
+    } }
+    field a2 [150,50,130,]
+    field b2 [300,50,130,]
+    button [10,50,,] { title:'Vložit pod jménem:'
+      proc onclick() {
+        var id: number
+        id.set(ask('klub_darce_anonym',anon.a2.get,anon.b2.get,
+          conc(p._prevody.protiucet.get,'/',p._prevody.banka.get)));
+        p_refresh(9,id,
+          ask('klub_dar_prevodem',id,p._prevody.ident.get,p._prevody.vsym.get,p._prevody.vsym2.get));
+        panel.close
+    } }
+    button [10,80,,] { title:'Vložit pod číslo 7'
+      proc onclick() {
+        p_refresh(9,7,
+          ask('klub_dar_prevodem',7,p._prevody.ident.get,p._prevody.vsym.get,p._prevody.vsym2.get));
+        panel.close
+    } }
+  }
+}
+# -------------------------------------------------------------------------------------------------- _p_vypisy
+form _p_vypisy [,,956,klu_pre_form] { css:'ae_work'
+  view vv: table vypis,
+  view vp: table prevod {/*join_type:'LEFT'*/ join:'ON left(vp.ident,7)=vv.ident' }
+  browse _vypisy [9,10,150,100] {type:'smart', buf_rows:100, rows:klu_pre_seznam,
+      qry_rows:1, group_by:'vv.ident', css_rows:'mintyp,5:pre_5,7:pre_7,9:pre_9'
+    show ident [,,60,] { title:'ident', data:vv.ident, format:'rsq' },
+    show datum [,,65,] { title:'datum', data:vv.datum, format:'rs-q' },
+#   show mintyp { title:'t', expr:"min(if(find_in_set(vp.typ,'1,2,3,4,6,8'),10,vp.typ))", format:'s-q' },
+    show mintyp { title:'t', expr:"min(if(vp.typ IN (1,2,3,4,6,8),10,vp.typ))", format:'s-q' },
+    show id     { data:vv.id_vypis },
+    show idp    { data:vp.id_prevod },
+    show soubor [,,10,] { data:vv.soubor, format:'t' },
+  }
+}
+# -------------------------------------------------------------------------------------------------- _p_prevody
+form _p_prevody [,,774,262] {
+  browse _prevody [0,10,300,100] {type:'smart', buf_rows:500, rows:klu_pre_seznam1, qry_rows:0,
+      css_rows:'typ,5:pre_5,6:pre_6,7:pre_7,9:pre_9'
+    show ident3 [,,30,] { title:'přev.', expr:'right(prevod.ident,3)', format:'rs' },
+    show popis [,,150,] { title:'popis', data:prevod.popis },
+    show clen [,,45,] { title:'člen', data:prevod.clen, format:'r' },
+    show dar [,,55,] { title:'dar', data:prevod.dar, format:'r' },
+    show typ [,,10,] { title:'t', data:prevod.typ, format:'s+r' },
+    show castka [,,60,] { title:'částka', data:prevod.castka, format:'r' },
+    show vsym [,,75,] { title:'vs', data:prevod.vsym },
+    show vsym2 [,,35,] { title:'oprava', data:prevod.vsym2, format:'r' },
+    show ssym [,,75,] { title:'ss', data:prevod.ssym },
+    show ksym [,,30,] { title:'ks', data:prevod.ksym },
+    show protiucet [,,120,] { title:'protiúčet', data:prevod.protiucet },
+    show banka [,,30,] { title:'banka', data:prevod.banka, format:'r' },
+    show id { data:prevod.id_prevod },
+    show ident { data:prevod.ident },
+    show splatnost { data:prevod.splatnost },
+    show metoda { data:prevod.metoda },
+    // DblClk přejde na dárce
+    proc onsubmit () { clen.get; klu.cle.show_clen(clen.get) }
+  }
+}
+# -------------------------------------------------------------------------------------------------- _p_info
+form _p_info [,,956,40] { css:'ae_work'
+  field vsym [100,3,96,18] { data:prevod.vsym, format:'o' },
+  field popis [202,3,198,18] { data:prevod.popis, format:'o' },
+  field castka [776,3,70,18] { data:prevod.castka, format:'or' },
+  field splatnost [855,3,92,18] { data:prevod.splatnost, format:'o' },
+  field poznamka [100,23,800,18] { data:prevod.poznamka, format:'o' },
+}
+# -------------------------------------------------------------------------------------------------- _p_rok
+form _p_rok [,,93,74] { css:'ae_parm'
+  radio p_co [1,1,85,42] {
+    case [0,0,78,14] { title:'všechny', expr:'1' },
+    case [0,17,78,14] { title:'letošní', expr:'2' },
+    case [0,34,78,14] { title:'loňské', expr:'3' },
+  },
+  check p_zbyva [3,53,78,14] { title:'nehotové', help:'jen nezelené', format:'t' }
+}
+# -------------------------------------------------------------------------------------------------- _p_clen
+form _p_clen [,,525,103] { css:'ae_work'
+  label [9,5,50,15] { title:'<h1>Dárce</h1>' },
+  label metoda [8,20,131,30] { style:'color:black' }
+  label [146,14,39,15] { title:'číslo' },
+  field clen [146,31,50,18] { data:clen.id_clen, format:'dr' },
+  label [198,13,50,15] { title:'příjmení/organizace' },
+  field prijmeni [203,32,101,17] { data:clen.prijmeni, format:'F' },
+  label [318,13,50,15] { title:'jméno/kontakt' },
+  field jmeno [313,32,81,17] { data:clen.jmeno, format:'F' },
+  label [147,57,50,15] { title:'ulice' },
+  field ulice [148,76,147,17] { data:clen.ulice, format:'' },
+  label [305,57,50,15] { title:'psč' },
+  field psc [304,76,40,17] { data:clen.psc, format:'r', sql_pipe:'psc' },
+  label [352,57,50,15] { title:'obec' },
+  field obec [350,76,163,17] { data:clen.obec, format:'F' },
+  label [488,15,17,15] { title:'účet' },
+  field [403,32,110,17] { data:clen.ucet, format:'r' },
+  button pridat [74,49,,] { title:'Přidat', format:'d' },
+  button _p_clen_clenove [3,76,,] { title:'Nalezený kontakt >>>', format:'' },
+}
+# -------------------------------------------------------------------------------------------------- _p_dar
+form _p_dar [,,414,103] { css:'ae_work'
+  label [9,5,50,15] { title:'<h1>Dar</h1>' },
+  field iddar [154,27,71,18] { data:dar.id_dar, format:'dr' },
+  label [315,9,76,15] { title:'došel dne' },
+  field dar_dne [314,27,87,18] { data:dar.castka_kdy, format:'x' },
+  label [238,10,50,15] { title:'Kč' },
+  field castka [235,27,70,17] { data:dar.castka, format:'r' },
+  label [154,57,50,15] { title:'účet' },
+  field ucet [153,76,158,17] { data:dar.ucet },
+  label [324,57,50,15] { title:'převod:' },
+  button pridat [74,49,,] { title:'Přidat', format:'d' },
+  label [154,11,,] { title:'číslo' },
+}
+# -------------------------------------------------------------------------------------------------- _p_cmd
+form _p_cmd [,,285,66] { css:'ae_work'
+  label ram [5,11,272,36] { title:' ', css:'ae_work' } //, style:'border:1px solid #f5f5f5;backgroundColor:#f5f5f5;MozBorderRadius:5px;zIndex:0' },
+  button rychle [12,18,,] { title:'Rychle', help:'projdi daný výpis a připiš dary' },
+  button rychle_ano [71,18,,] { title:'Ano, další', format:'d', help:'zapiš dar nalezenému dárci a běž dál' },
+  button rychle_ne [147,18,,] { title:'Ne, další', format:'d', help:'běž dál' },
+  button rychle_konec [218,18,,] { title:'Konec', format:'d', help:'ukonči procházení' },
+}
+# -------------------------------------------------------------------------------------------------- _p_cmd2
+form _p_cmd2 [,,373,66] { css:'ae_work'
+  button ucty [5,9,,] { title:'Hledat v účtech', format:'d' },
+  button zrus_darce [104,9,,] { title:'Zrušit odkaz na dárce', format:'d' },
+  button zrus_dar [237,9,,] { title:'Zrušit odkaz na dar', format:'d' },
+  button cleni [2,37,,] { title:'Tipy z Klubu'
+    proc onclick() {
+      pop_cleni.pc_load; ok.set(pop_cleni.modal(130,100)); ok.get;
+      c.metoda.set('vybrán mezi vytipovanými');
+      p_load_clen(pop_cleni.pc_vybrany.get); c.pridat.enable(1)
+    }
+  },
+  button anonym [84,37,,] { title:'Dar anonyma', format:'d'
+    proc onclick() { Anonym.modal(200,100) } }
+  button jinyvs [172,37,,] { title:'jiný VS', format:'d'
+    proc onclick() {
+      pop_vsym.vs.old.set(p._prevody.vsym.get);
+      pop_vsym.modal(300,350);
+  } }
+  button nedar [225,37,,] { title:'Převod není dar', format:'d'
+    proc onclick() {
+      ask('klub_zrus_prevodem',6,p._prevody.ident.get); p_refresh(6,0,0);
+  } }
+  button jedar [325,37,,] { title:'je dar', format:'d'
+    proc onclick() {
+      pop_vsym.vs.old.set(p._prevody.vsym.get);
+      pop_vsym.modal(300,350);
+      ask('klub_zrus_prevodem',5,p._prevody.ident.get); p_refresh(5,0,0);
+  } }
+  # ================================================================================== pop_vsym
+  panel pop_vsym [,,300,100] { title:'Oprava variabilního symbolu', type:'popup', css:'dialog'
+    use vs: form _pop_vsym [0,0,,],
+    # ----------------------------------------------------------- _pop_vsym
+    form _pop_vsym [,,280,100] {
+      label [20,13,130,] {title:"chybný symbol z převodu", format:"r"}
+      field old [161,10,100,] { format:"dr" }
+      label [20,43,130,] {title:"upravený symbol", format:"r"}
+      field new [161,40,50,] { format:"tr" } // { type:'map', options:cis_varsym.hodnota }
+      button save [62,74,,] { title:'Opravit', help:'opravit variabilní symbol',
+        proc onclick () {
+          ask('klub_clen_vs2',new.get,p._prevody.ident.get);
+          p._prevody.vsym2.let(new.get);
+          panel.close(1) } }
+      button cancel [162,74,,] { title:'Storno', help:'vrátit se zpět',
+        proc onclick () { panel.close(0) } }
+    }
+  }
+}

@@ -1,0 +1,460 @@
+# Systém Polička - modul Dopisy
+# (c) 2021 Martin Šmídek <martin@smidek.eu>
+
+var dopis_id: text
+proc onstart () { dopis_id.set(0) }
+# ================================================================================> DOPISY A ŠABLONY
+# editace vzorů zasílaných dopisů a jejich hlaviček
+panel vzo {type:'right', title:"[fa-paperclip] Vzory / šablony", _sys:'*'
+    use ii: form right [12,4,,] {
+      button opravit [-24,4,,] { title:'[fa-edit] Upravit', style:'display:none;zIndex:2'
+        proc onclick() { EDITOR.Edit(dopis_id.get); form.fill('',EDITOR.d.html.get) }
+      }
+  }
+  var cast_sablony: text
+  var cast_dopis: object
+  menu {type:'left', format:'f+', active:*
+    menu {title:'Vzory dopisů', type:'group'
+      item {title:'[fa-envelope-open-o] Potvrzení finančního daru'   ,par:{vzor:'dar1'} }
+      item {title:'[fa-stack-overflow] Potvrzení za kalendářní rok' ,par:{vzor:'rocni'} }
+      func onclick (i:ezer) {
+        ii.opravit.display(1); S_sablona.hide();
+        cast_dopis= php.dop_sab_text(i.par.vzor);
+        dopis_id= cast_dopis.id_dopis;
+        ii.header(i);
+        ii.fill('',cast_dopis.obsah);
+      }
+    }
+    menu {title:'Části šablony dopisů', type:'group', _sys:'sab'
+      item {title:'hlavička'                    ,par:{druh:'D',name:'hlavicka'} }
+      item {title:'vyřizuje'                    ,par:{druh:'D',name:'vyrizuje'} }
+      item {title:'telefon'                     ,par:{druh:'D',name:'telefon'} }
+      item {title:'datum'                       ,par:{druh:'D',name:'odeslano'} }
+      item {title:'věc'                         ,par:{druh:'D',name:'hlavicka'} }
+      item {title:'rámeček'                     ,par:{druh:'D',name:'ramecek'} }
+      item {title:'adresa'                      ,par:{druh:'D',name:'adresa'} }
+      item {title:'text dopisu'                 ,par:{druh:'D',name:'text'} }
+      item {title:'patička'                     ,par:{druh:'D',name:'paticka'} }
+      func onclick (i:ezer) {
+        ii.opravit.display(0);
+        cast_sablony= php.dop_sab_cast(i.par.druh,i.par.name);
+        ii.fill(i.title,' ');
+        S_sablona.popup(0,90);
+      }
+    }
+    menu {title:'Ukázkové tisky šablon', type:'group', _sys:'sab'
+      item {title:'[fa-print] šablona Charita'              ,par:{druh:'D'} }
+      func onclick (i:ezer) {
+        ii.opravit.display(0); S_sablona.hide();
+        ii.fill(i.title,php.dop_sab_nahled(i.par.druh))
+      }
+    }
+  }
+  # -----------------------------------------------------------------------------------==> S_sablona
+  # popup
+  panel S_sablona [0,0,*,*] { title:' Úprava šablony dopisu',
+    use cast: form _cast [0,0,,],
+    proc onfocus () {
+      cast.load(cast_sablony.get('id_dopis_cast'));
+      cast.ukazka.set(cast_sablony.get('obsah'))
+    }
+    form _cast [,,700,447] {
+      label [55,4,100,17] { title:'zleva:' },
+      field l [94,1,33,17] { data:dopis_cast.l, format:'r' },
+      label [144,5,50,17] { title:'zhora:' },
+      field t [183,1,35,17] { data:dopis_cast.t, format:'r' },
+      label [55,29,100,17] { title:'šířka:' },
+      field w [96,28,33,17] { data:dopis_cast.w, format:'r' },
+      label [142,30,50,17] { title:'výška:' },
+      field h [183,28,35,17] { data:dopis_cast.h, format:'r' },
+      label [267,32,50,17] { title:'zarovnání:' },
+      field align [332,31,30,17] { data:dopis_cast.fattr },
+      label [239,4,100,17] { title:'velikost písma:' },
+      field fsize [332,3,31,17] { data:dopis_cast.fsize, format:'r' },
+      label [381,6,50,17] { title:'řádkování:' },
+      field ln [444,3,32,17] { data:dopis_cast.ln },
+      label [376,31,100,17] { title:'ohraničení:' },
+      field bord [444,29,33,17] { data:dopis_cast.bord, format:'' },
+      label [490,6,100,17] { title:'umístění:' },
+      field umisteni [550,2,16,17] { data:dopis_cast.umisteni, format:'' },
+      label [518,28,100,17] { title:'typ:' },
+      field typ [550,29,17,17] { data:dopis_cast.typ, format:'' },
+      label [23,59,100,17] { title:'text (html):' },
+      edit obsah [95,63,547,200] { data:dopis_cast.obsah },
+      label [23,275,640,17] { title:"<u>orientační</u> ukázka (přesná viz menu 'Ukázkové tisky šablon'):" },
+      label ukazka [23,295,640,500]
+      button uloz [590,0,,] { title:'[fa-save] Uložit'
+        proc onclick () { form.save; form.load }
+      }
+    }
+  },
+}
+# ==========================================================================================> EDITOr
+# oprava textu, stavu v popup menu
+panel EDITOR [0,0,645,520] { title:' Úprava textu dopisu', type:'popup', css:'dialog'
+  var dopis_id: number
+  use d: form _dopis [0,0,,],
+  proc Edit(id_dopis) { d.load(id_dopis); panel.modal(50,50);
+#   proc onfocus () {
+#     dopis_id.get; d.load(dopis_id.get);
+#   | warning('nedefinovaný dopis')
+  }
+  # ------------------------------------------------------------------------------ _dopis
+  form _dopis [10,10,600,460] {
+//    label [0,12,60,20] { title:'Aktuální:' }
+//    check nazev [50,10,50,20] { data:dopis.aktualni },
+    button  [540,9,,] { title:'[fa-save] Uložit', help:'ukončit editor a uložit změny'
+      proc onclick() { form.save; panel.hide(1); }}
+    button  [600,9,,] { title:'[fa-undo] Zpět', help:'ukončit editor bez uložení změn'
+      proc onclick() { panel.hide(0); }}
+    edit html [0,40,655,480] {type:'html', data:dopis.obsah, par:{toolbar:'Letter'} },
+  }
+}
+# ==========================================================================================> DOPISY
+panel dop {type:'right', title:"[fa-envelope] Dopisy a seznamy", _sys:'*'
+  var virgin=1, last_item:object
+  use info:   form right   [12,4,,]
+  use dopisy: form _dopisy [12,50,,] {tag:'d', format:'n'}
+  use potvrz: form _potvrz [12,50,,] {tag:'p', format:'n'}
+  use stitky: form _stitky [12,50,,] {tag:'s', format:'n'}
+  func onfirstfocus() { 
+    if (virgin) {
+      virgin= 0; 
+      dopisy.Start(); potvrz.Start(); 
+    }
+  }
+  menu m {type:'left', format:'f+', active:*
+    menu d {title:'Dopisy', type:'group'
+      item {title:'[fa-envelope-open-o] vytváření a editace dopisů' 
+        func onclick (i:ezer) {
+          clear(); panel.display(2,'d'); info.header(i);
+          dopisy.Init();
+        }
+      }
+      item {title:'[fa-stack-overflow] roční potvrzení - osoby'
+        func onclick (i:ezer) {
+          clear(); panel.display(2,'p'); info.header(i);
+          potvrz.Init(1);
+        }
+      }
+      item {title:'[fa-stack-overflow] roční potvrzení - firmy'
+        func onclick (i:ezer) {
+          clear(); panel.display(2,'p'); info.header(i);
+          potvrz.Init(0);
+        }
+      }
+      item i {title:'[fa-envelope-o] tisk adresních štítků'
+        func onclick (i:ezer) {
+          clear(); panel.display(2,'s'); info.header(i);
+          stitky.Init();
+        }
+      }
+    }
+    menu s {title:'Seznamy', type:'group'
+      item {title:'[fa-file-text-o] benefiční koncert – firemní dárci'
+        par:{kdo:'0', ucty:'M', velky:0,
+            nazev:'Sponzoři benefičního koncertu'}}
+      item {title:'[fa-file-text-o] další firemní dárci'     
+        par:{kdo:'0', neucty:'M', velky:5000,
+            nazev:'Další firemní dárci'}}
+      item {title:'[fa-file-text-o] věcní dárci' 
+        par:{kdo:'0,1', vecne:1,
+            nazev:'Dárci věcných darů'}}
+      item {title:'[fa-file-text-o] významní individuální dárci'     
+        par:{kdo:'1', velky:5000,
+            nazev:'Významní individuální dárci'}}
+      func onclick (i:ezer) { 
+        clear(); panel.display(0,'.'); info.header(i);
+        info.fill('',php.dop_seznam(i.par));
+      }
+    }
+  }
+  # --------------------------------------------------------------------------------------==> ŠTÍTKY
+  form _stitky [0,0,180,267] {
+    func Init() {
+      pdf= 'zde bude po stisku [Generuj] odkaz na PDF se štítky a na seznam v Excelu ';
+      msg= '';
+      form.enable(0,'k|d');
+      kateg= 0;
+      darci= 0;
+      kat.selects();
+      stitek.report_init(); stitek.report_check();  
+    }
+    // ==> . položky
+    label  [0,0,531,153] {css:'work'}
+    label  [440,14,74,34] {css:'parm'}
+    label  [10,6,140,20] {title:'vybrat adresáty štítků'}
+    // kategorie
+    check kateg [10,25,150,] { title:'podle kategorie', format:'t'
+      func onchange() { form.enable(this,'k') }
+    }
+    select kat  [180,25,251,] {tag:'k', type:'map+', options:cis_kategorie.hodnota,
+        format:'t', help:'kategorie|kategorie dárců', title:'^kategorie (výběr kliknutím s držením Ctrl)' }
+    // dárci
+    check darci [10,65,150,] { title:'jako dárce, kteří', format:'t' 
+      func onchange() { form.enable(this,'d') }
+    }
+    field aspon [180,65,50,] {tag:'d', title:'^dali aspoň', format:'rt', help:'dali v období aspoň tolik'}
+    field od [240,65,90,] {tag:'d', type:'date', title:'^v období od', format:'rt'}
+    field do [340,65,90,] {tag:'d', type:'date', title:'^do', format:'rt'}
+    // firmy
+    check firmy [10,85,150,] { title:'včetně firem', format:'t' }
+    // výsledek
+    label pdf [10,120,514,20]
+    button [450,22,,] {title:'Generuj'
+      func onclick() { var typ:number, par:object, ret:object
+        clear(); 
+        par= {kateg:kateg,kat:kat.key(),darci:darci,aspon:aspon,od:od,do:do,firmy:firmy}; 
+        ret= php.dop_gener_stitky(typ,par,stitek.get_json());
+        pdf= ret.pdf;
+        msg= ret.msg;
+    }}
+    label [15,165,436,33] {title:"Poznámka: tisk je optimalizován pro štítky velikosti 70x41 
+        (21 štítků na listu). <br>Tento typ se prodává např. pod označením RAYFILM R0100.0533A"
+    }
+    label msg [0,208,600,600] 
+  }
+  // ==> . štítky
+  report stitek [0,0,200,287] { format:'A4:0,5,70,41',
+    box stitek    [  0,  0, 70, 41] { style:'12,R,LRTB' }
+    box adresa    [  5, 10, 65, 32] { style:'12,L' }
+  }
+  # --------------------------------------------------------------------------------------==> DOPISY
+  var et_prazdy: number
+  form _dopisy [0,0,180,267] {
+    # ==> . procedury
+    proc Start () {
+      texty.browse_load("etd.druh='P'");
+    | Init; form_state('n','u|z|s')
+    }
+    func Init() {
+      pdf= 'zde bude po stisku [Vygenerovat...] odkaz na PDF s vygenerovanými dopisy';
+//      msg= '';
+      form.init();
+      komu.key(1);
+      kat.selects();
+//      Reload();
+//      obsah.fill('zobrazení názvu a textu dopisu','');
+    }
+    func Reload() {
+      texty.browse_init();
+      texty.browse_refresh();
+      if (texty.browse_count()) texty.refresh()
+    }
+    # ==> . stav tlačítek
+    func form_state(on,off) {
+      form.enable(1,on); form.enable(0,off); }
+    func onchanged () {
+      if (uloz.enable() || oprav.enable()) form_state('u|z','n|s')
+    }
+    # ---------------------------------------==> . seznam dopisů
+    view etd: table dopis
+    browse texty [0,0,150,200] { rows:8, qry_rows:1, group_by:'id_dopis'
+      show id_dopis { data:etd.id_dopis }
+      show datum    [,,70,] { title:'datum', data:etd.datum, format:'rs-' }
+      show predmet [,,145,] { title:'předmět', data:etd.nazev, format:'sq' }
+      show komu    [,,110,] { title:'komu' , data:etd.adresati, format:'sq#', map_pipe:cis_adresati.zkratka }
+      show pocet    [,,30,] { title:'#', data:etd.pocet, format:'rs', help:"počet vygenerovaných PDF" }
+      proc onrowclick () { refresh }
+      proc refresh() { var ret:object
+        clear; form_state('n|s','u|z');
+        Init();
+        ret.set(ask('dop_show_vars',id_dopis.get));
+        vars.set(ret.html);
+        form.load(id_dopis.get);
+        obsah.fill(predmet.get,txt.get);
+      }
+    }
+    const L=395
+    label  [L+0,0,449,108] { css:'work' }
+//    field sign { data:dopis.sign }
+    field txt { data:dopis.obsah }
+    field datum [L+10,20,90,] { type:'date', title:'^dat.odeslání', data:dopis.datum,
+      format:'r', help:'datum|datum dopisu' }
+    select komu  [L+110,20,178,] { title:'^výběr adresátů', type:'map', data:dopis.adresati, 
+      options:cis_adresati.hodnota, help:'komu|skupina adresátů' }
+    select kat  [L+303,20,129,] {title:'^kategorie', type:'map', data:dopis.kategorie, 
+      options:cis_kategorie.zkratka, help:'kategorie|kategorie dárců'}
+    field predmet [L+10,59,415,] { title:'^název dopisu', data:dopis.nazev,
+      help:'předmět|předmět dopisu' }
+    label pdf [L+10,89,450,20]
+    # text dopisu
+    label obsah [0,208,626,400] {
+      proc fill(nadpis,telo) {
+        obsah.set(conc("<div style='padding:0 10px;border:1px solid green'><h3 class='work'>",
+          nadpis,"</h3>",telo,'</div>'));
+    }}
+    # proměnné
+    label vars [643,208,180,400] { title:'seznam proměnných',
+      style:'padding:0 10px;border:1px solid green;overflow:auto;z-index:3' }
+    label  [L+0,112,200,78] { css:'parm' }
+    #--------------------------------------==> .. ulož/zpět
+    button uloz [L+8,118,,] { tag:'u', type:'submit', title:'Uložit',
+      help:'uložit opravené hodnoty'
+      func onclick () {
+        if (form.same()) return;
+        if (form.key()) { // oprava
+          form.save(); form.load(); texty.browse_seek();
+          form_state('n|s','u|z'); texty.browse_focus();
+        }
+        else { // přidání
+          form.insert(); form.load();
+          texty.raise('onrowclick',texty.browse_seek(`id_dopis=${form.key()}`));
+          form_state('n|s','u|z');
+        }
+      }
+    }
+    button [L+64,118,,] { tag:'z', title:'Zpět', help:'neukládat hodnoty'
+      func onclick () {
+        Reload()
+      }
+    }
+    #--------------------------------------==> .. edit
+    button oprav [L+113,118,,] { tag:'s', title:'Opravit text', help:'opravit text dopisu',
+      func onclick () {
+        EDITOR.Edit(texty.id_dopis); texty.refresh()
+      }
+    }
+    #--------------------------------------==> .. test
+    label [L+322,148,68,36] { css:'parm2' }
+    button test [L+331,157,,] { tag:'s', title:'Ukázka',
+      help:'vyzkoušet na nastavené osobě či firmě na kartě Kontakty'
+      func onclick () { var idc:number, ret:object
+        clear();
+        idc= klu.cle.curr_clen(1);
+        ret= php.dop_show_vars(texty.id_dopis); vars= ret.html;
+        ret= php.dop_ukazka(texty.id_dopis,idc);
+        obsah.fill(`ukázka dopisu '${predmet}' pro ${idc}, PDF ke stažení je ${ret.ref}`,ret.html);
+      }
+    }
+    #--------------------------------------==> .. gen
+    label [L+8,164,184,] { title:"přegenerováním jsou také přepočteny všechny {proměnné}" }
+    button generovat [L+8,143,,] { tag:'s', title:'Vygenerovat všechny dopisy',
+      help:'po vygenerování bude nabídnut odkaz pro stažení'
+      func onclick () { var ret:object
+        clear();
+        ret= php.dop_vsem(texty.id_dopis); 
+        pdf= ret.pdf;
+        obsah= ret.msg;
+        texty.browse_row();
+      }
+    }
+    #--------------------------------------==> .. new/del
+    label  [L+324,110,120,32] { css:'parm' }
+    button novy [L+332,116,,] { tag:'n', title:'Nový', help:'vytvořit nový dopis',
+      func onclick () {
+        Init();
+        form_state('u|z','n|s');
+        texty.blur(1);
+        datum= now(); datum.change();
+        komu.key(1); komu.change(); kat.change();
+      }
+    }
+    button smaz [L+381,116,,] { tag:'s', title:'Smazat', help:'smazat dopis',
+      func onclick () {
+        if (confirm(`Opravdu smazat dopis '${texty.predmet}'?`)) {
+          php.xx_mai_smaz(texty.id_dopis);
+          Reload();
+        }
+      }
+    }
+  }
+  # -----------------------------------------------------------------------------------==> POTVRZENÍ
+  var et_prazdy: number
+  form _potvrz [0,0,180,267] {
+    var rok=2021, osoba:number
+    #--------------------------------------==> výběr potvrzení
+    func Start () { rok= fdate('Y'); odeslano= now(); drok= 2; rok= fdate('Y')-1; znovu= 0;}
+    func Init(_osoba) { 
+      osoba= _osoba;
+      if (_osoba) {
+        darci.firma.width(0); darci.ico.width(0); darci.jmeno.width(50); darci.prijmeni.width(75);
+      }
+      else { // firma
+        darci.firma.width(75); darci.ico.width(50); darci.jmeno.width(0); darci.prijmeni.width(0);
+      }
+      Reload(); info= '';
+    }
+    func Reload() {
+      // nesmazané nevěcné dary daného roku fyzických osob v celkové minimální výši
+      darci.browse_load( 
+          `osoba=${osoba} AND potvrzeni IN (1,2) AND c.deleted='' AND psc!='' 
+              AND d.deleted='' AND d.zpusob!=4 AND YEAR(d.castka_kdy)=${rok}`,
+          '',conc(znovu?'1':'nema>0',` AND dary>=${dmin?dmin:0}`));
+    }
+    view c: table clen
+    view d: table dar {join:'USING (id_clen)'}
+    browse darci [4,0,200,240] { rows:11, qry_rows:1, group_by:'id_clen'
+      show id_clen [,,50,] { title:'člen', data:c.id_clen, format:'rq=s+' }
+      show osoba { data:c.osoba }
+      show titul { data:c.titul }
+      show jmeno [,,50,] { title:'jméno', data:c.jmeno, format:'q*s' }
+      show prijmeni [,,75,] { title:'příjmení', data:c.prijmeni, format:'q*s' }
+      show firma [,,0,] { title:'firma', data:c.firma, format:'q*s' }
+      show ico   [,,0,] { title:'IČO', data:c.ico, format:'q*s' }
+      show ulice [,,110,] { title:'ulice', data:c.ulice, format:'q*s'  }
+      show psc [,,50,] { title:'psč', data:c.psc, format:'rq*s', sql_pipe:'psc' }
+      show obec [,,80,] { title:'obec', data:c.obec, format:'q*s' }
+      show potvr [,,15,] { title:'P', expr:"IF(c.potvrzeni=1,'V','R')", format:'q=s' }
+      show dary [,,60,] { title:'dary', expr:"SUM(d.castka)", format:'sr' }
+      show uzma [,,60,] { title:'už má', expr:"SUM(IF(d.potvrz_kdy,d.castka,0))", format:'sr' }
+      show nema [,,60,] { title:'nemá', expr:"SUM(IF(d.potvrz_kdy,0,d.castka))", format:'sr' }
+      func onsubmit () { klu.cle.show_clen(id_clen) }
+    }
+    label info [4,250,800,] 
+    #--------------------------------------==> . parametrizace
+    const LL=660
+    label [LL+0,0,185,145] { css:'work' }
+    field odeslano [LL+12,20,96,18]  { title:'^datum odeslání', type:'date', format:'rt' }
+    label [LL+8,50,171,14] { title:"vypsat potvrzení na minimálně" }
+    field dmin [LL+117,68,37,]  { format:'rt', value:'500'
+      func onchange () { Reload() }
+    }
+    label [LL+164,72,20,14] { title:"Kč" }
+    radio drok [LL+2,66,104,41] { style:'border:1px solid #ddd', format:'t'
+      case [0,3,100,16] { title:'letošní dary', value:'1' }
+      case [0,23,100,16] { title:'loňské dary', value:'2' }
+      func onchange () {
+        rok= drok==1 ? fdate('Y') : fdate('Y')-1;
+        Reload();
+      }
+    }
+    check znovu [LL+5,117,120,] { title:'včetně poslaných', format:'t'
+      proc onchange () { Reload() }
+    }
+    #--------------------------------------==> . test
+    button test [LL+120,21,,] { tag:'s', title:'Ukázka',
+      help:'vyzkoušet na nastaveném dárci'
+      func onclick () { var ret:object, idd:number
+        clear();
+        idd= 7;
+        ret= php.dop_potvrzeni(darci.browse_status(),{rok:rok,datum:odeslano},darci.id_clen);
+        info= `${ret.pdf}<hr>${ret.html}`;
+      }
+    }
+    #--------------------------------------==> . tvorba PDF
+    label  [LL+0,170,182,69] { css:'parm' }
+    button pdf [LL+15,180,,] { title:'1. vytvořit PDF pro tisk', help:'po vytištění je nutné zapsat datum potvrzení'
+      func onclick () { var ret:object
+        clear();
+        ret= php.dop_potvrzeni(darci.browse_status(),{rok:rok,datum:odeslano});
+        info= `${ret.msg}. ${ret.pdf}, ukázka posledního potvrzení<hr>${ret.html}`;
+    }}
+    button zpet [LL+15,210,,] { title:'2. zapsat datum potvrzení', help:'zápis o zaslání potvrzení'
+      func onclick () { 
+        if (confirm('podařilo se vytiskout všechna vygenerovaná potvrzení?')) {
+          info= php.dop_zapis_datum(darci.browse_status(),{rok:rok,datum:odeslano});
+        }
+    }}
+    proc reselect (id) {
+//      var cond:text
+//      cond.set(conc(" AND YEAR(datum)=",rok.get));
+//      [ dary.browse_load(conc("left(deleted,1)!='D' AND id_clen=",id,cond)) ];
+//      dary.browse_select(conc("left(deleted,1)!='D' AND druh!=1 AND id_clen=",id,cond))
+    }
+    proc onstart () {
+//      ii.potvrzeni.key(202); 
+//      drok.set(2); drok.onchange;
+    }
+  }
+}

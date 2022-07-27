@@ -1,0 +1,129 @@
+// Aplikace Polička - modul Ekonomika
+// (C) 2022 Martin Šmídek <martin@smidek.eu>
+
+panel pre {type:'right', title:"[fa-pie-chart] Přehledy", _sys:'pri'
+  var this_item: ezer, this_par:object
+  var this_export: number
+  use rp: form _eko [12,4,,] 
+  use vz: form right { 
+    check odkazy [-10,4,100,17] {title:'odkazy',style:'color:white', format:'t'
+      func onchange() { this_item.click() } } 
+  }
+  menu m {type:'left', active:m.uz.dar, format:'f+'
+    menu uz {title:'Přehledy',type:'group', _sys:'dar'
+      item dar {title:'[fa-euro] Přehled finančních darů'   par:°{typ:'D',off:'uz|his|rok',on:'VS|den',dary:'0',vs:'1'}}
+      item  {title:'[fa-gift] Přehled věcných darů'         par:°{typ:'D',off:'uz|his|rok',on:'VS|den',dary:'1',vs:'1'}}
+      proc onclick (i) { var tab:text
+        clear; rp.display(1); vz.display(0);
+        this_item.set(i);
+        rp.get.display(0,i.par.off); rp.get.display(1,i.par.on);
+        rp.fill(replace_fa(conc(i.owner.title,' - ',i.title)),'... počkejte prosím, provádím výpočet');
+        tab.set(ask('eko_mesic_dary',this_export.get,rp.os.get,rp.fy.get,rp.den_od.get,rp.den_do.get,i.par.dary));
+        rp.fill('',tab);
+        this_export.set(0);
+      }
+      item  {title:'[fa-download] Download kontaktů a darů' par:°{typ:'D',off:'uz|his|rok|VS|den',on:''}
+        proc onclick (i) { var tab:text
+          clear; rp.display(1); vz.display(0);
+          this_item.set(i);
+          rp.get.display(0,i.par.off); rp.get.display(1,i.par.on);
+          rp.fill(replace_fa(conc(i.owner.title,' - ',i.title)),'... počkejte prosím, provádím výpočet');
+          tab.set(ask('eko_download'));
+          rp.fill('',tab);
+          this_export.set(0);
+        }
+      }
+    }
+    menu {title:'Statistika',type:'group', _sys:'dar'
+      item dar {title:'[fa-bar-chart] Histogram finančních darů',
+          par:°{deleni:'300,700,1000;1500,2000;3000,4000,10000;20000;50000;100000'}
+        proc onclick (i) {
+          clear; rp.display(1); vz.display(0);
+          this_item.set(i); rp.get.display(0,'VS|rok|uz'); rp.get.display(1,'his|den');
+          rp.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
+          rp.fill('',ask('eko_histogram',this_export.get,rp.den_od.get,rp.den_do.get,0,i.par,rp.deleni.get));
+          this_export.set(0);
+      } }
+    }
+    menu {title:'Výroční zpráva',type:'group', _sys:'dar'
+      item {title:'[fa-file-text-o] benefiční koncert – firemní dárci'
+        par:{kdo:'0',ucty:'M',velky:0,
+            nazev:'Benefiční koncert',
+            velci:'Sponzoři benefičního koncertu'}}
+      item {title:'[fa-file-text-o] další firemní dárci'     
+        par:{kdo:'0',neucty:'M,D,Z',velky:5000,
+            nazev:'Další firemní dárci - právnické osoby',
+            velci:'Významní dárci Charity'}}
+      item {title:'[fa-file-text-o] individuální dárci '     
+        par:{kdo:'1',neucty:'D,Z',velky:5000,
+            nazev:'Individuální dárci',
+            velci:'Významní Individuální dárci Charity'}}
+      item {title:'[fa-file-text-o] dárci sbírky: Projekt ch.dům'    
+        par:{kdo:'1',ucty:'D',velky:5000,
+            nazev:'Veřejná sbírka Projekt charitní dům',
+            velci:'Velcí dárci na veřejnou sbírku Projekt charitní dům'}}
+      item {title:'[fa-file-text-o] dárci sbírky: Mé přání je ...'   
+        par:{kdo:'1',ucty:'Z',velky:5000,
+            nazev:'Veřejná sbírka Projekt charitní dům',
+            velci:'Velcí dárci na veřejnou sbírku Projekt charitní dům'}}
+      item {title:'[fa-file-text-o] DARUJME.CZ' 
+        par:{kategorie:19,velky:5000,
+            nazev:'Dárci přes darujme.cz'}}
+      item {title:'[fa-file-text-o] věcní dárci' 
+        par:{vecne:1,
+            nazev:'Dárci věcných darů a hmotné pomoci'}}
+      func onclick (i:ezer) {
+        clear(); rp.display(0); vz.display(1);
+        vz.header(i);
+        this_item= i; this_par= i.par;
+        vz.fill('',php.eko_vyrocka(this_par,vz.odkazy));
+      } 
+    }
+    func onstart () {
+      rp.den_od= now(); rp.den_do= now(); rp.rok= fdate('Y'); this_export= 0 }
+  }
+  # ------------------------------------------------------------------------------------------- _eko
+  # formulář pro levostranné menu
+  form _eko {//[,,750,600] {
+    label head [0,0,*,50] { title:'' }
+    label note [0,50,*,500] { title:'' }
+    label [-81,0,364,30] { tag:'den', css:'parm', style:'zIndex:1' }
+    button export [-20,5,,] { title:'Export', style:'zIndex:2'
+      proc onclick() { this_export.set(1); this_item.click; } }
+    button go [-88,5,,] { tag:'den,rok', title:'[fa-refresh]', style:'zIndex:2'
+      proc onclick() { this_item.click } }
+    // rok
+    label [-79,0,163,30] { tag:'rok', css:'parm', style:'zIndex:1' }
+//    check nuly [-112,6,50,] { tag:'rok', title:'nuly', format:'t', value:'0' }
+    field rok [-167,6,50,] { tag:'rok', title:'rok', type:'date', format:'Rrt:y', help:'volba roku' }
+    // VS
+//    field VS [-336,6,45,] { tag:'VS', title:'VS:', format:'rt', help:'variabilní symbol: lze zapisovat pomocí ?,*'}
+    // den
+    label [-214,0,158,30] { tag:'uz', css:'parm', style:'zIndex:1' }
+    field uzaverka [-224,6,87,] {tag:'uz', title:'uzávěrka:', type:'date', format:'Rrt', 
+      help:'datum uzávěrky darů', skill:'h|hddeu'
+      proc onchanged() {
+        ask('eko_uzaverka',date2sql(this.get));
+        this.set(sql2date(ask('eko_uzaverka_den')));
+    }}
+    // osoby, firmy
+    check fy [-331,4,50,] { title:'firmy' value:'1' }
+    check os [-388,4,58,] { title:'osoby' value:'1' }
+    // ode dne po den
+    field den_od [-224,6,87,] {tag:'den', title:'od:', type:'date', format:'Rrt', help:'počáteční datum včetně'}
+    field den_do [-115,6,87,] {tag:'den', title:'do:', type:'date', format:'Rrt', help:'koncové datum včetně'}
+    // his
+    label [5,32,,] { tag:'his', title:'dělící body:' }
+    field deleni [80,30,600,] { tag:'his', help:'dělící body histogramu', format:'t'
+        value:'300,700,1000;1500,2000;3000,4000,10000;20000;50000;100000'
+      proc onchanged () { this_item.click } }
+    proc fill(h,n) {
+      [ h; head.set(conc("<div class='karta'>",h,"</div>")) ];
+      [ n; note.set(n) ]
+    }
+    proc append(n) {
+      note.set(conc(note.get,n))
+    }
+  }
+}
+
