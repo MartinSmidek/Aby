@@ -12,7 +12,9 @@ panel cle {type:'plain', title:"[fa-home] Kontakty", _sys:'*',  include:'onload'
   func zpet_clen() {}
 }
 # =========================================================================================> PŘEVODY
-panel pre {type:'plain', title:"[fa-bank] Převody", _sys:'*',  skill:'hdp', include:'onclick' }
+panel pre {type:'plain', title:"[fa-bank] Převody", _sys:'*',  include:'onclick' }
+# ===========================================================================================> DONIO
+panel don {type:'plain', title:"[fa-envira] Donio", _sys:'*',  include:'onclick' }
 # ========================================================================================> KONTROLY
 panel kon  {type:'right', title:"[fa-info-circle] Informace, kontroly", _sys:'*',
   menu leve {type:'left', active:*

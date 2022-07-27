@@ -309,6 +309,11 @@ table dar { key_id:'id_dar'
   text   zmena_kdo   { help:'změna kým|značka autora poslední změny' },
   date   zmena_kdy   { help:'změna kdy|čas poslední změny' },
 }
+table projekt { key_id:'id_projekt'
+  number id_projekt     { key:'primary', help:'projekt|jedinečné číslo projektu' }
+  text nazev            { help:'pojmenování projektu' }
+  text soubor           { help:'importovaný výpis projektu' }
+}
 table ukol { key_id:'id_ukol'
   number id_ukol        { key:'primary', help:'dar|jedinečné číslo úkolu' }
   number id_clen        { help:'ID kontaktu|kontakt, kterého se úkol týká' }
