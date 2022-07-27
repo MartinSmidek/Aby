@@ -820,7 +820,7 @@ form _dar [,,390,240] {
     switch(zpusob){
       case 1: kas.stisk(c); break;
       case 2: ban.stisk(c); break;
-      case 3: slo.stisk(c); break;
+      case 5: don.stisk(c); break;
       case 4: vec.stisk(c); break;
       default:  x.stisk(c); break
     }
@@ -851,7 +851,7 @@ form _dar [,,390,240] {
   label ban [91,0,71,20] { tag:'z', title:'<b>Bankou</b>',  format:'c'
     proc onclick() { id_clen.get; stisk(0); }
     proc stisk(prog) { tags(prog,this,'n|u','v|x',2); } }
-  label slo [170,0,71,20] { tag:'z', title:'<b>Složenkou</b>', format:'c'
+  label don [170,0,71,20] { tag:'z', title:'<b>Donio</b>', format:'c'
     proc onclick() { id_clen.get; stisk(0); }
     proc stisk(prog) { tags(prog,this,'n','u|v|x',3); } }
   label vec [249,0,71,20] { tag:'z', title:'<b>Věcný dar</b>', format:'c'
@@ -875,7 +875,8 @@ form _dar [,,390,240] {
   field iddar   [327,0,57,17] { data:d.id_dar, format:'or' },
   # -----------------==> .. společné 
   field castka  [15,34,70,17] { title:'^hodnota daru', data:d.castka, format:'r', value:'' },
-  select stred  [130,34,198,] { title:'^pro středisko', type:'map', data:d.stredisko, options:cis_stredisko.hodnota }
+  select pro    [130,34,198,] { title:'^na projekt', type:'map', data:d.id_projekt, options:map_projekt.hodnota }
+//  select stred  [130,34,198,] { title:'^pro středisko', type:'map', data:d.stredisko, options:cis_stredisko.hodnota }
   field dar_dne [15,71,87,17] { title:'^došlého dne', format:'RUr', type:'date', data:d.castka_kdy }
   field darce   [218,148,158,17] { title:'^jiné jméno do potvrzení', data:d.darce },
   field pozn    [14,110,363,17]  { title:'^poznámka k daru', data:d.pozn, value:'' },

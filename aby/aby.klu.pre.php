@@ -407,3 +407,100 @@ function ch_ban_load($file) {  //trace();
 end:
   return $y;
 }
+# ===========================================================================================> DONIO
+# ----------------------------------------------------------------------------------- aby donio_load
+# primární import dat => {idp,war,err}
+function aby_donio_load($csv) { trace();
+  global $ezer_path_root;
+  $res= (object)array('idp'=>0,'err'=>'','war'=>'');
+  $data= array();
+  $csv_path= "$ezer_path_root/banka/donio/$csv";
+  $msg= aby_csv2array($csv_path,$data,999999,'UTF-8');
+  display($msg);                                            
+  if ($msg) { 
+    $res->err= $msg; goto end;
+  }  
+  // ochrana proti násobnému načtení
+  $md5= md5_file($csv_path);
+  $duplicita= select('soubor','projekt',"md5='$md5'");
+  if ($duplicita) {
+    $res->err= "tento projekt již byl vložen ze souboru '$duplicita'"; goto end;
+  }
+  else {
+    query("INSERT INTO projekt (nazev,soubor,md5) VALUES ('','$csv','$md5') ");
+    $res->idp= pdo_insert_id();
+  }
+  // otestování a případné vytvoření ANONYM
+  $anonym= select('id_clen','clen', "jmeno='ANONYM'");
+  if (!$anonym) {
+    $qry= "INSERT INTO clen (osoba,jmeno,email) VALUE (1,'ANONYM','')";
+    query($qry);
+    $anonym= pdo_insert_id();
+  }
+  // definice polí
+  $flds= array( 
+      // Donio: Email	Jméno	Částka	Stav	Typ platby	Datum příspěvku	Jméno přispěvatele	Vzkaz
+      'Částka'            => "castka,dn",
+      'Stav'              => ",stav",          // zaplaceno | nezaplaceno
+      'Datum příspěvku'   => "castka_kdy,dt",
+      'Jméno přispěvatele'=> "-",
+      'Vzkaz'             => "pozn"
+  );
+  // rozdělíme na clen a dar
+  $n_clen= $n_dar= $suma= 0;
+  foreach ($data as $row) {
+                                                    debug($row);
+    // atributy darů
+    $d= array();
+    $castka= 0;
+    foreach ($flds as $fld=>$desc) {
+      if ($desc=='-') continue;
+      list($itm,$cnv)= explode(',',$desc);
+      $val= $row[$fld];
+      switch ($cnv) {
+        case 'stav':
+          if ($val=='nezaplaceno') continue 3; // přejdi na další záznam
+          break;
+        case 'dn': 
+          $castka= strtr($val,array(' '=>'','Kč'=>''));
+          $d[$itm]= $castka;
+          break;
+        case 'dt': 
+          $m= null;
+          if (preg_match("~^(\d+\.\d+\.\d+)~",$val,$m)) {
+            $d[$itm]= sql_date($m[1],1); 
+          }
+          break;
+        default: 
+          $d[$itm]= $val; 
+          break;
+      }
+    }
+    // přičti částku
+    $suma+= $castka;
+    // najdi kontakt podle emailu nebo vlož nový kontakt
+    $email= trim($row['Email']);
+    $jmeno= trim($row['Jméno']);
+    $idc= $email ? select('id_clen','clen', "email='$email'") : $anonym;
+    if (!$idc) {
+      $qry= "INSERT INTO clen (osoba,jmeno,email) VALUE (1,'$jmeno','$email')";
+      query($qry);
+      $idc= pdo_insert_id();
+      $n_clen++;
+    }
+    // vytvoření dar
+    $attr= array();
+    $d['id_clen']= $idc;
+    foreach ($d as $itm=>$val) {
+      $attr[]= "$itm='$val'";
+    }
+    if (isset($d['castka']) && $d['castka']) {
+      query("INSERT INTO dar SET typ=9,zpusob=5,id_projekt=$res->idp,".implode(',',$attr));
+      $n_dar++;
+    }
+  }
+  query("UPDATE projekt SET suma='$suma' WHERE id_projekt=$res->idp");
+  $res->war= "Bylo vloženo $n_clen lidí a $n_dar darů";
+end:
+  return $res;
+}

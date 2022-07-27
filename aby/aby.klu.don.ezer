@@ -9,6 +9,7 @@ func onfirstfocus () {
 //  r.filter_init();
 //  p_reload();
 ////  panel.owner.call('kontakte_init'); // kvůli ukaz_ctenare
+  proj.Init();
   onfocus();
 }
 func onfocus() { 
@@ -18,7 +19,7 @@ func onfocus() {
 //var ok: number
 //
 use proj:  form _proj  [6,3,,]
-//use p:  form _p_prevody [321,3,,]
+use dary:  form _dary [404,3,,]
 //use i:  form _p_info    [405,331,,]
 //use r:  form _p_rok     [6,507,,]
 //use c:  form _p_clen    [405,390,,]
@@ -50,6 +51,9 @@ use drop:  form _drop      [6,331,,]
 # --------------------------------------------------==> PROJEKTY
 form _proj [,,1070,309] { css:'work'
   label tit [22,5,100,] { title:'<h1>Projekty</h1>' }
+  func Init() {
+    _projekty.browse_load();
+  }
   func Seek(idv) {
 //    p_reload();
     if (!_projekty.browse_seek(`p.id_projekt=${idv}`)) {
@@ -77,12 +81,11 @@ form _proj [,,1070,309] { css:'work'
 //        help:'datum nejstarší platby v souboru'}
 //    show [,,65,] { title:'do', expr:"MAX(vp.castka_kdy)", sql_pipe:'sql_date1', format:'rsq=' 
 //        help:'datum nejnovější platby v souboru'}
-    show zkratka [,,120,] { title:'název', data:p.nazev, format:'ts' 
-        help:'název importovaného souboru'}
-    show soubor [,,120,] { title:'soubor', data:p.soubor, format:'ts' 
-        help:'název importovaného souboru'}
+    show nazev [,,120,] { title:'název', data:p.nazev, format:'ts' }
+    show suma [,,60,] { title:'vybráno', data:p.suma, format:'ts' }
+    show soubor [,,170,] { title:'soubor', data:p.soubor, format:'ts' }
     func onrowclick () {
-//      p._prevody.browse_load(`id_projekt=${v._projekty.id_projekt}`);
+      dary._dary.browse_load(`id_projekt=${id_projekt}`);
 //      k.p_rychle_off();
     }
     func onclick() {
@@ -92,8 +95,9 @@ form _proj [,,1070,309] { css:'work'
   }
 }
 # --------------------------------------------------==> DARY
-//form _p_prevody [,,774,262] {
-//  view p: table dar
+form _dary [,,774,262] {
+  view d: table dar
+  view c: table clen {join_type:'LEFT' join:'USING (id_clen)' }
 //  label [12,5,73,] { title:'<h1>Platby</h1>' }
 //  label [77,9,700,] { title:"
 //    <span class='pre_10'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> není dar ... 
@@ -103,9 +107,14 @@ form _proj [,,1070,309] { css:'work'
 //     <span class='pre_8'>&nbsp;&nbsp;</span><span class='pre_9'>&nbsp;&nbsp;</span> spojená složenka) ... 
 //    <span class='pre_9'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> OK spojeno s dárcem"
 //  }
-//  browse _prevody [0,29,300,100] {buf_rows:500, rows:13, qry_rows:1,
+  browse _dary [0,29,300,100] {buf_rows:500, rows:13, qry_rows:1,
 //      css_rows:'typ,5:pre_5,6:pre_6,7:pre_7,8:pre_8,9:pre_9'
 //    show id_dar [,,55,] { title:'ID platby', data:p.id_dar, format:'rs+' }
+    show datum [,,75,] { title:'datum', data:d.castka_kdy, format:'rq=' }
+    show castka [,,70,] { title:'částka', data:d.castka, format:'rq=' }
+    show jmeno [,,80,] { title:'dárce', data:c.jmeno, format:'tq*' }
+    show email [,,170,] { title:'email', data:c.email, format:'tq*' }
+    show pozn [,,220,] { title:'vzkaz', data:d.pozn, format:'tq*' }
 //    show popis [,,151,] { title:'popis účtu', data:p.ucet_popis, format:'tq*' }
 //    show zprava [,,110,] { title:'zpráva', data:p.zprava, format:'tq*' }
 //    show idc [,,50,] { title:'ID osoby', data:p.id_clen, format:'rq=' 
@@ -152,8 +161,8 @@ form _proj [,,1070,309] { css:'work'
 //          php.ch_bank_join_dary(v._projekty.browse_key());
 //          _prevody.browse_refresh();
 //      }}
-//    }
-//  }
+    }
+  }
 //  # --------------------------------------------------==> DROP
 //  panel pop_novy [,,392,161] { title:'Vytvoření nového dárce', type:'popup', css:'dialog'
 //    func Vytvor(_idd,_vs) { var y:object
@@ -206,13 +215,15 @@ form _drop [,,392,161] { css:'work'
       if (match('csv$',f.name,'i')) return(1);
       alert(`'${f.name}' není soubor typu CSV`); return(0)
     }
-    func onload(f:object) { var y:object // po dokončení přenosu, jméno bude ASCII
+    func onload(f:object) { var y:object, nazev:text // po dokončení přenosu, jméno bude ASCII
       echo(`load: ${f.name}`);
-      y= php.aby_donio_load(f.name);
+      y= php.aby_donio_load(f.name); // => {idp,war,err}
       if (y.war) warning(y.war);
       if (y.err) alert(y.err);
       else {
-        proj.Seek(y.idv);
+        nazev= prompt2('Pojmenujte projekt');
+        if (nazev) php.query(`UPDATE projekt SET nazev='${nazev}' WHERE id_projekt=${y.idp}`);
+        proj.Seek(y.idp);
       }
     }
     func onerror(e:object) { 

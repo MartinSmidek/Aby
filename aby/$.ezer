@@ -38,6 +38,7 @@ menu aby { type:'main', active:*
           role:   "id_role>*,id_osoba>clen,id_firma>clen,popis,priorita",
           ukol:   "id_ukol>*,id_clen>clen,kdo_od>clen,kdo_pro>clen,popis",
           dar:    "id_dar>*,id_clen>clen,zpusob,ucet,stredisko,castka_kdy",
+          projekt:"id_projekt>*,nazev,suma,soubor",
           vypis:  "id_vypis>*,nas_ucet,datum_od,datum_do,soubor_od,soubor_do,soubor",
           dopis:  "id_dopis>*,druh,vzor,datum,adresati,kategorie,nazev",
           dopis_cast: "id_dopis_cast>*,druh,name",
@@ -281,6 +282,7 @@ table dar { key_id:'id_dar'
   number id_dar      { key:'primary', help:'dar|jedinečné číslo daru' },
   number id_clen     { help:'dárce|identifikace dárce' },
   number id_vypis    { help:'výpis|bankovní výpis, je-li' },
+  number id_projekt     { help:'projekt|id projektu' },
   text   deleted     { help:'ok|prázdné nebo D=značka smazání daru' },
   number zpusob      { help:'způsob|způsob platby 1:pokladnou 2:převodem 3:složenkou 4:věcný' },
   number typ
@@ -312,6 +314,7 @@ table dar { key_id:'id_dar'
 table projekt { key_id:'id_projekt'
   number id_projekt     { key:'primary', help:'projekt|jedinečné číslo projektu' }
   text nazev            { help:'pojmenování projektu' }
+  number suma           { help:'vybraná částka v Kč' }
   text soubor           { help:'importovaný výpis projektu' }
 }
 table ukol { key_id:'id_ukol'
@@ -437,3 +440,4 @@ map cis_u_stavy:        table _cis { where:"druh='u_stavy'", order:'data', key_i
 //map cis_k_zprava_jak:   table _cis { where:"druh='k_zprava_jak'", order:'data', key_id:'data'}
 map cis_kategorie:      table _cis { where:"druh='kategorie'", order:'zkratka', key_id:'data'}
 map cis_adresati:       table _cis {where:"druh='adresati'", order:'hodnota', key_id:'data'}
+map map_projekt:        table projekt { where:"1", order:'1', key_id:'id_projekt'}

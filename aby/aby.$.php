@@ -217,6 +217,8 @@ function aby_csv2array($fpath,&$data,$max=0,$encoding='UTF-8') { trace();
   if ( !$f ) { $msg.= "soubor $fpath nelze otevřít"; goto end; }
   // načteme hlavičku
   $s= fgets($f, 5000);
+  $bom= pack('H*','EFBBBF');
+  $s= preg_replace("/^$bom/", '', $s);
   if ($encoding!='UTF-8' && $encoding!='UTF-16LE') {
     if ($encoding=='CP1250')
       $s= win2utf($s,1);
