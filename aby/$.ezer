@@ -1,19 +1,50 @@
 # Aplikace Polička
 # (c) 2021 Martin Šmídek <martin@smidek.eu>
 
-# modul_state.xxx obsahuje o každém tabs tyto informace (to je konvence, ne automatismus)
-#   .loaded  -- tabs bylo zavedeno
-#   .dirty   -- vynutí v onfocus refresh
-var modul_state:object
+//# modul_state.xxx obsahuje globálně přístupné informace pro globální funkce modulu zejm. onfocus:
+//#   .loaded  -- tabs bylo zavedeno
+//#   .dirty   -- vynutí v onfocus refresh
+//var modul_state= {
+//  klu: {cle: {dirty:0}}
+//}
+//  func onstart () {
+//  alert('onstart');
+//    php.table_lock('none'); // uvolni všechny zámky řádků tabulek přihlášeného 
+//    modul_state= {klu:0,dop:0,ban:0,pok:0,eko:0,syst:0,doc:0};
+//  }
+//  # pokud je modul aktivní, nastaví mu dirty=1 aby došlo k překreslení obsahu při onfocus
+//  # jméno modulu je zřetězením id od aby (nevčetně)
+//proc dirty (mod) { // vynutí refresh v onfocus
+//  modul_state.get(mod); 
+//  modul_state.set(1,conc(mod,'.dirty'));
+//}
 
 menu aby { type:'main', active:*
-  const //plus = 2, //0,                       // rozšíření karet - jednotkou je výška řádku browse
-        klu_cle_cleni = 13,
-        klu_cle_dary = 334,
-        klu_kom_rows = 4,
-        klu_kom_zprava_t = 161,
-        klu_kom_zprava_h = 35
-  var global: text
+  # modul_state.xxx, kde xxx je jméno modulu (samostatně kompilovanou část)
+  #  obsahuje globálně přístupné informace pro globální funkce modulu 
+  #   .loaded  -- tabs bylo zavedeno
+  #   .dirty   -- vynutí v onfocus refresh 
+  var modul_state= {
+    klu: {cle: {dirty:0}}
+  }
+  func onstart () { 
+    php.table_lock('none'); // uvolni všechny zámky řádků tabulek přihlášeného 
+  }
+  # pokud je modul aktivní, nastaví mu dirty=1 aby došlo k překreslení obsahu při onfocus
+  proc dirty (mod) { //var state:object
+//    state= aby.part(`modul_state.${mod}`);
+//    state.dirty= 1;
+//    modul.dirty= 1;
+//    modul_state.get(mod); 
+    modul_state.set(1,conc(mod,'.dirty'));
+  }
+//  const //plus = 2, //0,                       // rozšíření karet - jednotkou je výška řádku browse
+//        klu_cle_cleni = 13,
+//        klu_cle_dary = 334,
+//        klu_kom_rows = 4,
+//        klu_kom_zprava_t = 161,
+//        klu_kom_zprava_h = 35
+//  var global: text
   tabs klu { title:"[fa-users] Osoby, [fa-industry] firmy", skill:'hd', _sys:'klu',  include:'onload', active:* 
     panel cle { type:'plain'
       func refresh_vyber() { }
@@ -137,15 +168,15 @@ menu aby { type:'main', active:*
   }
   tabs doc  {title:"[fa-question] Nápověda", _sys:'nap',  include:'onload,ezer2.help', active:* }
   tabs off  {type:'logoff', title:"[fa-power-off] Odhlásit"}
-  func onstart () {
-    php.table_lock('none'); // uvolni všechny zámky řádků tabulek přihlášeného 
-    modul_state= {klu:0,dop:0,ban:0,pok:0,eko:0,syst:0,doc:0};
-  }
-  # pokud je modul aktivní, nastaví mu dirty=1 aby došlo k překreslení obsahu při onfocus
-  # jméno modulu je zřetězením id od aby (nevčetně)
-  proc dirty (mod) {
-    modul_state.get(mod); modul_state.set(1,conc(mod,'.dirty'));
-  }
+//  func onstart () {
+//    php.table_lock('none'); // uvolni všechny zámky řádků tabulek přihlášeného 
+//    modul_state= {klu:0,dop:0,ban:0,pok:0,eko:0,syst:0,doc:0};
+//  }
+//  # pokud je modul aktivní, nastaví mu dirty=1 aby došlo k překreslení obsahu při onfocus
+//  # jméno modulu je zřetězením id od aby (nevčetně)
+//  proc dirty (mod) {
+//    modul_state.get(mod); modul_state.set(1,conc(mod,'.dirty'));
+//  }
   // univerzální procedury
   proc the_formsave (f,b) {
     f.same

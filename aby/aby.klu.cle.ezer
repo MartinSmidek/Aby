@@ -12,17 +12,41 @@ use C_clen_butt: form _clen_butt [670,580,,] { tabindex:30 }
 use C_dary: form _dary [5,340,,] { tabindex:50, skill:'hdd' }
 use C_dar: form _dar [270,340,,] {  skill:'hdd' }
 
-proc onstart () {
-  aby.modul_state.set(°{active:1,dirty:0},'klu.cle');   # poznačení, že modul je aktivní
-  C_cleni.cleni.osoba_firma(C_cleni.cond_os.get,C_cleni.cond_fy.get);
-  C_cleni.cond.Refresh;
+func onstart () {
+  modul_state.klu.cle= {active:1,dirty:0};   # poznačení, že modul je aktivní
+  C_cleni.cleni.osoba_firma(C_cleni.cond_os,C_cleni.cond_fy);
+  C_cleni.cond.Refresh();
   C_cleni.cond.key(1);
   C_cleni._cleni_vyber(0);
-  C_clen.kon.onclick;
-  Ctrack.clen_form.set(C_clen);
-  Dtrack.dar_form.set(C_dar);
+  C_clen.kon.onclick();
+  Ctrack.clen_form= C_clen;
+  Dtrack.dar_form= C_dar;
   has_skill('hdd');
   C_dar.kas.stisk(1); C_dar.kas.set_css('','changed');
+}
+//proc onstart () {
+//  aby.modul_state.set({active:1,dirty:0},'klu.cle');   # poznačení, že modul je aktivní
+//  C_cleni.cleni.osoba_firma(C_cleni.cond_os.get,C_cleni.cond_fy.get);
+//  C_cleni.cond.Refresh;
+//  C_cleni.cond.key(1);
+//  C_cleni._cleni_vyber(0);
+//  C_clen.kon.onclick;
+//  Ctrack.clen_form.set(C_clen);
+//  Dtrack.dar_form.set(C_dar);
+//  has_skill('hdd');
+//  C_dar.kas.stisk(1); C_dar.kas.set_css('','changed');
+//}
+
+# překreslení, pokud někdo zavolal dirty('klu.cle')
+func onfocus () {
+  if (modul_state.klu.cle.dirty) {
+    C_dar.pro.set_attrib('options','map_projekt.nazev'); 
+    C_cleni.cleni.browse_refresh();
+    modul_state.klu.cle.dirty= 0;
+  }
+//  aby.modul_state.get;           /* !!!!!!!!!!!!!!!!!!!!!!!!!! když onfocus proběhne před onstart */
+//  aby.modul_state.set('cle','klu.last');   # poznačení aktivnosti cle
+//  C_cleni._cleni_focus
 }
 
 # aktivace_zvenčí
@@ -55,11 +79,6 @@ func zpet_clen() {
   }
 }
 
-proc onfocus () {
-  aby.modul_state.get;           /* !!!!!!!!!!!!!!!!!!!!!!!!!! když onfocus proběhne před onstart */
-  aby.modul_state.set('cle','klu.last');   # poznačení aktivnosti cle
-  C_cleni._cleni_focus
-}
 # ===========================================================================================> Členi
 form _cleni [,,660,334+17] {
   # ------------------------------------------==> podmínka výběru členů
@@ -156,8 +175,8 @@ form _cleni [,,660,334+17] {
     show ucet     [,, 0,] { title:'účet',      data:c.ucet,       format:'q$rs' }
     show rodcis   [,, 0,] { title:'rč/IČ',     data:c.rodcis,     format:'q$s' }
     show titul    [,, 0,] { title:'titul',     data:c.titul,      format:'q$s' }
-    show telefony [,,90,] { title:'telefony',  data:c.telefony,   format:'q$s' }
-    show email    [,, 0,] { title:'email',     data:c.email,      format:'q$s' }
+    show telefony [,, 0,] { title:'telefony',  data:c.telefony,   format:'q$s' }
+    show email    [,,90,] { title:'email',     data:c.email,      format:'q$s' }
     show potvrz   [,, 0,] { title:'potvrzení', data:c.potvrzeni,  format:'q#s',
       map_pipe:cis_k_potvrzeni.zkratka }
     show kategorie[,, 0,] { title:'kategorie', data:c.kategorie, format:'q#s'
@@ -875,7 +894,7 @@ form _dar [,,390,240] {
   field iddar   [327,0,57,17] { data:d.id_dar, format:'or' },
   # -----------------==> .. společné 
   field castka  [15,34,70,17] { title:'^hodnota daru', data:d.castka, format:'r', value:'' },
-  select pro    [130,34,198,] { title:'^na projekt', type:'map', data:d.id_projekt, options:map_projekt.hodnota }
+  select pro    [130,34,198,] { title:'^na projekt', type:'map', data:d.id_projekt, options:map_projekt.nazev }
 //  select stred  [130,34,198,] { title:'^pro středisko', type:'map', data:d.stredisko, options:cis_stredisko.hodnota }
   field dar_dne [15,71,87,17] { title:'^došlého dne', format:'RUr', type:'date', data:d.castka_kdy }
   field darce   [218,148,158,17] { title:'^jiné jméno do potvrzení', data:d.darce },

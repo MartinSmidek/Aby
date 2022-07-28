@@ -82,7 +82,7 @@ form _proj [,,1070,309] { css:'work'
 //    show [,,65,] { title:'do', expr:"MAX(vp.castka_kdy)", sql_pipe:'sql_date1', format:'rsq=' 
 //        help:'datum nejnovější platby v souboru'}
     show nazev [,,120,] { title:'název', data:p.nazev, format:'ts' }
-    show suma [,,60,] { title:'vybráno', data:p.suma, format:'ts' }
+    show suma [,,60,] { title:'vybráno', data:p.suma, format:'rs' }
     show soubor [,,170,] { title:'soubor', data:p.soubor, format:'ts' }
     func onrowclick () {
       dary._dary.browse_load(`id_projekt=${id_projekt}`);
@@ -224,6 +224,8 @@ form _drop [,,392,161] { css:'work'
         nazev= prompt2('Pojmenujte projekt');
         if (nazev) php.query(`UPDATE projekt SET nazev='${nazev}' WHERE id_projekt=${y.idp}`);
         proj.Seek(y.idp);
+        map_projekt.map_load();
+        aby.dirty('klu.cle');
       }
     }
     func onerror(e:object) { 
