@@ -204,7 +204,7 @@ form _drop [,,392,161] { css:'work'
   #==> . vložení výpisů
   var  dfold='/banka'      // podsložka bez koncového / se nastavuje dynamicky
   label [10,7,371,] {title:'místo pro vložení výpisu - přesvědčte se prosím, že název souboru 
-    <br>má tvar "číslo účtu-banka_od_do.csv" kde banka je 0600 nebo 0800 
+    <br>má tvar "číslo účtu-banka_od_do.csv" kde banka je 2100 
     <br>a <u>od</u> a <u>do</u> jsou datumy ve tvaru rrrr-mm-dd'
   }
   label drop [10,54,370,98] { type:'drop'

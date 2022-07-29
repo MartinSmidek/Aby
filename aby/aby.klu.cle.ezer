@@ -28,6 +28,7 @@ func onstart () {
 # překreslení, pokud někdo zavolal dirty('klu.cle')
 func onfocus () {
   if (modul_state.klu.cle.dirty) {
+    C_clen.kategorie.set_attrib('options','cis_kategorie.hodnota'); 
     C_dar.pro.set_attrib('options','map_projekt.nazev'); 
     C_cleni.cleni.browse_refresh();
     modul_state.klu.cle.dirty= 0;
@@ -228,14 +229,14 @@ form _cleni [,,660,334+17] {
           if (C_clen.osoba=='osoba') { 
             C_clen.osoba.key(0); C_clen.osoba.change();
             if (!C_clen.firma) { 
-              C_clen.firma= C_clen.jmeno; C_clen.firma.change(); 
-              C_clen.jmeno= ''; C_clen.jmeno.change(); 
+              C_clen.firma= C_clen.prijmeni; C_clen.firma.change(); 
+              C_clen.prijmeni= ''; C_clen.prijmeni.change(); 
             }
           }
           else { // firma
             C_clen.osoba.key(1); C_clen.osoba.change();
-            if (!C_clen.jmeno) { 
-              C_clen.jmeno= C_clen.firma; C_clen.jmeno.change(); 
+            if (!C_clen.prijmeni) { 
+              C_clen.prijmeni= C_clen.firma; C_clen.prijmeni.change(); 
               C_clen.firma= ''; C_clen.firma.change(); 
             }
           }

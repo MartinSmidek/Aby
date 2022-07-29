@@ -22,18 +22,18 @@ panel kon  {type:'right', title:"[fa-info-circle] Informace, kontroly", _sys:'*'
   menu leve {type:'left', active:*
     menu cisla {title:'Statistika',type:'group', _sys:'*'
       item pocet {title:'[fa-line-chart] počet kontaktů'       ,par:{fce:'stat'} }
-      item       {title:'[fa-line-chart]vývoj obdarování'      ,par:{fce:'vyvoj', p:'2014'} }
+      item       {title:'[fa-line-chart]vývoj obdarování'      ,par:{fce:'vyvoj', p:'2021'} }
     }
     menu dary {title:'Kontrola darů',type:'group', _sys:'*', active:no
       item {title:'[fa-exclamation] duplicity letošních darů',        par:{fce:'dary_dupl',p:'0',corr:'0'} }
       item {title:'[fa-exclamation-circle] duplicity loňských darů',  par:{fce:'dary_dupl',p:'1',corr:'0'} }
-      item {title:'[fa-exclamation-circle fa-red] ... 1. OPRAVA',     par:{fce:'dary_dupl',p:'1',corr:'1'}, skill:'m'}
-      item {title:'[fa-exclamation-circle fa-red] ... 2. OPRAVA',     par:{fce:'dary_dupl',p:'1',corr:'2'}, skill:'m' }
+//      item {title:'[fa-exclamation-circle fa-red] ... 1. OPRAVA',     par:{fce:'dary_dupl',p:'1',corr:'1'}, skill:'m'}
+//      item {title:'[fa-exclamation-circle fa-red] ... 2. OPRAVA',     par:{fce:'dary_dupl',p:'1',corr:'2'}, skill:'m' }
     }
     menu vypisy  {title:'Kontrola výpisů',type:'group', _sys:'*'
       item {title:'[fa-question] nechybí nějaký loňský měsíc?',       par:{fce:'vypisy_uplnost',p:'1',corr:'0'} }
       item {title:'[fa-question] nechybí nějaký letošní měsíc?',      par:{fce:'vypisy_uplnost',p:'0',corr:'0'} }
-      item {title:'[fa-exclamation-circle] vymaž chybně nahrané!',    par:{fce:'vypisy_dupl',p:'1',corr:'2'}, skill:'m' }
+//      item {title:'[fa-exclamation-circle] vymaž chybně nahrané!',    par:{fce:'vypisy_dupl',p:'1',corr:'2'}, skill:'m' }
     }
     func onclick(i:ezer){
       rp.header(i);
@@ -50,11 +50,9 @@ panel uko  {type:'right', title:"[fa-cutlery] Úkoly", _sys:'*', include:'onload
 }
 # ===========================================================================================> (MAP)
 # systémové číselníky
-map cis_vyber:          table _cis  { where:"druh='vyber' and left(zkratka,1)!='-'", order:'poradi'}
 map cis_k_zpusob:       table _cis  { where:"druh='k_zpusob'", order:'poradi', key_id:'data'}
 map cis_k_osoba:        table _cis  { where:"druh='k_osoba'", order:'poradi', key_id:'data'}
 map cis_k_potvrzeni:    table _cis  { where:"druh='k_potvrzeni'", order:'poradi', key_id:'data'}
-map cis_podminky2:      table _cis  { where:"druh='vyber_daru' and left(zkratka,1)!='-'", order:'poradi'}
 map cis_k_vyjimka:      table _cis  { where:"druh='k_vyjimka'", order:'poradi', key_id:'data'}
 map cis_k_rod:          table _cis  { where:"druh='k_rod'", order:'poradi', key_id:'data'}
 map cis_b_ucty:         table _cis  { where:"druh='b_ucty'", order:'poradi', key_id:'data'}

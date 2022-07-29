@@ -543,7 +543,7 @@ function eko_histogram($export,$od,$do,$vecne,$par,$deleni) { trace();
 //   $html.= nl2br("{$par->deleni}\n$group\n\n$qry");
   return $html;
 }
-# ----------------------------------------------------------------------------------- eko_mesic_dary
+# ----------------------------------------------------------------------------------- eko mesic_dary
 # $export=1 způsobí export do Excelu
 function eko_mesic_dary($export,$osoby,$firmy,$od,$do,$vecne,$VS='') { trace();
   $html= '';
@@ -650,60 +650,46 @@ function eko_mesic_dary($export,$osoby,$firmy,$od,$do,$vecne,$VS='') { trace();
   }
   return $html;
 }
-# --------------------------------------------------------------------------------- eko_mesic_vynosy
+# -------------------------------------------------------------------------------- eko projekty_dary
 # $export=1 způsobí export do Excelu
-# $vecne,$jen_sloz lze kombinovat jako (0,0), (1,0), (0,1)
-function eko_mesic_vynosy($export,$od,$do,$vecne,$jen_sloz=0) { trace();
+# $vecne=0|1
+function eko_projekty_dary($export,$od,$do,$vecne=0) { trace();
   $html= '';
   $od_sql= sql_date($od,1);
   $do_sql= sql_date($do,1);
-  $cond= $vecne ? "zpusob=4" : ($jen_sloz ? "zpusob=3" : "zpusob!=4");
-  $jakych_daru= $vecne ? "věcných darů" : ($jen_sloz ? "darů složenkou" : "finančních darů");
+  $cond= $vecne ? "zpusob=4" : "zpusob!=4";
+  $jakych_daru= $vecne ? "věcných darů" : "finančních darů";
   $platby= 0;
   $tab= array();
-  $qry= "SELECT varsym,COUNT(castka) AS _pocet,SUM(castka) AS castky,castka_kdy,
-           _cis.hodnota,_cis.zkratka
-         FROM dar LEFT JOIN _cis ON varsym=data AND druh='varsym'
+  $qry= "SELECT id_projekt,COUNT(castka) AS _pocet,SUM(castka) AS castky,castka_kdy,nazev
+         FROM dar 
+         LEFT JOIN projekt USING (id_projekt)
          WHERE NOT left(dar.deleted,1)='D'
            AND castka_kdy BETWEEN '$od_sql' AND '$do_sql'
            AND id_clen!=9999 AND $cond
-         GROUP BY varsym ORDER BY varsym ";
+         GROUP BY id_projekt ORDER BY id_projekt ";
   $res= pdo_qry($qry);
   $n= 0;
   while ( $res && $d= pdo_fetch_object($res) ) {
-    $varsym= ltrim($d->varsym,' 0');
-    $varsym= $varsym=='' ? '0000' : $varsym ;
-    if ( $d->zkratka!=1 ) {
-      if ( $platby ) {
-        // platba
-        $tab[$varsym]['pocet']+= $d->_pocet;
-        $tab['*&sum;']['pocet']+= $d->_pocet;
-        $tab[$varsym]['dar']= '';
-        $tab[$varsym]['platba']= $d->castky;
-        if ( $platby ) $tab['*&sum;']['platba']+= $d->castky;
-      }
-    }
-    else {
-      // dar
-      $tab[$varsym]['pocet']+= $d->_pocet;
-      $tab['*&sum;']['pocet']+= $d->_pocet;
-      $tab[$varsym]['dar']= $d->castky;
-      if ( $platby ) $tab[$varsym]['platba']= '';
-      $tab[$varsym]['popis']= $d->varsym ? $d->hodnota : '(VS neuveden)';
-      $tab['*&sum;']['dar']+= $d->castky;
-    }
+    // dar
+    $tab[$d->nazev]['pocet']+= $d->_pocet;
+    $tab['*&sum;']['pocet']+= $d->_pocet;
+    $tab[$d->nazev]['dar']= $d->castky;
+    if ( $platby ) $tab[$d->nazev]['platba']= '';
+    $tab[$d->nazev]['popis']= $d->nazev ? $d->hodnota : '(VS neuveden)';
+    $tab['*&sum;']['dar']+= $d->castky;
   }
   $clmn= array('pocet'=>'počet:8','dar'=>'součet darů:12');
   if ( $platby ) $clmn['platba']= 'součet plateb:12';
-  $clmn['popis']= 'význam VS:70';
+//  $clmn['popis']= 'význam VS:70';
   $algn= array('pocet'=>'right', 'dar'=>'right', 'platba'=>'right');
   $titl= "Měsíční výnos $jakych_daru podle VS za období od $od do $do";
   $html.= "<h2 class='CTitle'>$titl</h2>";
   // případný export do Excelu
   if ( $export )
-    $html.= tab_xls($tab,"VS:8",$clmn,$algn,$titl,"varsym_{$od_sql}_{$do_sql}");
+    $html.= tab_xls($tab,"Projekt:50",$clmn,$algn,$titl,"projekty_{$od_sql}_{$do_sql}");
   // zobrazení tabulky
-  $html.= tab_show($tab,"VS",$clmn,$algn,'stat');
+  $html.= tab_show($tab,"Projekt",$clmn,$algn,'stat','width:unset');
   return $html;
 }
 # ------------------------------------------------------------------------------------------ tab_xls
@@ -776,12 +762,13 @@ __XLS;
 }
 # ----------------------------------------------------------------------------------------- tab_show
 # ukáže tabulku ve formátu HTML
-function tab_show($tab,$left,$clmn,$align,$class='') {
+function tab_show($tab,$left,$clmn,$align,$class='',$style='') {
 //                                                 debug($tab,"tab_show");
   // nadpis
   $class= $class ? "class='$class'" : '';
+  $style= $style ? "style='$style'" : '';
   list($left)= explode(':',$left);
-  $t= "<table bgcolor='#fff' $class><tr><th>$left</th>";
+  $t= "<table bgcolor='#fff' $class $style><tr><th>$left</th>";
   foreach ($clmn as $j => $nazev) {
     list($nazev)= explode(':',$nazev);
     $t.= "<th>$nazev</th>";

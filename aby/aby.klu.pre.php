@@ -416,7 +416,7 @@ function aby_donio_load($csv) { trace();
   $data= array();
   $csv_path= "$ezer_path_root/banka/donio/$csv";
   $msg= aby_csv2array($csv_path,$data,999999,'UTF-8');
-  display($msg);                                            
+//  display($msg);                                            
   if ($msg) { 
     $res->err= $msg; goto end;
   }  
@@ -435,9 +435,9 @@ function aby_donio_load($csv) { trace();
     $res->idp= pdo_insert_id();
   }
   // otestování a případné vytvoření ANONYM
-  $anonym= select('id_clen','clen', "jmeno='♥ANONYM'");
+  $anonym= select('id_clen','clen', "prijmeni='♥ANONYM'");
   if (!$anonym) {
-    $qry= "INSERT INTO clen (osoba,jmeno,email) VALUE (1,'♥ANONYM','')";
+    $qry= "INSERT INTO clen (osoba,prijmeni,email) VALUE (1,'♥ANONYM','')";
     query($qry);
     $anonym= pdo_insert_id();
   }
@@ -453,7 +453,7 @@ function aby_donio_load($csv) { trace();
   // rozdělíme na clen a dar
   $n_clen= $n_dar= $suma= 0;
   foreach ($data as $row) {
-                                                    debug($row);
+//                                                    debug($row);
     // atributy darů
     $d= array();
     $castka= 0;
@@ -484,10 +484,10 @@ function aby_donio_load($csv) { trace();
     $suma+= $castka;
     // najdi kontakt podle emailu nebo vlož nový kontakt
     $email= trim($row['Email']);
-    $jmeno= trim($row['Jméno']);
+    $prijmeni= trim($row['Jméno']);
     $idc= $email ? select('id_clen','clen', "email='$email'") : $anonym;
     if (!$idc) {
-      $qry= "INSERT INTO clen (osoba,jmeno,email) VALUE (1,'$jmeno','$email')";
+      $qry= "INSERT INTO clen (osoba,prijmeni,email) VALUE (1,'$prijmeni','$email')";
       query($qry);
       $idc= pdo_insert_id();
       $n_clen++;
@@ -516,7 +516,7 @@ function aby_darujme_load($csv,$typ=2) { trace();
   $data= array();
   $csv_path= "$ezer_path_root/banka/darujme/$csv";
   $msg= aby_csv2array($csv_path,$data,999999,'UTF-8');
-  display($msg);                                            
+//  display($msg);                                            
   if ($msg) { 
     $res->err= $msg; goto end;
   }  
@@ -531,9 +531,9 @@ function aby_darujme_load($csv,$typ=2) { trace();
     $res->err= "tento soubor již byl vložen"; goto end;
   }
   // otestování a případné vytvoření ANONYM
-  $anonym= select('id_clen','clen', "jmeno='♥ANONYM'");
+  $anonym= select('id_clen','clen', "prijmeni='♥ANONYM'");
   if (!$anonym) {
-    $qry= "INSERT INTO clen (osoba,jmeno,email) VALUE (1,'♥ANONYM','')";
+    $qry= "INSERT INTO clen (osoba,prijmeni,email) VALUE (1,'♥ANONYM','')";
     query($qry);
     $anonym= pdo_insert_id();
   }

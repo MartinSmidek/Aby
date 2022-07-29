@@ -68,7 +68,7 @@ menu aby { type:'main', active:*
           clen:   "id_clen>*,firma,jmeno,prijmeni",
           role:   "id_role>*,id_osoba>clen,id_firma>clen,popis,priorita",
           ukol:   "id_ukol>*,id_clen>clen,kdo_od>clen,kdo_pro>clen,popis",
-          dar:    "id_dar>*,id_clen>clen,zpusob,ucet,stredisko,castka_kdy",
+          dar:    "id_dar>*,id_clen>clen,id_projekt>projekt,zpusob,castka,castka_kdy",
           projekt:"id_projekt>*,nazev,suma,soubor",
           vypis:  "id_vypis>*,nas_ucet,datum_od,datum_do,soubor_od,soubor_do,soubor",
           dopis:  "id_dopis>*,druh,vzor,datum,adresati,kategorie,nazev",
