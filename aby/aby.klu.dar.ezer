@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------------------------------ #
-# Karta pro vkládání projektů z Donio.cz                                                           #
+# Karta pro vkládání projektů z Darujme.cz                                                         #
 #                                                                                                  #
 # Systém Ezer pro Nadační fond sester františkánek       (c) 2022 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
@@ -20,9 +20,9 @@ use drop:  form _drop [6,331,,]
 # ----------------------------------------==> lokální proc
 # --------------------------------------------------==> PROJEKTY
 form _proj [,,1070,309] { css:'work'
-  label tit [22,5,218,] { title:'<h1>Projekt přes donio.cz ... </h1>' }
+  label tit [22,5,220,] { title:'<h1>Projekt přes darujme.cz ... </h1>' }
   func Init() {
-    _projekty.browse_load(`typ=1`);
+    _projekty.browse_load(`typ=2`);
   }
   func Seek(idp) {
     if (!_projekty.browse_seek(`p.id_projekt=${idp}`)) {
@@ -64,10 +64,10 @@ form _dary [,,774,262] {
     show idc { data:d.id_clen }
     show datum [,,75,] { title:'datum', data:d.castka_kdy, format:'rq=' }
     show castka [,,70,] { title:'částka', data:d.castka, format:'rq=' }
-    show jmeno [,,80,] { title:'dárce', data:c.jmeno, format:'tq*' }
-    show jm2 [,,40,] { title:'...', data:d.ucet_popis, format:'tq*' }
-    show email [,,170,] { title:'email', data:c.email, format:'tq*' }
-    show pozn [,,180,] { title:'vzkaz', data:d.pozn, format:'tq*' }
+    show [,,80,] { title:'jméno', data:c.jmeno, format:'tq*' }
+    show [,,80,] { title:'příjmení', data:c.prijmeni, format:'tq*' }
+    show [,,170,] { title:'email', data:c.email, format:'tq*' }
+    show [,,140,] { title:'obec', data:c.obec, format:'tq*' }
     func onsubmit() {
       cle.show_clen(idc)
     }
@@ -76,14 +76,14 @@ form _dary [,,774,262] {
 # --------------------------------------------------==> DROP
 form _drop [,,392,161] { css:'work'
   #==> . vložení projektu
-  var  dfold='/banka/donio'      // podsložka bez koncového / se nastavuje dynamicky
+  var  dfold='/banka/darujme'      // podsložka bez koncového / se nastavuje dynamicky
   label [10,7,371,] {title:'místo pro vložení souhrnu projektu - přesvědčte se prosím, že název 
     souboru má tvar "projekt.csv" a byl získán z "projekt.xlsx"
     příkazem Excelu <b>Uložit jako</b> s variantou "CSV UTF-8 (s oddělovači)"'
   }
   label drop [10,54,370,98] { type:'drop'
     func start() {
-      drop.init('/banka/donio','U:'); 
+      drop.init('/banka/darujme','U:'); 
     }
     func ondrop(f:object) {  // možnost odmítnutí přenosu navrácením 0
       if (match('csv$',f.name,'i')) return(1);
@@ -91,12 +91,10 @@ form _drop [,,392,161] { css:'work'
     }
     func onload(f:object) { var y:object, nazev:text // po dokončení přenosu, jméno bude ASCII
       echo(`load: ${f.name}`);
-      y= php.aby_donio_load(f.name); // => {idp,war,err}
+      y= php.aby_darujme_load(f.name); // => {idp,war,err}
       if (y.war) warning(y.war);
       if (y.err) alert(y.err);
       else {
-        nazev= prompt2('Pojmenujte projekt');
-        if (nazev) php.query(`UPDATE projekt SET nazev='${nazev}' WHERE id_projekt=${y.idp}`);
         proj.Seek(y.idp);
         map_projekt.map_load();
         aby.dirty('klu.cle');

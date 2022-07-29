@@ -24,18 +24,6 @@ func onstart () {
   has_skill('hdd');
   C_dar.kas.stisk(1); C_dar.kas.set_css('','changed');
 }
-//proc onstart () {
-//  aby.modul_state.set({active:1,dirty:0},'klu.cle');   # poznačení, že modul je aktivní
-//  C_cleni.cleni.osoba_firma(C_cleni.cond_os.get,C_cleni.cond_fy.get);
-//  C_cleni.cond.Refresh;
-//  C_cleni.cond.key(1);
-//  C_cleni._cleni_vyber(0);
-//  C_clen.kon.onclick;
-//  Ctrack.clen_form.set(C_clen);
-//  Dtrack.dar_form.set(C_dar);
-//  has_skill('hdd');
-//  C_dar.kas.stisk(1); C_dar.kas.set_css('','changed');
-//}
 
 # překreslení, pokud někdo zavolal dirty('klu.cle')
 func onfocus () {
@@ -226,10 +214,37 @@ form _cleni [,,660,334+17] {
     }
     # ---------------------------------------==> . kontextové menu
     menu { type:'context'
+      item { title:'změnit: jméno <=> příjmení'
+        func onclick () { var x:text
+          if (C_clen.osoba=='osoba') { 
+            x= C_clen.jmeno; 
+            C_clen.jmeno= C_clen.prijmeni; C_clen.jmeno.change(); 
+            C_clen.prijmeni= x; C_clen.prijmeni.change(); 
+            C_clen_butt._clen_uloz(0);
+          }
+      } }
+      item { title:'změnit: osoba <=> firma'
+        func onclick () { 
+          if (C_clen.osoba=='osoba') { 
+            C_clen.osoba.key(0); C_clen.osoba.change();
+            if (!C_clen.firma) { 
+              C_clen.firma= C_clen.jmeno; C_clen.firma.change(); 
+              C_clen.jmeno= ''; C_clen.jmeno.change(); 
+            }
+          }
+          else { // firma
+            C_clen.osoba.key(1); C_clen.osoba.change();
+            if (!C_clen.jmeno) { 
+              C_clen.jmeno= C_clen.firma; C_clen.jmeno.change(); 
+              C_clen.firma= ''; C_clen.firma.change(); 
+            }
+          }
+          C_clen_butt._clen_uloz(0);
+      } }
+      item { title:'-spojit vybrané kontakty'
+        func onclick () { alert('Gándí: funkce není hotová') } }
       item { title:'zrušit výběr'
         func onclick () { cleni.selected('clear'); _cleni_vyber(0) } }
-      item { title:'spojit vybrané kontakty'
-        proc onclick () {  } }
     }
   }
   label zmena [12,-5,236,18] { title:'' },
@@ -870,9 +885,9 @@ form _dar [,,390,240] {
   label ban [91,0,71,20] { tag:'z', title:'<b>Bankou</b>',  format:'c'
     proc onclick() { id_clen.get; stisk(0); }
     proc stisk(prog) { tags(prog,this,'n|u','v|x',2); } }
-  label don [170,0,71,20] { tag:'z', title:'<b>Donio</b>', format:'c'
+  label don [170,0,71,20] { tag:'z', title:'<b>Online</b>', format:'c'
     proc onclick() { id_clen.get; stisk(0); }
-    proc stisk(prog) { tags(prog,this,'n','u|v|x',3); } }
+    proc stisk(prog) { tags(prog,this,'','n|u|v|x',3); } }
   label vec [249,0,71,20] { tag:'z', title:'<b>Věcný dar</b>', format:'c'
     proc onclick() { id_clen.get; stisk(0); }
     proc stisk(prog) { tags(prog,this,'v','n|u|x',4); } }
