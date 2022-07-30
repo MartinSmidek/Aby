@@ -1,4 +1,6 @@
-<?php # (c) 2011 Martin Smidek <martin@smidek.eu>
+<?php
+# Aplikace Aby pro Nadační fond sester františkánek
+# (c) 2022 Martin Smidek <martin@smidek.eu>
 # ----------------------------------------------------------------------------------==> ch ban_zmena
 # ASK
 # $idc_new je buďto '*' pokud se ID plátce nemá měnit, nebo nové ID plátce

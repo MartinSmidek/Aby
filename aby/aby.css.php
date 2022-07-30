@@ -1,4 +1,6 @@
 <?php # (c) 2010 Martin Smidek <martin@smidek.eu>
+# Aplikace Aby pro Nadační fond sester františkánek
+# (c) 2022 Martin Smidek <martin@smidek.eu>
 header("Content-type: text/css");
 if ( !isset($_SESSION) ) session_start();
 $ezer_root= $_GET['root'];

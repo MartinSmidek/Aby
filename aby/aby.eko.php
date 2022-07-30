@@ -1,4 +1,6 @@
-<?php # (c) 2007-2008 Martin Smidek <martin@smidek.eu>
+<?php
+# Aplikace Aby pro Nadační fond sester františkánek
+# (c) 2022 Martin Smidek <martin@smidek.eu>
 # -------------------------------------------------------------------------------------- eko downoad
 # export celé databáze
 function eko_download() {

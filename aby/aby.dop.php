@@ -1,5 +1,6 @@
-<?php # Aplikace Polička, (c) 2021 Martin Smidek <martin@smidek.eu>
-
+<?php
+# Aplikace Aby pro Nadační fond sester františkánek
+# (c) 2022 Martin Smidek <martin@smidek.eu>
 /** =======================================================================================> ŠABLONY */
 # ------------------------------------------------------------------------------------- dop sab_mail
 # přečtení běžného dopisu daného typu

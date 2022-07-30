@@ -1,4 +1,6 @@
-<?php # (c) 2011-2015 Martin Smidek <martin@smidek.eu>
+<?php 
+# Aplikace Aby pro Nadační fond sester františkánek
+# (c) 2022 Martin Smidek <martin@smidek.eu>
 /** *************************************************************************************==> CLENOVE */
 # --------------------------------------------------------------------------------------- klub vyber
 # pro cmd='options' sestaví podmínky výběru kontaktů 

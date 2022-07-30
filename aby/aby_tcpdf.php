@@ -1,6 +1,4 @@
 <?php # (c) 2009 Martin Smidek <martin@smidek.eu>
-//   require_once('tcpdf/config/lang/eng.php');
-//   require_once('tcpdf/tcpdf.php');
 # ================================================================================================== TC_PDF
 define('FIS_font','dejavuserif');
 define('FIS_font_sanscondensed','dejavuserifcondensed');

@@ -1,4 +1,5 @@
-// funkce pro FIS, (c) Martin Smidek <martin@smidek.eu>, 2009
+// Aplikace Aby pro Nadační fond sester františkánek
+// (c) 2022 Martin Smidek <martin@smidek.eu>
 // ----------------------------------------------------------------------------------------- date_gt
 // vrátí date2sql(a)>date2sql(b) ? 1 : 0
 function date_gt(a,b) {

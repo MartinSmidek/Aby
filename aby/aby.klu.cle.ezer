@@ -215,7 +215,7 @@ form _cleni [,,660,334+17] {
     }
     # ---------------------------------------==> . kontextové menu
     menu { type:'context'
-      item { title:'změnit: jméno <=> příjmení'
+      item { title:'zaměnit: jméno <=> příjmení'
         func onclick () { var x:text
           if (C_clen.osoba=='osoba') { 
             x= C_clen.jmeno; 
@@ -224,7 +224,7 @@ form _cleni [,,660,334+17] {
             C_clen_butt._clen_uloz(0);
           }
       } }
-      item { title:'změnit: osoba <=> firma'
+      item { title:'zaměnit: osoba <=> firma'
         func onclick () { 
           if (C_clen.osoba=='osoba') { 
             C_clen.osoba.key(0); C_clen.osoba.change();
@@ -919,7 +919,7 @@ form _dar [,,390,240] {
   field dik_dne [129,71,87,16]  { title:'^poděkovaného', type:'date', data:d.diky_kdy, format:'RUr' }
   // potvrzení
   field pot_dne [241,71,87,16]  { title:'^potvrzeného', type:'date', data:d.potvrz_kdy, format:'RUr' }
-  label pot_open [222,71,16,15] { tag:'d', title:"<img src='ch/img/letter_open.png'>", format:''
+  label pot_open [222,71,16,15] { tag:'d', title:"<img src='aby/img/letter_open.png'>", format:''
       help:"Vytvoření a tisk potvrzení o přijetí daru"
     func onclick() {
       clear(); Tisk.dop= php.dop_potvrz_dar1(id_clen,iddar);

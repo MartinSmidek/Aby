@@ -3,7 +3,7 @@
 error_reporting(E_ALL & ~E_NOTICE);
 ini_set('display_errors', 'On');
 
-$ezer_root= 'ch';
+$ezer_root= 'aby';
 
 if ( !isset($_SESSION) ) session_start();
 
