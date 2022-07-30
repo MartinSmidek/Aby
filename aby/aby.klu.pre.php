@@ -423,7 +423,7 @@ function aby_donio_load($csv) { trace();
     $res->err= $msg; goto end;
   }  
   // test na donio.cz
-  if (!isset($data[0]['Jméno přispěvatele'])) {
+  if (!isset($data[0]['Datum příspěvku'])) {
     $res->err= "'$csv' asi není export z donio.cz"; goto end;
   }
   // ochrana proti násobnému načtení
