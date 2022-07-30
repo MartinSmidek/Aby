@@ -12,7 +12,7 @@
   require_once("$deep_root/aby.dbs.php");
 
   // parametry aplikace FiS
-  $app_name=  "Aby";
+  $app_name=  "Aby...";
   $app_root=  'aby';
   $app_js=    array('/aby/aby_user.js');
   $app_css=   array('/aby/aby.css.php=skin',"/ezer$ezer_version/client/wiki.css");
@@ -44,7 +44,7 @@
 
   $add_pars= array(
     'favicon' => $favicon,
-    'title_right' => "<span$title_style>$title_flag $app_name ...</span>$demo",
+//    'title_right' => "<span$title_style>$title_flag $app_name ...</span>$demo",
     'watch_key' => 1,   // true = povolit přístup jen po vložení klíče
     'watch_ip' => 1,    // true = povolit přístup jen ze známých IP adres
     'contact' => $kontakt,
