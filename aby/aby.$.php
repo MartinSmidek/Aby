@@ -5,12 +5,25 @@
 # ------------------------------------------------------------------------------------- aby truncate
 # inicializace db
 function aby_truncate() { trace();
+  global $abs_root;
   query("TRUNCATE TABLE dar");
   query("TRUNCATE TABLE clen");
   query("TRUNCATE TABLE ukol");
   query("TRUNCATE TABLE role");
+  query("TRUNCATE TABLE projekt");
   query("TRUNCATE TABLE vypis");
-  return "tabulky clen, role, dar, ukol, vypis jsou vymazány";
+  // vymaž banka
+  foreach (array("$abs_root/banka/darujme","$abs_root/banka/donio","$abs_root/banka/2100") as $dir) {
+    if (($handle= opendir($dir))) {
+      while (false !== ($file= readdir($handle))) {
+        if (is_file("$dir/$file")) {
+          @unlink("$dir/$file");
+        }
+      }
+      closedir($handle);
+    }
+  }  
+  return "tabulky clen, role, dar, ukol, projekt, vypis a soubory banka/* jsou vyprázdněny";
 }
 # --------------------------------------------------------------------------------------- aby import
 # primární import dat

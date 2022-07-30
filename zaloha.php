@@ -1,8 +1,8 @@
 <?php
 # ------------------------------------------------------------------------------------------------ #
-# Zaloha databází systému Ezer pro Polička                                                         #
+# Zaloha databází                                                                                  #
 #                                                                                                  #
-#                                                   (c) 2007-2020 Martin Šmídek <martin@smidek.eu> #
+# Systém Aby ... pro Nadační fond sester františkánek    (c) 2022 Martin Šmídek <martin@smidek.eu> #
 # ------------------------------------------------------------------------------------------------ #
 
 global $EZER, $dbs, $ezer_server;

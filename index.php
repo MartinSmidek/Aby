@@ -4,7 +4,6 @@
   
   // verze použitého jádra Ezeru
   $ezer_version= isset($_GET['ezer']) ? $_GET['ezer'] : '3.1'; 
-  $kernel= "ezer3.1";
   $_GET['pdo']= 2; 
   $_GET['touch']= 0; // nezavede jquery.touchSwipe.min.js => filtry v browse jdou upravit myší
 
@@ -45,7 +44,7 @@
 
   $add_pars= array(
     'favicon' => $favicon,
-    'title_right' => "<span$title_style>$title_flag $app_name</span>$demo",
+    'title_right' => "<span$title_style>$title_flag $app_name ...</span>$demo",
     'watch_key' => 1,   // true = povolit přístup jen po vložení klíče
     'watch_ip' => 1,    // true = povolit přístup jen ze známých IP adres
     'contact' => $kontakt,

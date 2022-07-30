@@ -1,5 +1,5 @@
-# Systém Polička - modul Dopisy
-# (c) 2021 Martin Šmídek <martin@smidek.eu>
+# Aplikace Aby ... pro Nadační fond sester františkánek
+# (c) 2022 Martin Šmídek <martin@smidek.eu>
 
 var dopis_id: text
 proc onstart () { dopis_id.set(0) }
@@ -8,10 +8,10 @@ proc onstart () { dopis_id.set(0) }
 panel vzo {type:'right', title:"[fa-paperclip] Vzory / šablony", _sys:'*'
     use ii: form right [12,4,,] {
       button opravit [-24,4,,] { title:'[fa-edit] Upravit', style:'display:none;zIndex:2'
-        proc onclick() { EDITOR.Edit(dopis_id.get); form.fill('',EDITOR.d.html.get) }
+        func onclick() { EDITOR.Edit(dopis_id); ii.fill('',EDITOR.d.html) }
       }
   }
-  var cast_sablony: text
+  var cast_sablony: object
   var cast_dopis: object
   menu {type:'left', format:'f+', active:*
     menu {title:'Vzory dopisů', type:'group'
@@ -43,7 +43,7 @@ panel vzo {type:'right', title:"[fa-paperclip] Vzory / šablony", _sys:'*'
       }
     }
     menu {title:'Ukázkové tisky šablon', type:'group', _sys:'sab'
-      item {title:'[fa-print] šablona Charita'              ,par:{druh:'D'} }
+      item {title:'[fa-print] šablona Nadační fond', par:{druh:'D'} }
       func onclick (i:ezer) {
         ii.opravit.display(0); S_sablona.hide();
         ii.fill(i.title,php.dop_sab_nahled(i.par.druh))
@@ -54,9 +54,9 @@ panel vzo {type:'right', title:"[fa-paperclip] Vzory / šablony", _sys:'*'
   # popup
   panel S_sablona [0,0,*,*] { title:' Úprava šablony dopisu',
     use cast: form _cast [0,0,,],
-    proc onfocus () {
-      cast.load(cast_sablony.get('id_dopis_cast'));
-      cast.ukazka.set(cast_sablony.get('obsah'))
+    func onfocus () {
+      cast.load(cast_sablony.id_dopis_cast);
+      cast.ukazka= cast_sablony.obsah;
     }
     form _cast [,,700,447] {
       label [55,4,100,17] { title:'zleva:' },
@@ -94,11 +94,7 @@ panel vzo {type:'right', title:"[fa-paperclip] Vzory / šablony", _sys:'*'
 panel EDITOR [0,0,645,520] { title:' Úprava textu dopisu', type:'popup', css:'dialog'
   var dopis_id: number
   use d: form _dopis [0,0,,],
-  proc Edit(id_dopis) { d.load(id_dopis); panel.modal(50,50);
-#   proc onfocus () {
-#     dopis_id.get; d.load(dopis_id.get);
-#   | warning('nedefinovaný dopis')
-  }
+  func Edit(id_dopis) { d.load(id_dopis); panel.modal(50,50); }
   # ------------------------------------------------------------------------------ _dopis
   form _dopis [10,10,600,460] {
 //    label [0,12,60,20] { title:'Aktuální:' }

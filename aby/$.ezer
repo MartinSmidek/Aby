@@ -1,4 +1,4 @@
-# Aplikace Aby pro Nadační fond sester františkánek
+# Aplikace Aby ... pro Nadační fond sester františkánek
 # (c) 2022 Martin Šmídek <martin@smidek.eu>
 
 menu aby { type:'main', active:*
@@ -49,17 +49,19 @@ menu aby { type:'main', active:*
         css: 'struc' // styl tabulek
     }}
     # ===================================================================================== APLIKACE
-    panel APPL {type:'right', title:'[fa-download] Data/Git', _sys:'str', skill:'m'
-      menu m {type:'left', format:'f+', active:no
+    panel apl {type:'right', title:'[fa-download] Data/Git', _sys:'str', skill:'m'
+      menu m {type:'left', format:'f+'
         menu  {title:'Primární import dat', type:'group', skill:'m', active:no
-          item {title:'[fa-upload] TRUNCATE clen, role, dar, vypis'
+          item {title:'[fa-upload] TRUNCATE ... + UNLINK ...'
             func onclick (i:ezer) {
               clear(); info.display(0,'t');
               info.fill(replace_fa(i.title),' ');
-              if (!sys('ezer','server')) 
-                info.fill('',php.aby_truncate());
-              else
-                alert('TRUNCATE nelze provádět na ostrém serveru');
+              if (confirm("POZOR: budou smazány pracovní tabulky a adresáře! Pokračovat?")) {
+//                if (!sys('ezer','server')) 
+                  info.fill('',php.aby_truncate());
+//                else
+//                  alert('TRUNCATE nelze provádět na ostrém serveru');
+              }
             }
           }
           item {title:'[fa-upload] celý soubor kontakty...2021.csv'  par:{file:'kontakty_darci_2021',max:0} }

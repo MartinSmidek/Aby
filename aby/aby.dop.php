@@ -137,6 +137,7 @@ function dop_gener_stitky($komu,$par,$report) {
 #   array(-$idc,$osloveni,$titul,$jmeno,$prijmeni,$organizace,$ulice,$obec,$psc,$kusy,$konto)
 # $report_json obsahuje: jmeno, adresa
 function dop_rep_seznam($fname,$flds,$idcs,$title) { trace();
+  global $ezer_version;
   // vlastní export do Excelu
   $xls= <<<__XLS
     |open $fname
@@ -184,7 +185,7 @@ __XLS;
   }
   // předání ke generování
   $xls.= "\n|close";
-  require_once "ezer3.1/server/vendor/autoload.php";
+  require_once "ezer$ezer_version/server/vendor/autoload.php";
   Excel2007($xls,1);
   $ref= "<a href='docs/$fname.xlsx' target='xls'>$fname.xlsx</a>";
   return $ref;

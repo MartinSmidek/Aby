@@ -1,5 +1,5 @@
-# Aplikace Polička - menu Osoby, firmy
-# (c) 2021 Martin Šmídek <martin@smidek.eu>
+# Aplikace Aby ... pro Nadační fond sester františkánek
+# (c) 2022 Martin Šmídek <martin@smidek.eu>
 
 # ======================================================================================= klu - Klub
 proc warning1() { warning('Před touto operací je zapotřebí inicializovat kartu Klub|Kontakty'); return(0); }

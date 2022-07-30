@@ -1,5 +1,5 @@
-// Aplikace Polička - modul Ekonomika
-// (C) 2022 Martin Šmídek <martin@smidek.eu>
+# Aplikace Aby ... pro Nadační fond sester františkánek
+# (c) 2022 Martin Šmídek <martin@smidek.eu>
 
 panel pre {type:'right', title:"[fa-pie-chart] Přehledy", _sys:'pri'
   var this_item: ezer, this_par:object

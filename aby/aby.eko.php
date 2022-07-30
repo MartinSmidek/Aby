@@ -697,7 +697,8 @@ function eko_projekty_dary($export,$od,$do,$vecne=0) { trace();
 # ------------------------------------------------------------------------------------------ tab_xls
 # exportuje tabulku ve formátu XLS
 function tab_xls($tab,$left,$clmn,$align,$titl='sestava',$fname='tmp') { trace();
-  require_once 'ezer3.1/server/vendor/autoload.php';
+  global $ezer_version;
+  require_once 'ezer$ezer_version/server/vendor/autoload.php';
   $html= '';
   $h= "bcolor=aac0e2c2";
   list($a2,$w)= explode(':',$left);

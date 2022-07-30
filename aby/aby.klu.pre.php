@@ -439,7 +439,7 @@ function aby_donio_load($csv) { trace();
   // otestování a případné vytvoření ANONYM
   $anonym= select('id_clen','clen', "prijmeni='♥ANONYM'");
   if (!$anonym) {
-    $qry= "INSERT INTO clen (osoba,prijmeni,email) VALUE (1,'♥ANONYM','')";
+    $qry= "INSERT INTO clen (zdroj,osoba,prijmeni,email) VALUE ('system',1,'♥ANONYM','')";
     query($qry);
     $anonym= pdo_insert_id();
   }
@@ -487,9 +487,9 @@ function aby_donio_load($csv) { trace();
     // najdi kontakt podle emailu nebo vlož nový kontakt
     $email= trim($row['Email']);
     $prijmeni= trim($row['Jméno']);
-    $idc= $email ? select('id_clen','clen', "email='$email'") : $anonym;
+    $idc= $email ? select('id_clen','clen', "email='$email' AND deleted='' ") : $anonym;
     if (!$idc) {
-      $qry= "INSERT INTO clen (osoba,prijmeni,email) VALUE (1,'$prijmeni','$email')";
+      $qry= "INSERT INTO clen (zdroj,osoba,prijmeni,email) VALUE ('donio',1,'$prijmeni','$email')";
       query($qry);
       $idc= pdo_insert_id();
       $n_clen++;
@@ -535,7 +535,7 @@ function aby_darujme_load($csv,$typ=2) { trace();
   // otestování a případné vytvoření ANONYM
   $anonym= select('id_clen','clen', "prijmeni='♥ANONYM'");
   if (!$anonym) {
-    $qry= "INSERT INTO clen (osoba,prijmeni,email) VALUE (1,'♥ANONYM','')";
+    $qry= "INSERT INTO clen (zdroj,osoba,prijmeni,email) VALUE ('system',1,'♥ANONYM','')";
     query($qry);
     $anonym= pdo_insert_id();
   }
@@ -606,10 +606,10 @@ function aby_darujme_load($csv,$typ=2) { trace();
 //                                                    debug($d,'dar');
     // najdi kontakt podle emailu nebo vlož nový kontakt
     $email= trim($row['Email']);
-    $idc= $email ? select('id_clen','clen', "email='$email'") : $anonym;
+    $idc= $email ? select('id_clen','clen', "email='$email' AND deleted='' ") : $anonym;
     if (!$idc) {
       $jmeno= trim($row['Jméno']);
-      $qry= "INSERT INTO clen (osoba,jmeno,email) VALUE (1,'$jmeno','$email')";
+      $qry= "INSERT INTO clen (zdroj,osoba,jmeno,email) VALUE ('darujme',1,'$jmeno','$email')";
       query($qry);
       $idc= pdo_insert_id();
       $n_clen++;

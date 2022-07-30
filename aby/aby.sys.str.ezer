@@ -1,5 +1,5 @@
-# Aplikace Polička - uživatelský číselník
-# (c) 2021 Martin Šmídek <martin@smidek.eu>
+# Aplikace Aby ... pro Nadační fond sester františkánek
+# (c) 2022 Martin Šmídek <martin@smidek.eu>
 
 const rows= 8, top_cmd= 88 + 136 // 136=8*17
 

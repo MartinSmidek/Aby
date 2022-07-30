@@ -34,8 +34,7 @@
   $deep_root= "../files/aby";
   require_once("$deep_root/aby.dbs.php");
   
-  // banky a sql
-  $path_banka['2100']= "abs_roots/banky/2100/";
+  // archiv sql
   $path_backup= "$deep_root/sql";
   
   $tracked= ',clen,dar,projekt,ukol,dopis,role,_user,_cis,';
@@ -56,7 +55,7 @@
   require_once('tcpdf/tcpdf.php');
 
   // stará verze json
-  require_once("ezer3.1/server/licensed/JSON_Ezer.php");
+  require_once("ezer$ezer_version/server/licensed/JSON_Ezer.php");
 
   // je to aplikace se startem v rootu
   chdir($_SESSION[$ezer_root]['abs_root']);
@@ -66,44 +65,4 @@
   global $ezer_path_root;
 
   $path_www= './';
-  
-//  // nahrazení "PDO" funkcí jejich mysql verzí pro ezer2.2
-//  if ( $EZER->version=='ezer2.2' ) { //version_compare(PHP_VERSION, '7.0.0') == -1 ) {
-//    function pdo_num_rows($rs) {
-//      return mysql_num_rows($rs);
-//    }
-//    function pdo_result($rs,$cnum) {
-//      return mysql_result($rs,$cnum);
-//    }
-//    function pdo_fetch_object($rs) {
-//      return mysql_fetch_object($rs);
-//    }
-//    function pdo_fetch_assoc($rs) {
-//      return mysql_fetch_assoc($rs);
-//    }
-//    function pdo_fetch_row($rs) {
-//      return mysql_fetch_row($rs);
-//    }
-//    function pdo_fetch_array($rs) {
-//      return mysql_fetch_array($rs);
-//    }
-//    function pdo_real_escape_string($inp) {
-//      return mysql_real_escape_string($inp);
-//    }
-//    function pdo_query($query) {
-//      return mysql_query($query);
-//    }
-//    function pdo_insert_id() {
-//      return mysql_insert_id();
-//    }
-//    function pdo_error() {    
-//      return mysql_error();
-//    }
-//    function pdo_affected_rows() {
-//      return mysql_affected_rows();
-//    }
-//    function pdo_qry($qry,$pocet=null,$err=null,$to_throw=false,$db='.main.') {
-//      return mysql_qry($qry,$pocet,$err,$to_throw,$db);
-//    }
-//  }
 ?>
