@@ -1,6 +1,9 @@
-<?php # Systém Archa/Ezer, (c) 2008-2018 Martin Šmídek <martin@smidek.eu>
+<?php
+# Aplikace Aby pro Nadační fond sester františkánek
+# (c) 2022 Martin Smidek <martin@smidek.eu>
   
-  // volba verze jádra Ezer
+  // verze použitého jádra Ezeru
+  $ezer_version= isset($_GET['ezer']) ? $_GET['ezer'] : '3.1'; 
   $kernel= "ezer3.1";
   $_GET['pdo']= 2; 
   $_GET['touch']= 0; // nezavede jquery.touchSwipe.min.js => filtry v browse jdou upravit myší
@@ -13,7 +16,7 @@
   $app_name=  "Aby";
   $app_root=  'aby';
   $app_js=    array('/aby/aby_user.js');
-  $app_css=   array('/aby/aby.css.php=skin',"/$kernel/client/wiki.css");
+  $app_css=   array('/aby/aby.css.php=skin',"/ezer$ezer_version/client/wiki.css");
   $skin=      'ck';
   $title_style= $ezer_server==0 ? " style='color:#ef7f13'" : '' ;
   $title_flag=  $ezer_server==0 ? 'lokální' : '';
@@ -60,6 +63,6 @@
 
   
   // je to aplikace se startem v rootu
-  require_once("$kernel/ezer_main.php");
+  require_once("ezer$ezer_version/ezer_main.php");
 
 ?>

@@ -1,13 +1,17 @@
-<?php # Systém Chap/Ezer, (c) 2021 Martin Šmídek <martin@smidek.eu>
+<?php
+# Aplikace Aby pro Nadační fond sester františkánek
+# (c) 2022 Martin Šmídek <martin@smidek.eu>
 
   global // import 
     $ezer_root; 
   global // export
-    $EZER, $ezer_server;
+    $EZER, $ezer_server, $ezer_version;
+  global // klíče
+    $api_gmail_user, $api_gmail_pass;
   
   // vyzvednutí ostatních hodnot ze SESSION
   $ezer_server=  $_SESSION[$ezer_root]['ezer_server'];
-  $kernel= "ezer{$_SESSION[$ezer_root]['ezer']}";
+  $ezer_version= $_SESSION[$ezer_root]['ezer'];
   $abs_root=     $_SESSION[$ezer_root]['abs_root'];
   $rel_root=     $_SESSION[$ezer_root]['rel_root'];
   chdir($abs_root);
@@ -26,33 +30,15 @@
       ),
       'activity'=>(object)array());
   
-  // banky
-  $bank= array(
-      "C:/Ezer/beans/aby",
-      "/home/users/gandi/smidek.eu/web/demo"
-    );
-  $bank= $bank[$ezer_server];
-  $path_banka['0800']= "$bank/banky/0800/";
-
-  // specifické cesty pro Poličku
-  $path_backup= array(
-    "C:/Ezer/beans/aby/sql"
-  )[$ezer_server];
-  
   // databáze
   $deep_root= "../files/aby";
   require_once("$deep_root/aby.dbs.php");
   
+  // banky a sql
+  $path_banka['2100']= "abs_roots/banky/2100/";
   $path_backup= "$deep_root/sql";
   
-  // cesta k utilitám MySQL/MariaDB
-  $ezer_mysql_path= array(
-      "C:/Apache/bin/mysql/mysql5.7.21/bin",  // *.bean
-      "/volume1/@appstore/MariaDB/usr/bin",   // Synology DOMA
-      "/volume1/@appstore/MariaDB/usr/bin"    // Synology Polička
-    )[$ezer_server];
-
-  $tracked= ',clen,dar,ukol,dopis,role,_user,_cis,';
+  $tracked= ',clen,dar,projekt,ukol,dopis,role,_user,_cis,';
   
   // PHP moduly aplikace Ark
   $app_php= array(
