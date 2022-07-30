@@ -3,7 +3,7 @@
 # (c) 2022 Martin Smidek <martin@smidek.eu>
   
   // verze použitého jádra Ezeru
-  $ezer_version= isset($_GET['ezer']) ? $_GET['ezer'] : '3.1'; 
+  $ezer_version= isset($_GET['ezer']) ? $_GET['ezer'] : '3.2'; 
   $_GET['pdo']= 2; 
   $_GET['touch']= 0; // nezavede jquery.touchSwipe.min.js => filtry v browse jdou upravit myší
 
