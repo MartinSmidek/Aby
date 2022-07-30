@@ -6,11 +6,10 @@ menu aby { type:'main', active:*
   #  obsahuje globálně přístupné informace pro globální funkce modulu 
   #   .loaded  -- tabs bylo zavedeno
   #   .dirty   -- vynutí v onfocus refresh 
-  var modul_state= {
-    klu: {cle: {dirty:0}}
-  }
+  var modul_state= {klu:{cle:{dirty:0}}}
   func onstart () { 
     php.table_lock('none'); // uvolni všechny zámky řádků tabulek přihlášeného 
+//    modul_state= {klu:{cle:{dirty:0}}}
   }
   # pokud je modul aktivní, nastaví mu dirty=1 aby došlo k překreslení obsahu při onfocus
   proc dirty (mod) { //var state:object
