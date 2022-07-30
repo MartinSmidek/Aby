@@ -273,48 +273,62 @@ function fopen_utf8($filename){ trace();
 # provede git par.cmd>.git.log a zobrazí jej
 # fetch pro lokální tj. vývojový server nepovolujeme
 function git_make($par) {
-  global $abs_root;
+  global $abs_root, $ezer_version;
   $bean= preg_match('/bean/',$_SERVER['SERVER_NAME'])?1:0;
-                                                    display("bean=$bean");
+  display("ezer$ezer_version, abs_root=$abs_root, bean=$bean");
+  if ($ezer_version!='3.1') { fce_error("POZOR není aktivní jádro 3.1 ale $ezer_version"); }
   $cmd= $par->cmd;
   $folder= $par->folder;
-  $lines= '';
+  $lines= array();
   $msg= "";
-  // proveď operaci
-  switch ($par->op) {
-  case 'cmd':
-    if ( $cmd=='fetch' && $bean) {
-      $msg= "na vývojových serverech (*.bean) příkaz fetch není povolen ";
-      break;
-    }
-    $state= 0;
-    // zruš starý obsah .git.log
-    $f= @fopen("$abs_root/docs/.git.log", "r+");
-    if ($f !== false) {
-        ftruncate($f, 0);
-        fclose($f);
-    }
-    if ( $folder=='ezer') chdir("../_ezer3.1");
-    elseif ( $folder=='skins') { chdir($abs_root); chdir("../_skins"); }
-    $exec= "git $cmd>$abs_root/docs/.git.log";
-    exec($exec,$lines,$state);
-                            display("$state::$exec");
-    // po fetch ještě nastav shodu s github
-    if ( $cmd=='fetch') {
-      $msg.= "$state:$exec\n";
-      $cmd= "reset --hard origin/".($folder=='ezer'?'ezer3.1':'master');
-      $exec= "git $cmd>$abs_root/docs/.git.log";
+  // nastav složku pro Git
+  if ( $folder=='ezer') 
+    chdir("./ezer$ezer_version");
+  elseif ( $folder=='skins') 
+    chdir("./skins");
+  elseif ( $folder=='.') 
+    chdir(".");
+  else
+    fce_error('chybná aktuální složka');
+  // proveď příkaz Git
+  $state= 0;
+  $branch= $folder=='ezer' ? ($ezer_version=='3.1' ? 'master' : 'ezer3.2') : 'master';
+  switch ($cmd) {
+    case 'log':
+    case 'status':
+      $exec= "git $cmd";
+      display($exec);
       exec($exec,$lines,$state);
-                            display("$state::$exec");
-    }
-    if ( $folder=='ezer' || $folder=='skins') chdir($abs_root);
-    $msg.= "$state:$exec\n";
-  case 'show':
-    $msg.= file_get_contents("$abs_root/docs/.git.log");
-    break;
+      $msg.= "$state:$exec\n";
+      break;
+    case 'pull':
+      $exec= "git pull origin $branch";
+      display($exec);
+      exec($exec,$lines,$state);
+      $msg.= "$state:$exec\n";
+      break;
+    case 'fetch':
+      if ( $bean) 
+        $msg= "na vývojových serverech (*.bean) příkaz fetch není povolen ";
+      else {
+        $exec= "git pull origin $branch";
+        display($exec);
+        exec($exec,$lines,$state);
+        $msg.= "$state:$exec\n";
+        $exec= "git reset --hard origin/$branch";
+        display($exec);
+        exec($exec,$lines,$state);
+        $msg.= "$state:$exec\n";
+      }
+      break;
   }
+  // případně se vrať na abs-root
+  if ( $folder=='ezer'||$folder=='skins') 
+    chdir($abs_root);
+  // zformátuj výstup
   $msg= nl2br(htmlentities($msg));
   $msg= "<i>Synology: musí být spuštěný Git Server (po aktualizaci se vypíná)</i><hr>$msg";
+  $msg.= $lines ? '<hr>'.implode('<br>',$lines) : '';
   return $msg;
 }
 /** ================================================================================================ NASTAVENÍ */

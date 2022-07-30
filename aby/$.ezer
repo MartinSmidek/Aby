@@ -1,23 +1,5 @@
-# Aplikace Polička
-# (c) 2021 Martin Šmídek <martin@smidek.eu>
-
-//# modul_state.xxx obsahuje globálně přístupné informace pro globální funkce modulu zejm. onfocus:
-//#   .loaded  -- tabs bylo zavedeno
-//#   .dirty   -- vynutí v onfocus refresh
-//var modul_state= {
-//  klu: {cle: {dirty:0}}
-//}
-//  func onstart () {
-//  alert('onstart');
-//    php.table_lock('none'); // uvolni všechny zámky řádků tabulek přihlášeného 
-//    modul_state= {klu:0,dop:0,ban:0,pok:0,eko:0,syst:0,doc:0};
-//  }
-//  # pokud je modul aktivní, nastaví mu dirty=1 aby došlo k překreslení obsahu při onfocus
-//  # jméno modulu je zřetězením id od aby (nevčetně)
-//proc dirty (mod) { // vynutí refresh v onfocus
-//  modul_state.get(mod); 
-//  modul_state.set(1,conc(mod,'.dirty'));
-//}
+# Aplikace Aby pro Nadační fond sester františkánek
+# (c) 2022 Martin Šmídek <martin@smidek.eu>
 
 menu aby { type:'main', active:*
   # modul_state.xxx, kde xxx je jméno modulu (samostatně kompilovanou část)
@@ -32,19 +14,8 @@ menu aby { type:'main', active:*
   }
   # pokud je modul aktivní, nastaví mu dirty=1 aby došlo k překreslení obsahu při onfocus
   proc dirty (mod) { //var state:object
-//    state= aby.part(`modul_state.${mod}`);
-//    state.dirty= 1;
-//    modul.dirty= 1;
-//    modul_state.get(mod); 
     modul_state.set(1,conc(mod,'.dirty'));
   }
-//  const //plus = 2, //0,                       // rozšíření karet - jednotkou je výška řádku browse
-//        klu_cle_cleni = 13,
-//        klu_cle_dary = 334,
-//        klu_kom_rows = 4,
-//        klu_kom_zprava_t = 161,
-//        klu_kom_zprava_h = 35
-//  var global: text
   tabs klu { title:"[fa-users] Osoby, [fa-industry] firmy", skill:'hd', _sys:'klu',  include:'onload', active:* 
     panel cle { type:'plain'
       func refresh_vyber() { }
@@ -94,16 +65,6 @@ menu aby { type:'main', active:*
           item {title:'[fa-upload] celý soubor kontakty...2021.csv'  par:{file:'kontakty_darci_2021',max:0} }
           item {title:'[fa-upload] ... jen testy'             par:{file:'kontakty_darci_2021',max:0,test:1} }
           item {title:'[fa-upload] ... jen 1 záznam'          par:{file:'kontakty darci_2021',max:1} }
-//          item {title:'[fa-upload] celý soubor v2-firmy.csv'  par:{file:'v2-firmy',max:0} }
-//          item {title:'[fa-upload] ... jen testy'             par:{file:'v2-firmy',max:0,test:1} }
-//          item {title:'[fa-upload] ... jen 1 záznam'          par:{file:'v2-firmy',max:1} }
-//          item {title:'[fa-upload] celý soubor v2-firmy2.csv' par:{file:'v2-firmy2',max:0} }
-//          item {title:'[fa-upload] ... jen testy'             par:{file:'v2-firmy2',max:0,test:1} }
-//          item {title:'[fa-upload] ... jen 1 záznam'          par:{file:'v2-firmy2',max:1} }
-//          item {title:'[fa-upload] celý soubor v2-dobr.csv'   par:{file:'v2-dobr',max:0} }
-//          item {title:'[fa-upload] ... jen testy'             par:{file:'v2-dobr',max:0,test:1} }
-//          item {title:'[fa-upload] ... jen 1 záznam'          par:{file:'v2-dobr',max:1} }
-//          item {title:'[fa-upload] celý soubor v2-kruh.csv'   par:{file:'v2-kruh',max:0} }
           func onclick (i:ezer) {
             clear(); info.display(0,'t');
             info.fill(replace_fa(i.title),' čekej ...');
@@ -168,15 +129,6 @@ menu aby { type:'main', active:*
   }
   tabs doc  {title:"[fa-question] Nápověda", _sys:'nap',  include:'onload,ezer2.help', active:* }
   tabs off  {type:'logoff', title:"[fa-power-off] Odhlásit"}
-//  func onstart () {
-//    php.table_lock('none'); // uvolni všechny zámky řádků tabulek přihlášeného 
-//    modul_state= {klu:0,dop:0,ban:0,pok:0,eko:0,syst:0,doc:0};
-//  }
-//  # pokud je modul aktivní, nastaví mu dirty=1 aby došlo k překreslení obsahu při onfocus
-//  # jméno modulu je zřetězením id od aby (nevčetně)
-//  proc dirty (mod) {
-//    modul_state.get(mod); modul_state.set(1,conc(mod,'.dirty'));
-//  }
   // univerzální procedury
   proc the_formsave (f,b) {
     f.same
