@@ -126,7 +126,7 @@ menu aby { type:'main', active:*
       use info: form right [12,4,,]     { tag:'i' }
     }
     # ===================================================================================> STŘEDISKA
-    panel str {type:'plain', title:"[fa-cubes] Střediska, účty, kategorie", _sys:'*', skill:'hns|hns', include:'onclick' }
+    panel str {type:'plain', title:"[fa-cubes] Kategorie,účty", _sys:'*', skill:'hns|hns', include:'onclick' }
   }
   tabs doc  {title:"[fa-question] Nápověda", _sys:'nap',  include:'onload,ezer2.help', active:* }
   tabs off  {type:'logoff', title:"[fa-power-off] Odhlásit"}
