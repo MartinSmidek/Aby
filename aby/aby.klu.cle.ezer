@@ -16,8 +16,8 @@ func onstart () {
   modul_state.klu.cle= {active:1,dirty:0};   # poznačení, že modul je aktivní
   C_cleni.cleni.osoba_firma(C_cleni.cond_os,C_cleni.cond_fy);
   C_cleni.cond.Refresh();
-  C_cleni.cond.key(1);
-  C_cleni._cleni_vyber(0);
+//  C_cleni.cond.key(1);
+//  C_cleni._cleni_vyber(0);
   C_clen.kon.onclick();
   Ctrack.clen_form= C_clen;
   Dtrack.dar_form= C_dar;
@@ -73,7 +73,7 @@ form _cleni [,,660,334+17] {
   # ------------------------------------------==> podmínka výběru členů
   label [2,2,651,30] { css:'ae_parm'},
   label [9,11,50,15] { title:'<h1>Výběr</h1>'
-    func onclick() {cond.Refresh()}
+    func onclick() {cond.Refresh(); }
   }
   var _cond= 1 // hodnota cond po substituci kdo+kým
   select cond [64,9,170,] { format:'t', help:'výběr|základní výběr definovaný v číselníku'
@@ -84,7 +84,9 @@ form _cleni [,,660,334+17] {
       _cleni_vyber(0);
     }
     func Refresh() {
-      cond.selects(php.klub_vyber('options'),',:',0,1);
+      _cond= 1;
+      cond.key(cond.selects(php.klub_vyber('options'),',:',0,1));
+      _cleni_vyber(0);
     }
   }
   // rozhodnutí firma / osoba
@@ -124,10 +126,11 @@ form _cleni [,,660,334+17] {
       !cond_os&&cond_fy ? " AND osoba=0" : ''
     );
     C_clen.init(); 
-    if (idc) { cleni.browse_seek(`id_clen=${idc}`,where) }
-    elseif (!cleni.browse_load(where)) {
-      C_dary.dary.browse_init(); C_dar._form_state('','b.');
-    }
+    C_dary.dary.browse_init(); C_dar.init(); C_dar._form_state('','b.');
+    if (idc) 
+      cleni.browse_seek(`id_clen=${idc}`,where)
+    else
+      cleni.browse_load(where);
   }
   func ShowAll() { 
     cleni.browse_load("left(c.deleted,1)!='D' AND umrti=0");
