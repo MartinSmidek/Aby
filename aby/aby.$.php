@@ -399,7 +399,7 @@ function psc ($psc,$user2sql=0) {
   return $text;
 }
 /** ================================================================================================ OSLOVENÍ */
-# -------------------------------------------------------------------------------------------------- osl_insert
+# -------------------------------------------------------------------------------------------------- osl update
 # ASK
 # vygeneruje rod,osloveni,prijmeni5p do tabulky CLEN
 function osl_update($id_clen) {
@@ -419,7 +419,7 @@ function osl_update($id_clen) {
   }
   return 1;
 }
-# -------------------------------------------------------------------------------------------------- osl_insert
+# -------------------------------------------------------------------------------------------------- osl insert
 # ASK
 # vygeneruje rod,osloveni,prijmeni5p do tabulky CLEN
 function osl_insert($osoba,$titul,$jmeno,$prijmeni) {
@@ -528,7 +528,7 @@ function osl_kontakt_new ($op,$ids='',$limit=25000) { trace();
   }
   return $msg;
 }
-# -------------------------------------------------------------------------------------------------- osl_oslovení
+# -------------------------------------------------------------------------------------------------- osl oslovení
 // generování oslovení
 function osl_osloveni ($rod,$typ) {
   $oslo= 0;
@@ -541,7 +541,7 @@ function osl_osloveni ($rod,$typ) {
   }
   return $oslo;
 }
-# -------------------------------------------------------------------------------------------------- osl_prijmeni5p
+# -------------------------------------------------------------------------------------------------- osl prijmeni5p
 // generování 5. pádu z $prijmeni,$rod
 function osl_prijmeni5p ($titul,$prijmeni,$rod,&$ano) {  
   $y= '';
@@ -588,7 +588,7 @@ function osl_prijmeni5p ($titul,$prijmeni,$rod,&$ano) {
 //                                                 display("osl_prijmeni5p($p,$rod)=$y ($len:$p1,$p_1,$p2,$p_2,$p3,$p_3:$p)");
   return $y;
 }
-# -------------------------------------------------------------------------------------------------- osl_kontakt
+# -------------------------------------------------------------------------------------------------- osl kontakt
 # rozeznání kategorie člena - kvůli oslovení (vstupem db hodnoty $osoba,$titul,$jmeno,$prijmeni,$sex)
 # rod: ?|m|f|mm|ff|mf
 # typ: l|ll|s|ss|p

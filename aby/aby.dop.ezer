@@ -2,7 +2,7 @@
 # (c) 2022 Martin Šmídek <martin@smidek.eu>
 
 var dopis_id: text
-proc onstart () { dopis_id.set(0) }
+func onstart () { dopis_id= 0; }
 # ================================================================================> DOPISY A ŠABLONY
 # editace vzorů zasílaných dopisů a jejich hlaviček
 panel vzo {type:'right', title:"[fa-paperclip] Vzory / šablony", _sys:'*'
@@ -84,7 +84,7 @@ panel vzo {type:'right', title:"[fa-paperclip] Vzory / šablony", _sys:'*'
       label [23,275,640,17] { title:"<u>orientační</u> ukázka (přesná viz menu 'Ukázkové tisky šablon'):" },
       label ukazka [23,295,640,500]
       button uloz [590,0,,] { title:'[fa-save] Uložit'
-        proc onclick () { form.save; form.load }
+        func onclick () { form.save(); form.load() }
       }
     }
   },
@@ -100,9 +100,9 @@ panel EDITOR [0,0,645,520] { title:' Úprava textu dopisu', type:'popup', css:'d
 //    label [0,12,60,20] { title:'Aktuální:' }
 //    check nazev [50,10,50,20] { data:dopis.aktualni },
     button  [540,9,,] { title:'[fa-save] Uložit', help:'ukončit editor a uložit změny'
-      proc onclick() { form.save; panel.hide(1); }}
+      func onclick() { form.save(); panel.hide(1); }}
     button  [600,9,,] { title:'[fa-undo] Zpět', help:'ukončit editor bez uložení změn'
-      proc onclick() { panel.hide(0); }}
+      func onclick() { panel.hide(0); }}
     edit html [0,40,655,480] {type:'html', data:dopis.obsah, par:{toolbar:'Letter'} },
   }
 }
@@ -219,9 +219,10 @@ panel dop {type:'right', title:"[fa-envelope] Dopisy a seznamy", _sys:'*'
   var et_prazdy: number
   form _dopisy [0,0,180,267] {
     # ==> . procedury
-    proc Start () {
-      texty.browse_load("etd.druh='P'");
-    | Init; form_state('n','u|z|s')
+    func Start () {
+      if (!texty.browse_load("etd.druh='P'")) {
+        Init(); form_state('n','u|z|s')
+      }
     }
     func Init() {
       pdf= 'zde bude po stisku [Vygenerovat...] odkaz na PDF s vygenerovanými dopisy';

@@ -82,6 +82,7 @@ panel Kategorie [0,0,400,160] { title:'', type:'popup', css:'dialog'
         if (n==0 || confirm(`POZOR tato kategorie je uvedena u ${n} kontaktů, 
               změna jejího názvu by tedy neměla měnit smysl. Mám změnu uložit?`)) {
           the_formsave(form,ks.seznam);
+          cis_kategorie.map_load();
           aby.dirty('klu.cle');
         }
         panel.hide(form.key()) 

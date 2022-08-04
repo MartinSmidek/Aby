@@ -12,8 +12,8 @@ menu aby { type:'main', active:*
 //    modul_state= {klu:{cle:{dirty:0}}}
   }
   # pokud je modul aktivní, nastaví mu dirty=1 aby došlo k překreslení obsahu při onfocus
-  proc dirty (mod) { //var state:object
-    modul_state.set(1,conc(mod,'.dirty'));
+  func dirty (mod) { //var state:object
+    modul_state[`${mod}.dirty`]= 1;
   }
   tabs klu { title:"[fa-users] Osoby, [fa-industry] firmy", skill:'hd', _sys:'klu',  include:'onload', active:* 
     panel cle { type:'plain'
@@ -76,23 +76,25 @@ menu aby { type:'main', active:*
           item { title:"[fa-question] přehled záloh"                par:{typ:'download'}}
           item { title:"[fa-upload] zálohuj teď"                    par:{typ:'special'}}
           item { title:"[fa-download] obnova ze zálohy (jen local)" par:{typ:'restore'}}
-          proc onclick(i) { 
-            info.fill(conc(i.owner.title,' - ',i.title),' ');
-            { eq(i.par.typ,'download'); 
-              info.append("<i>zobrazené zálohy lze stáhnout kliknutím (nelze 'Stahnout jako ...')</i><br>");
-              info.append(ask('sys_backup_make',i.par)) 
-            | eq(i.par.typ,'special'); 
-              [ confirm('Pokračovat?'); info.append(ask('sys_backup_make',i.par)) ]
-            | eq(i.par.typ,'restore'); 
-              // test na lokální běh na NTB či Synology
-              { eq(sys('ezer','server'),0,1); 
-                [ confirm('Opravdu mám lokální databázi přepsat tou, kterou teď vybereš? 
-                        Máš ji uschovanou? Po výběru se již rozběhne proces obnovy ...'); 
+          func onclick(i:ezer) { 
+            info.header(i);
+            switch (i.par.typ) {
+              case 'download': 
+                info.append("<i>zobrazené zálohy lze stáhnout kliknutím (nelze 'Stahnout jako ...')</i><br>");
+                info.append(php.sys_backup_make(i.par));
+                break;
+              case 'special': 
+                if (confirm('Pokračovat?'))
+                  info.append(php.sys_backup_make(i.par));
+                break;
+              case 'restore': 
+                if (sys('ezer','server'))  // test na lokální běh na NTB
+                  alert('obnovu ze zálohy nelze provádět na ostrém serveru');
+                elseif ( confirm(`Opravdu mám lokální databázi přepsat tou, kterou teď vybereš? 
+                          Máš ji uschovanou? Po výběru se již rozběhne proces obnovy ...`) )
                   // načti obnovu
-                  info.append(ask('sys_backup_make',i.par));
-                ]
-              | alert('obnovu ze zálohy nelze provádět na ostrém serveru');
-              }
+                  info.append(php.sys_backup_make(i.par));
+                break;
             }
           }
         }
@@ -115,11 +117,13 @@ menu aby { type:'main', active:*
           item { title:'[fa-gears] Skins: git pull'      par:{folder:'skins',op:'cmd',cmd:'pull'}}
           item { title:'[fa-gears] Skins: git fetch ...' help:"po fetch>git reset --hard origin/master"
                                                          par:{folder:'skins',op:'cmd',cmd:'fetch'}}
-          proc onclick (i) {  
-            info.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' '); panel.display(2,'i'); 
-            sys('ezer','server'); // test na lokální běh na NTB
-            info.append(ask('git_make',i.par));
-          | alert('nelze na vývojovém serveru')  
+          func onclick (i:ezer) {  
+            info.header(i); 
+            panel.display(2,'i'); 
+            if (sys('ezer','server'))  // test na lokální běh na NTB
+              info.append(php.git_make(i.par));
+            else
+              alert('nelze na vývojovém serveru')  
           }
         }
       }
@@ -131,12 +135,19 @@ menu aby { type:'main', active:*
   tabs doc  {title:"[fa-question] Nápověda", _sys:'nap',  include:'onload,ezer2.help', active:* }
   tabs off  {type:'logoff', title:"[fa-power-off] Odhlásit"}
   // univerzální procedury
-  proc the_formsave (f,b) {
-    f.same
-  | f.key; f.save; f.load; b.browse_seek;
-  | f.insert; f.load;
-    { b.browse_seek(conc(f.id_key,'=',f.key))
-    | b.browse_seek(conc(f.id_key,'=',f.key),1)
+  func the_formsave (f:ezer,b:ezer) {
+    if ( not(f.same()) ) {
+      if ( f.key() ) {
+        f.save(); 
+        if ( b.browse_seek() ) 
+          f.load() 
+        else 
+          f.init() 
+      }
+      else {
+        f.insert(); f.load();
+        b.raise('onrowclick',b.browse_seek(conc(f.id_key(),'=',f.key())))
+      }
     }
   }
 }
@@ -145,10 +156,10 @@ menu aby { type:'main', active:*
 panel track [,,540,276] { title:'Historie oprav', type:'popup', css:'dialog'
   var reverted_table= '', reverted_key= 0
   use back: form _back [0,16,,] { tabindex:20 },
-  proc back_show(kde,klic) {
+  func back_show(kde,klic) {
     panel.popup(0,1);
     panel.set_attrib('title',conc('Historie oprav pro ',kde,' id=',klic));
-    reverted_table.set(''); reverted_key.set(0);
+    reverted_table= ''; reverted_key= 0;
     back.lst.browse_load(conc("(kde='",kde,"' AND klic=",klic,")"),"kdy DESC");
     back.lst.raise('onrowclick')
   }
@@ -166,25 +177,30 @@ panel track [,,540,276] { title:'Historie oprav', type:'popup', css:'dialog'
       show id_track [,,0,] { data:_track.id_track }
       menu { type:'context'
         item { title:'vrátit nastavenou opravu'
-          proc onclick() {
-            lst.selected('clear'); lst.selected('toggle',1); revert }}
+          func onclick() {
+            lst.selected('clear'); lst.selected('toggle',1); revert() }}
         item { title:'vrátit i související opravy'
-          proc onclick() { var ret:object
+          func onclick() { var ret:object
             lst.selected('clear');
-            ret.set(ask('track_like',lst.browse_key));
-            { ret.ok; lst.selected('set',ret.ids); [ revert ]
-            | alert(ret.msg) }
+            ret= php.track_like(lst.browse_key());
+            if (ret.ok) {
+              lst.selected('set',ret.ids); 
+              revert();
+            }
+            else alert(ret.msg);
           }}
       }
-      proc revert() { var ret:object
-        confirm('mám zkusit vrátit opravy označených řádků?');
-        ret.set(ask('track_revert',lst.selected('get',0)));
-        { ret.ok; warning("změny byly vráceny");
-          reverted_table.set(ret.tab); reverted_key.set(ret.klic);
-          lst.browse_refresh;
-        | alert(ret.msg) }
-      }
-    },
+      func revert() { var ret:object
+        if (confirm('mám zkusit vrátit opravy označených řádků?')) {
+          ret= php.track_revert(lst.selected('get',0));
+          if (ret.ok) {
+            warning("změny byly vráceny");
+            reverted_table= ret.tab; reverted_key= ret.klic;
+            lst.browse_refresh();
+          }
+          else alert(ret.msg)
+        }}
+    }
     label [0,250,545,] { title:"ÚDAJE: i=vložení (insert), u=úprava, U= hromadná úprava<br>ZÁZNAM: x=smazano, o=obnoveno, r=různé od uvedeného záznamu" }
   }
 }
