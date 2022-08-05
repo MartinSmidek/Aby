@@ -48,7 +48,8 @@ panel kon  {type:'right', title:"[fa-info-circle] Informace, kontroly", _sys:'*'
 }
 //# ===========================================================================================> ÚKOLY
 panel uko  {type:'right', title:"[fa-cutlery] Úkoly", _sys:'*', include:'onload', skill:'hdu|hdu',
-  func  ukol_show() { return(warning1); }
+  func ukol_show() { return(warning1); }
+  func ukol_show(id_ukol,kdo,komu) { return(warning1); }
 }
 # ===========================================================================================> (MAP)
 # systémové číselníky

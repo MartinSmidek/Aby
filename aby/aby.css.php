@@ -53,6 +53,10 @@ div.MenuGroup3 li.m { color:orange !important; text-shadow: 1px 1px 2px black; }
   color:#456; }
 .Label3 h1 {
   font-size:12pt; margin:0; padding:0 }
+.href:hover {
+  background-color:#fb6 !important; }
+.href {
+  text-decoration:underline; color:navy; cursor:pointer; }
 #Content, #Index {
   padding:15px; }
 .CheckT input {

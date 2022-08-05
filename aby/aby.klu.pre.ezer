@@ -26,18 +26,8 @@ use d:  form _p_dar     [880,390,,]
 use f:  form _drop      [6,331,,]
 use k:  form _cmd       [180,520,,]
 # ----------------------------------------==> globální proc
-//func ukaz_platbu(idp,idv) {
-//  echo("ukaz_platbu ",idp, " výpisu ",idv);
-//  v._vypisy.browse_seek(`id_vypis=${idv}`,0,0,0,1);
-//  echo('výpis=',v._vypisy.id_vypis);
-//  p._prevody.browse_seek(`id_dar=${idp}`,`id_vypis=${v._vypisy.id_vypis}`);
-//  echo('platba=',p._prevody.id_dar);
-//}
+
 # ----------------------------------------==> lokální proc
-//proc detect_sign() {
-//  sign.set(cconc(eq(function("return Ezer.panel.owner._id;"),'rod'),'R','O'));
-//  echo("platby časopisu ",sign.get);
-//}
 #==> . p_reload
 func p_reload () {
   r.filter_refresh();
@@ -84,10 +74,6 @@ form _p_vypisy [,,1070,309] { css:'work'
         help:'zkratka našeho účtu'}
     show datum_od [,,65,] { title:'od', data:vv.datum_od, format:'rs-q=' }
     show datum_do [,,65,] { title:'do', data:vv.datum_do, format:'rsq=' }
-//    show [,,65,] { title:'od', expr:"MIN(vp.castka_kdy)", sql_pipe:'sql_date1', format:'rs-q=' 
-//        help:'datum nejstarší platby v souboru'}
-//    show [,,65,] { title:'do', expr:"MAX(vp.castka_kdy)", sql_pipe:'sql_date1', format:'rsq=' 
-//        help:'datum nejnovější platby v souboru'}
     show soubor [,,120,] { title:'soubor', data:vv.soubor, format:'ts' 
         help:'název importovaného souboru'}
     func onrowclick () {
@@ -102,7 +88,7 @@ form _p_vypisy [,,1070,309] { css:'work'
 }
 # --------------------------------------------------==> PLATBY
 form _p_prevody [,,774,262] {
-  view p: table dar
+  view d: table dar
   label [12,5,73,] { title:'<h1>Platby</h1>' }
   label [77,9,700,] { title:"
     <span class='pre_10'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> není dar ... 
@@ -114,24 +100,23 @@ form _p_prevody [,,774,262] {
   }
   browse _prevody [0,29,300,100] {buf_rows:500, rows:13, qry_rows:1,
       css_rows:'typ,5:pre_5,6:pre_6,7:pre_7,8:pre_8,9:pre_9'
-    show id_dar [,,55,] { title:'ID platby', data:p.id_dar, format:'rs+' }
-    show popis [,,151,] { title:'popis účtu', data:p.ucet_popis, format:'tq*' }
-    show zprava [,,110,] { title:'zpráva', data:p.zprava, format:'tq*' }
-    show idc [,,50,] { title:'ID osoby', data:p.id_clen, format:'rq=' 
+    show id_dar [,,55,] { title:'ID platby', data:d.id_dar, format:'rs+' }
+    show popis [,,151,] { title:'popis účtu', data:d.ucet_popis, format:'tq*' }
+    show zprava [,,110,] { title:'zpráva', data:d.zprava, format:'tq*' }
+    show idc [,,50,] { title:'ID osoby', data:d.id_clen, format:'rq=' 
         css_cell:'typ_slozenka,5:pre_5,6:pre_6,7:pre_7,8:pre_8,9:pre_9' }
-    show castka [,,70,] { title:'částka', data:p.castka, format:'rq=' 
+    show castka [,,70,] { title:'částka', data:d.castka, format:'rq=' 
         css_cell:'typ_slozenka,5:pre_5,6:pre_6,7:pre_7,8:pre_8,9:pre_9' }
-    show vsym [,,75,] { title:'vs', data:p.vsym, format:'rq*' }
-//    show ssym [,,75,] { title:'ss', data:p.ssym, format:'rq*' }
-    show ucet [,,126,] { title:'účet', data:p.ucet, format:'trq*' }
-    show datum [,,75,] { title:'datum', data:p.castka_kdy, format:'rq=' }
-    show typ [,,0,] { data:p.typ, format:'rq=' }
-    show typ_slozenka { expr:"IF(p.typ=8 AND p.id_clen!=0,9,p.typ)" }
+    show vsym [,,75,] { title:'vs', data:d.vsym, format:'rq*' }
+//    show ssym [,,75,] { title:'ss', data:d.ssym, format:'rq*' }
+    show ucet [,,126,] { title:'účet', data:d.ucet, format:'trq*' }
+    show datum [,,75,] { title:'datum', data:d.castka_kdy, format:'rq=' }
+    show typ [,,0,] { data:d.typ, format:'rq=' }
+    show typ_slozenka { expr:"IF(d.typ=8 AND d.id_clen!=0,9,d.typ)" }
     func onrowclick () {
       i.load(id_dar);
       d.load(id_dar);
       if (idc) c.load_clen(idc); else c.init();
-//      { eq(typ.get,9); d.enable(0,'d') | d.enable(1,'d') } 
     }
     func onclick() {
       if (typ.width()) { typ.width(0); popis.width(151) }
@@ -231,11 +216,11 @@ form _drop [,,392,161] { css:'work'
 }
 # --------------------------------------------------==> PLATBA
 form _p_info [,,672,52] { css:'work'
-  view p: table dar
-  field [26,8,96,18] { title:'VS:', data:p.vsym, format:'o' }
-  field [156,8,312,18] { title:'popis:', data:p.ucet_popis, format:'o' }
-  field [155,28,475,18] { title:'zpráva:', data:p.zprava, format:'o' }
-  field [589,8,70,18] { title:'částka:', data:p.castka, format:'or' }
+  view d: table dar
+  field [26,8,96,18] { title:'VS:', data:d.vsym, format:'o' }
+  field [156,8,312,18] { title:'popis:', data:d.ucet_popis, format:'o' }
+  field [155,28,475,18] { title:'zpráva:', data:d.zprava, format:'o' }
+  field [589,8,70,18] { title:'částka:', data:d.castka, format:'or' }
 }
 # --------------------------------------------------==> PLÁTCE (osoba | firma)
 form _p_clen [,,464,123] { css:'work'
@@ -309,44 +294,49 @@ form _cmd [,,897,89] { css:'work'
   var rychle: number
   var done:number
   button rychle_start [406,23,,] { help:'projdi daný výpis a připisuj platby', title:"[fa-play] Rychle"
-    proc onclick () {
-      done.set(1);
-      rychle.set(1);
+    func onclick () {
+      done= 1;
+      rychle= 1;
       ram.set_css('aktivni','pasivni');
       rychle_start.enable(0); rychle_ano.enable(1);
       rychle_ne.enable(1); rychle_konec.enable(1);
-      p._prevody.browse_next(1); eq(p._prevody.typ.get,5,7);
-      p._prevody.raise('onrowclick',p._prevody.id_dar.get)
-    | p_rychle_next
+      p._prevody.browse_next(1); 
+      if (eq(p._prevody.typ,5,7)) 
+        p._prevody.raise('onrowclick',p._prevody.id_dar)
+      else
+        p_rychle_next()
   }}
-  proc p_rychle_next () {
-    p._prevody.browse_next; p_rychle_skip; eq(p._prevody.typ.get,5,7);
-    p._prevody.raise('onrowclick',p._prevody.id_dar.get)
-  | p_rychle_off
+  func p_rychle_next () {
+    p._prevody.browse_next(); p_rychle_skip(); 
+    if (eq(p._prevody.typ.get,5,7))
+      p._prevody.raise('onrowclick',p._prevody.id_dar)
+    else
+      p_rychle_off()
   }
   button rychle_ano [477,23,,] { title:'[fa-plus] Ano, další', format:'d',
     help:'zapiš platbu odsouhlasenému kontaktu a běž dál'
-    proc onclick () { var idd:number
-      [ c.key; zmena_typu(9,c.key) ];
-      p_rychle_next
+    func onclick () { var idd:number
+      if (c.key()) zmena_typu(9,c.key());
+      p_rychle_next()
   }}
-  proc p_rychle_skip () {
-    eq(p._prevody.typ.get,5,7); p._prevody.idc.get
-  | p._prevody.browse_next; p_rychle_skip
+  func p_rychle_skip () {
+    if (eq(p._prevody.typ.get,5,7) && p._prevody.idc) {
+      p._prevody.browse_next(); p_rychle_skip()
+    }
   }
   button rychle_ne [563,23,,] { title:'[fa-minus] Ne, další', format:'d', help:'běž dál'
-    proc onclick () {
-      p_rychle_next
+    func onclick () {
+      p_rychle_next()
   }}
   button rychle_konec [643,23,,] { title:'[fa-stop] Konec', format:'d', help:'ukonči procházení'
-    proc onclick () {
+    func onclick () {
 //      p_rychle_off
   }}
-  proc p_rychle_off () {
-    rychle.set(0); ram.set_css('pasivni','aktivni');
+  func p_rychle_off () {
+    rychle= 0; ram.set_css('pasivni','aktivni');
     rychle_start.enable(1); rychle_ano.enable(0);
     rychle_ne.enable(0); rychle_konec.enable(0);
-    v._vypisy.browse_focus
+    v._vypisy.browse_focus()
   }
   # ----------------------------------------==> . hledat ap.
   button ucty [12,9,,] { title:'[fa-search] Hledat v účtech'

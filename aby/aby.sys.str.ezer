@@ -11,12 +11,12 @@ func onstart () {
   us.Load();
   ks.Load();
 }
-proc the_formsave (f,b) {
-  f.same
-| f.key; f.save; { b.browse_seek; f.load | f.init }
-| f.insert; f.load;
-  b.raise('onrowclick',b.browse_seek(conc(f.id_key,'=',f.key)))
-}
+//proc the_formsave (f,b) {
+//  f.same
+//| f.key; f.save; { b.browse_seek; f.load | f.init }
+//| f.insert; f.load;
+//  b.raise('onrowclick',b.browse_seek(conc(f.id_key,'=',f.key)))
+//}
 # =======================================================================================> Kategorie
 form _kategorie [,,380,250] {css:'ae_parm'
   browse seznam [9,27,200,200] {qry_rows:1, rows:rows

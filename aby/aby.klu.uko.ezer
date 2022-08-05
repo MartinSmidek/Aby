@@ -3,18 +3,20 @@
 
 # ================================================================================================== ÚKOLY
 
-proc onfirstfocus() {
-  m.g1.i.click
+func onfirstfocus() {
+  m.g1.i.click()
 }
 
-proc ukol_show(id_ukol,kdo,komu) {
-  { eq(sys('user','id_user'),komu); m.g1.a.click
-  | eq(sys('user','id_user'),kdo); m.g2.a.click
-  | has_skill('hduv'); m.g3.a.click
-  | alert("detaily jsou přístupné pouze pro Vaše úkoly nebo pro úkoly Vámi zadané");
+func ukol_show(id_ukol,kdo,komu) {
+  panel.focus();
+  if (sys('user','id_user')==komu) m.g1.a.click();
+  elseif (sys('user','id_user')==kdo) m.g2.a.click();
+  elseif (has_skill('hduv')) m.g3.a.click();
+  else {
+    alert("detaily jsou přístupné pouze pro Vaše úkoly nebo pro úkoly Vámi zadané");
     href('klu.cle');
-  };
-  ukoly.ukoly.browse_seek(conc("id_ukol=",id_ukol))
+  }
+  ukoly.ukoly.browse_seek(`id_ukol=${id_ukol}`);
 }
 
 menu m {type:'left', active:*
@@ -48,11 +50,10 @@ menu m {type:'left', active:*
     item {title:'... odložených'          ,par:°{cond:"stav=2"} }
     item {title:'... zrušených'           ,par:°{cond:"stav=3"} }
   }
-  proc onclick(i) {
-    var cond: text
-    u.fill(conc(i.owner.title,' - ',i.title),' ');
-    ukoly.get.display(1,'u|b');
-    cond.set(replace(i.par.cond,"#I",sys('user','id_user')));
+  func onclick(i:ezer) { var cond: text
+    u.header(i);
+    ukoly.display(1,'u|b');
+    cond= replace(i.par.cond,"#I",sys('user','id_user'));
     ukoly._ukoly_load(cond)
   }
 }
@@ -65,7 +66,7 @@ form _ukoly [,,400,50] {
   const T_butt = 360
   const T_lege = 2
   const L_ukol = 450; T_ukol = 20
-  proc onchanged () { form.key; _form_state('bc','be|br') }
+  func onchanged () { if (form.key()) _form_state('bc','be|br') }
   # --------------------------- seznam úkolů
   view u: table ukol
   view x: table _user { join_type:'LEFT', join:"ON x.id_user=u.kdo_od" }
@@ -87,7 +88,7 @@ form _ukoly [,,400,50] {
     show [,,100,] { title:'kontakt', expr:"CONCAT(c.jmeno,' ',c.prijmeni)", format:'sq*t' }
     show [,,153,] { title:'popis', data:u.popis, format:'sq*t', css_cell:'je_diskuse,1:diskuse'  }
     show [,,60,] { title:'termín', data:u.cas_do, format:'rs-q*', css_cell:'barva2,1:termin' }
-    proc onrowclick() { form.load(id_ukol.get); diskuse.display(je_diskuse.get) }
+    func onrowclick() { form.load(id_ukol); diskuse.display(je_diskuse) }
   }
   # --------------------------- položky
   field u_od { data:u.kdo_od }
@@ -105,7 +106,7 @@ form _ukoly [,,400,50] {
   select stav  [L_ukol+84,T_butt+9,76,] { tag:'bo', type:'map', options:cis_u_stavy.zkratka, data:u.stav}
   # --------------------------- případná diskuse
   check je_diskuse [L_ukol,T_ukol+230,80,] { tag:'u', title:'diskuse', data:u.je_diskuse, value:'0'
-    proc onchange() { diskuse.display(this.get) }
+    func onchange() { diskuse.display(this) }
   }
   chat diskuse [L_ukol+58,T_ukol+230,243,100] { tag:'u', format:'n', divide:70, data:u.diskuse }
   # --------------------------- popisky
@@ -126,44 +127,54 @@ form _ukoly [,,400,50] {
   label [341,T_lege+0,52,] {title:'odloženo', format:'c', help:'požadavek je odložen', css:'pre_7'}
   label [400,T_lege+0,45,] {title:'zrušeno', format:'c', help:'požadavek je zrušen', css:'nasedly'}
   # --------------------------- tlačítka a změna stavu
-  proc _form_state(on,off) {
+  func _form_state(on,off) {
     form.enable(1,on); form.enable(0,off);
   }
   # Uložit změněný úkol
   button uloz_ukol [L_ukol+176,T_butt+8,,] { tag:'bc', type:'submit', title:'Uložit změny'
     help:'provede uložení změněných (červeně orámovaných) položek'
-    proc onclick() { echo("před=",form.key); the_formsave(form,ukoly); echo("po=",form.key); _form_state('be','bc|br') }
+    func onclick() { 
+      echo("před=",form.key()); 
+      the_formsave(form,ukoly); 
+      echo("po=",form.key()); 
+      _form_state('be','bc|br') }
   }
   # Zpět
   button zpet_ukol [L_ukol+267,T_butt+8,,] { tag:'bc', title:'Zpět'
     help:'zruší červené orámování a vrátí původní obsah'
-    proc onclick () {
-      ukoly.browse_count; form.load(ukoly.browse_key); _form_state('be','bc|br')
-    | form.init; _form_state('be','bc|br')
+    func onclick () {
+      if (ukoly.browse_count()) {
+        form.load(ukoly.browse_key()); _form_state('be','bc|br');
+      }
+      else {
+        form.init(); _form_state('be','bc|br')
+      }
     }
   }
   # Nový úkol
   button vytvor_ukol [L_ukol+8,T_butt+8,,] { tag:'be', title:'Nový úkol'
     help:'naplní položky základními hodnotami, vlastní vytvoření se provede uložením změn'
-    proc onclick () {
-      confirm("Nový úkol se bude týkat kontaktu č.",aby.klu.cle.curr_clen(1),chr(10),
-        aby.klu.cle.curr_clen(2),chr(10),"nastaveného na kartě Kontakty");
-      ukol_novy(aby.klu.cle.curr_clen(1),aby.klu.cle.curr_clen(2));
-      _form_state('bc','be|br')
+    func onclick () {
+      if (confirm("Nový úkol se bude týkat kontaktu č.",aby.klu.cle.curr_clen(1),chr(10),
+        aby.klu.cle.curr_clen(2),chr(10),"nastaveného na kartě Kontakty")) {
+        ukol_novy(aby.klu.cle.curr_clen(1),aby.klu.cle.curr_clen(2));
+        _form_state('bc','be|br')
+      }
     }
   }
-  proc ukol_novy (id,name) {
-    form.init(1); u_popis.change;
-    id_clen.set(id); nm_clen.set(name); id_clen.change;
-    cas_do.set(now); cas_do.change;
-    cas_od.set(now); cas_od.change;
-    u_pro.key(sys('user','id_user')); u_pro.change; // sobě
-    u_od.set(sys('user','id_user')); u_od.change; zadal.set(sys('user','surname')); // zadavatel
+  func ukol_novy (id,name) {
+    form.init(1); u_popis.change();
+    id_clen= id; nm_clen= name; id_clen.change();
+    cas_do= now(); cas_do.change();
+    cas_od= now(); cas_od.change();
+    u_pro.key(sys('user','id_user')); u_pro.change(); // sobě
+    u_od= sys('user','id_user'); u_od.change(); zadal= sys('user','surname'); // zadavatel
     stav.key(1); stav.change();
   }
-  proc _ukoly_load (cond) {[
-    ukoly.browse_load(cond);
-    form.load(ukoly.browse_key)
-  | form.init
-  ]}
+  func _ukoly_load (cond) {
+    if (ukoly.browse_load(cond))
+      form.load(ukoly.browse_key())
+    else
+      form.init()
+  }
 }
