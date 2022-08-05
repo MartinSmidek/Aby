@@ -286,23 +286,24 @@ function fopen_utf8($filename){ trace();
 # provede git par.cmd>.git.log a zobrazí jej
 # fetch pro lokální tj. vývojový server nepovolujeme
 function git_make($par) {
-  global $abs_root, $ezer_version;
+  global $abs_root, $ezer_version, $ezer_path;
   $bean= preg_match('/bean/',$_SERVER['SERVER_NAME'])?1:0;
-  display("ezer$ezer_version, abs_root=$abs_root, bean=$bean");
-//  if ($ezer_version!='3.1') { fce_error("POZOR není aktivní jádro 3.1 ale $ezer_version"); }
+//  display("ezer$ezer_version, abs_root=$abs_root, bean=$bean");
+  if ($ezer_version!='3.2') { fce_error("POZOR není aktivní jádro 3.2 ale $ezer_version"); }
   $cmd= $par->cmd;
   $folder= $par->folder;
   $lines= array();
   $msg= "";
   // nastav složku pro Git
   if ( $folder=='ezer') 
-    chdir("./ezer$ezer_version");
+    chdir($ezer_path);
   elseif ( $folder=='skins') 
     chdir("./skins");
   elseif ( $folder=='.') 
     chdir(".");
   else
     fce_error('chybná aktuální složka');
+  debug($par,"git_make(...), ezer_version=$ezer_version, bean=$bean, ezer_path=$ezer_path, cwd=".getcwd());
   // proveď příkaz Git
   $state= 0;
   $branch= $folder=='ezer' ? ($ezer_version=='3.1' ? 'master' : 'ezer3.2') : 'master';

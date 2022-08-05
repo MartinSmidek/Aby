@@ -813,15 +813,12 @@ form _dary [,,260,256] {
   func _dary_load () {
     C_dar._dar_init();
     suma= '';
-    C_cleni.cleni.browse_key();
-    //n nase.set(conc(" AND FIND_IN_SET(dd.stredisko,'",klu.cond_strediska.get,"')"));
-    //n [ if(has_skill('hdks'),{nase.set(cconc(show_our.get,nase.get,''))}) ];
-    dary.browse_load(conc(
-      cconc(C_dary.show_del,'',"left(deleted,1)!='D' AND "),
-      " typ IN (8,9) AND id_clen=",C_cleni.cleni.browse_key(),
-      //n nase.get,
-      cconc(C_dary.show_new," AND year(castka_kdy)>=year(curdate())-1")
-    ));
+    if (!C_cleni.cleni.browse_key()) return;
+    if (!dary.browse_load(conc(
+        C_dary.show_del ? '' : "left(deleted,1)!='D' AND ",
+        " typ IN (8,9) AND id_clen=",C_cleni.cleni.browse_key(),
+        C_dary.show_new ? " AND YEAR(castka_kdy)>=YEAR(CURDATE())-1" : ''
+    ))) return;
     _dary_suma();
     dary.dary_znacka();
   }
