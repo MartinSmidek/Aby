@@ -252,14 +252,14 @@ panel dop {type:'right', title:"[fa-envelope] Dopisy a seznamy", _sys:'*'
       show predmet [,,145,] { title:'předmět', data:etd.nazev, format:'sq' }
       show komu    [,,110,] { title:'komu' , data:etd.adresati, format:'sq#', map_pipe:cis_adresati.zkratka }
       show pocet    [,,30,] { title:'#', data:etd.pocet, format:'rs', help:"počet vygenerovaných PDF" }
-      proc onrowclick () { refresh }
-      proc refresh() { var ret:object
-        clear; form_state('n|s','u|z');
+      func onrowclick () { refresh() }
+      func refresh() { var ret:object
+        clear(); form_state('n|s','u|z');
         Init();
-        ret.set(ask('dop_show_vars',id_dopis.get));
-        vars.set(ret.html);
-        form.load(id_dopis.get);
-        obsah.fill(predmet.get,txt.get);
+        ret= php.dop_show_vars(id_dopis);
+        vars= ret.html;
+        form.load(id_dopis);
+        obsah.fill(predmet,txt);
       }
     }
     const L=395
@@ -277,9 +277,9 @@ panel dop {type:'right', title:"[fa-envelope] Dopisy a seznamy", _sys:'*'
     label pdf [L+10,89,450,20]
     # text dopisu
     label obsah [0,208,626,400] {
-      proc fill(nadpis,telo) {
-        obsah.set(conc("<div style='padding:0 10px;border:1px solid green'><h3 class='work'>",
-          nadpis,"</h3>",telo,'</div>'));
+      func fill(nadpis,telo) {
+        obsah= `<div style='padding:0 10px;border:1px solid green'><h3 class='work'>
+          ${nadpis}</h3>${telo}</div>`;
     }}
     # proměnné
     label vars [643,208,180,400] { title:'seznam proměnných',
@@ -417,7 +417,7 @@ panel dop {type:'right', title:"[fa-envelope] Dopisy a seznamy", _sys:'*'
       }
     }
     check znovu [LL+5,117,120,] { title:'včetně poslaných', format:'t'
-      proc onchange () { Reload() }
+      func onchange () { Reload() }
     }
     #--------------------------------------==> . test
     button test [LL+120,21,,] { tag:'s', title:'Ukázka',
@@ -443,13 +443,13 @@ panel dop {type:'right', title:"[fa-envelope] Dopisy a seznamy", _sys:'*'
           info= php.dop_zapis_datum(darci.browse_status(),{rok:rok,datum:odeslano});
         }
     }}
-    proc reselect (id) {
+    func reselect (id) {
 //      var cond:text
 //      cond.set(conc(" AND YEAR(datum)=",rok.get));
 //      [ dary.browse_load(conc("left(deleted,1)!='D' AND id_clen=",id,cond)) ];
 //      dary.browse_select(conc("left(deleted,1)!='D' AND druh!=1 AND id_clen=",id,cond))
     }
-    proc onstart () {
+    func onstart () {
 //      ii.potvrzeni.key(202); 
 //      drok.set(2); drok.onchange;
     }

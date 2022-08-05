@@ -5,7 +5,7 @@ panel pre {type:'right', title:"[fa-pie-chart] Přehledy", _sys:'pri'
   var this_item: ezer, this_par:object
   var this_export: number
   use rp: form _eko [12,4,,] 
-  use vz: form right { 
+  use vz: form right [12,4,,] { 
     check odkazy [-10,4,100,17] {title:'odkazy',style:'color:white', format:'t'
       func onchange() { this_item.click() } } 
   }
@@ -31,14 +31,15 @@ panel pre {type:'right', title:"[fa-pie-chart] Přehledy", _sys:'pri'
       }
       item  {title:'[fa-download] Download kontaktů a darů',                               skill:'m'
           par:{typ:'D',off:'uz|his|rok|VS|den',on:''}
-        proc onclick (i) { var tab:text
-          clear; rp.display(1); vz.display(0);
-          this_item.set(i);
-          rp.get.display(0,i.par.off); rp.get.display(1,i.par.on);
-          rp.fill(replace_fa(conc(i.owner.title,' - ',i.title)),'... počkejte prosím, provádím výpočet');
-          tab.set(ask('eko_download'));
+        func onclick (i:ezer) { var tab:text
+          clear(); rp.display(1); vz.display(0);
+          this_item= i;
+          rp.display(0,i.par.off); rp.display(1,i.par.on);
+          rp.header(i);
+          rp.fill('','... počkejte prosím, provádím výpočet');
+          tab= php.eko_download();
           rp.fill('',tab);
-          this_export.set(0);
+          this_export= 0;
         }
       }
     }
@@ -46,12 +47,12 @@ panel pre {type:'right', title:"[fa-pie-chart] Přehledy", _sys:'pri'
       item dar {title:'[fa-bar-chart] Histogram finančních darů',
 //          par:{deleni:'300,1000;3000;10000;30000;100000;300000;1000000'}
 //          par:{deleni:'300,700,1000;1500,2000;3000,4000,10000;20000;50000;100000'}
-        proc onclick (i) {
-          clear; rp.display(1); vz.display(0);
-          this_item.set(i); rp.get.display(0,'VS|rok|uz'); rp.get.display(1,'his|den');
-          rp.fill(replace_fa(conc(i.owner.title,' - ',i.title)),' ');
-          rp.fill('',ask('eko_histogram',this_export.get,rp.den_od.get,rp.den_do.get,0,i.par,rp.deleni.get));
-          this_export.set(0);
+        func onclick (i:ezer) {
+          clear(); rp.display(1); vz.display(0);
+          this_item= i; rp.display(0,'VS|rok|uz'); rp.display(1,'his|den');
+          rp.header(i);
+          rp.fill('',php.eko_histogram(this_export,rp.den_od,rp.den_do,0,i.par,rp.deleni));
+          this_export= 0;
       } }
     }
     menu {title:'Výroční zpráva',type:'group', _sys:'dar'
@@ -82,9 +83,9 @@ panel pre {type:'right', title:"[fa-pie-chart] Přehledy", _sys:'pri'
     label note [0,50,*,500] { title:'' }
     label [-81,0,364,30] { tag:'den', css:'parm', style:'zIndex:1' }
     button export [-20,5,,] { title:'Export', style:'zIndex:2'
-      proc onclick() { this_export.set(1); this_item.click; } }
+      func onclick() { this_export= 1; this_item.click(); } }
     button go [-88,5,,] { tag:'den,rok', title:'[fa-refresh]', style:'zIndex:2'
-      proc onclick() { this_item.click } }
+      func onclick() { this_item.click() } }
     // rok
     label [-79,0,163,30] { tag:'rok', css:'parm', style:'zIndex:1' }
 //    check nuly [-112,6,50,] { tag:'rok', title:'nuly', format:'t', value:'0' }
@@ -95,9 +96,9 @@ panel pre {type:'right', title:"[fa-pie-chart] Přehledy", _sys:'pri'
     label [-214,0,158,30] { tag:'uz', css:'parm', style:'zIndex:1' }
     field uzaverka [-224,6,87,] {tag:'uz', title:'uzávěrka:', type:'date', format:'Rrt', 
       help:'datum uzávěrky darů', skill:'h|hddeu'
-      proc onchanged() {
-        ask('eko_uzaverka',date2sql(this.get));
-        this.set(sql2date(ask('eko_uzaverka_den')));
+      func onchanged() {
+        php.eko_uzaverka(date2sql(this));
+        this= sql2date(php.eko_uzaverka_den());
     }}
     // osoby, firmy
     check fy [-331,4,50,] { title:'firmy' value:'1' }
@@ -110,18 +111,18 @@ panel pre {type:'right', title:"[fa-pie-chart] Přehledy", _sys:'pri'
     field deleni [80,30,600,] { tag:'his', help:'dělící body histogramu', format:'t'
         value:'300;1000;3000;10000;30000;100000;300000;1000000'
 //        value:'300,700,1000;1500,2000;3000,4000,10000;20000;50000;100000'
-      proc onchanged () { this_item.click } }
+      func onchanged () { this_item.click() } }
     func header(i:ezer) { var i_owner:ezer
       clear(); i_owner= i.owner();
       head= replace_fa(`<div class='karta'>${i_owner.title} - ${i.title}</div>`);
       note= '';
     }
-    proc fill(h,n) {
-      [ h; head.set(conc("<div class='karta'>",h,"</div>")) ];
-      [ n; note.set(n) ]
+    func fill(x,y) {
+      if (x) head= `<div class='karta'>${replace_fa(x)}</div>`;
+      if (y) note= y
     }
-    proc append(n) {
-      note.set(conc(note.get,n))
+    func append(y) {
+      if (y) note= conc(note,y)
     }
   }
 }
