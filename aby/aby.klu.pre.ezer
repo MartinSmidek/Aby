@@ -22,7 +22,7 @@ use p:  form _p_prevody [321,3,,]
 use i:  form _p_info    [405,331,,]
 use r:  form _p_rok     [6,507,,]
 use c:  form _p_clen    [405,390,,]
-use d:  form _p_dar     [880,390,,]
+//use d:  form _p_dar     [880,390,,]
 use f:  form _drop      [6,331,,]
 use k:  form _cmd       [180,520,,]
 # ----------------------------------------==> globální proc
@@ -32,7 +32,8 @@ use k:  form _cmd       [180,520,,]
 func p_reload () {
   r.filter_refresh();
 //  v.tit= "<h1>Výpisy</h1>";
-  p._prevody.browse_init(); c.init(); d.init(); i.init();
+  p._prevody.browse_init(); c.init(); i.init();
+//  d.init(); 
   v._vypisy.browse_load(r.p_filter);
 }
 #==> . zmena_typu
@@ -68,21 +69,32 @@ form _p_vypisy [,,1070,309] { css:'work'
     // sloupce
     show id_vypis [,,0,] { title:'ID výpisu', data:vv.id_vypis, format:'rsq=' }
     show {data:vp.id_dar}
-    show mintyp { title:'t', format:'s-q' 
-        expr:"IFNULL(MIN(IF(vp.typ IN (1,2,3,4,6),10,IF(vp.typ=8 AND vp.id_clen!=0,9,vp.typ))),0)"}
     show [,,20,] { title:'účet', data:vu.zkratka, format:'csq=' 
         help:'zkratka našeho účtu'}
+    show rok_vypis [,,40,] { title:'rok', data:vv.rok_vypis, format:'rsq=' }
+    show n_vypis [,,40,] { title:'č.', data:vv.n_vypis, format:'rsq=' }
+    show mintyp { title:'t', format:'s-q' 
+        expr:"IFNULL(MIN(IF(vp.typ IN (1,2,3,4,6),10,IF(vp.typ=8 AND vp.id_clen!=0,9,vp.typ))),0)"}
+    show maxtyp { title:'t', format:'s-q' 
+        expr:"IFNULL(MAX(IF(vp.typ IN (1,2,3,4,6),0,IF(vp.typ=8 AND vp.id_clen!=0,9,vp.typ))),0)"}
     show datum_od [,,65,] { title:'od', data:vv.datum_od, format:'rs-q=' }
     show datum_do [,,65,] { title:'do', data:vv.datum_do, format:'rsq=' }
-    show soubor [,,120,] { title:'soubor', data:vv.soubor, format:'ts' 
+    show stav_od [,,0,] { title:'poč.stav', data:vv.stav_od, format:'rsq=' }
+    show stav_do [,,0,] { title:'konc.stav', data:vv.stav_do, format:'rsq=' }
+    show soubor [,,35,] { title:'soubor', data:vv.soubor, format:'ts' 
+        css_cell:'maxtyp,5:pre_5,7:pre_7,8:pre_8,9:pre_9'
         help:'název importovaného souboru'}
     func onrowclick () {
       p._prevody.browse_load(`id_vypis=${v._vypisy.id_vypis}`);
       k.p_rychle_off();
     }
     func onclick() {
-      if (id_vypis.width()) { id_vypis.width(0); soubor.width(120) }
-      else { id_vypis.width(40); soubor.width(79) }
+      if (datum_od.width()) { 
+        datum_od.width(0); datum_do.width(0); stav_od.width(65); stav_do.width(65); 
+      }
+      else { 
+        datum_od.width(65); datum_do.width(65); stav_od.width(0); stav_do.width(0); 
+      }
     }
   }
 }
@@ -115,7 +127,7 @@ form _p_prevody [,,774,262] {
     show typ_slozenka { expr:"IF(d.typ=8 AND d.id_clen!=0,9,d.typ)" }
     func onrowclick () {
       i.load(id_dar);
-      d.load(id_dar);
+//      d.load(id_dar);
       if (idc) c.load_clen(idc); else c.init();
     }
     func onclick() {
@@ -188,10 +200,7 @@ form _p_prevody [,,774,262] {
 form _drop [,,392,161] { css:'work'
   #==> . vložení výpisů
   var  dfold='/banka'      // podsložka bez koncového / se nastavuje dynamicky
-  label [10,7,371,] {title:'místo pro vložení výpisu - přesvědčte se prosím, že název souboru 
-    <br>má tvar "číslo účtu-banka_od_do.csv" kde banka je 2100 
-    <br>a <u>od</u> a <u>do</u> jsou datumy ve tvaru rrrr-mm-dd'
-  }
+  label [10,7,371,] {title:'místo pro vložení bankovního výpisu typu CSV'}
   label drop [10,54,370,98] { type:'drop'
     func start() {
       drop.init('/banka','U:'); 
@@ -202,7 +211,7 @@ form _drop [,,392,161] { css:'work'
     }
     func onload(f:object) { var y:object // po dokončení přenosu, jméno bude ASCII
       echo(`load: ${f.name}`);
-      y= php.ch_ban_load(f.name);
+      y= php.aby_ban_load(f.name);
       if (y.war) warning(y.war);
       if (y.err) alert(y.err);
       else {
@@ -256,13 +265,13 @@ form _p_clen [,,464,123] { css:'work'
     form.display(2,osoba==1 ? 'o' : 'f');
   }
 }
-# --------------------------------------------------==> ROZDĚLENÍ
-form _p_dar [,,197,123] { css:'work'
-  view vp: table dar
-  label [8,12,100,15] { title:'<h1>úhrada / dar</h1>' }
-  field idp { data:vp.id_dar }
-  field castka [122,19,57,17] { title:'^částka', data:vp.castka, format:'dr' }
-}
+//# --------------------------------------------------==> ROZDĚLENÍ
+//form _p_dar [,,197,123] { css:'work'
+//  view vp: table dar
+//  label [8,12,100,15] { title:'<h1>úhrada / dar</h1>' }
+//  field idp { data:vp.id_dar }
+//  field castka [122,19,57,17] { title:'^částka', data:vp.castka, format:'dr' }
+//}
 # --------------------------------------------------==> VÝBĚR
 form _p_rok [,,155,74] { css:'parm'
   var p_filter=1

@@ -222,33 +222,39 @@ function aby_import($par) { trace();
 # ------------------------------------------------------------------------------------ aby csv2array
 # načtení CSV-souboru do asociativního pole, při chybě navrací chybovou zprávu
 # obsahuje speciální kód pro soubory kódované UTF-16LE
-function aby_csv2array($fpath,&$data,$max=0,$encoding='UTF-8') { trace();
-  $msg= '';
-//  display($fpath); fopen("C:/Ezer/beans/aby/doc/import/kontakty darci_2021.csv",'r');
-  $f= $encoding=='UTF-16LE' ? fopen_utf8($fpath, "r") : @fopen($fpath, "r");
-  if ( !$f ) { $msg.= "soubor $fpath nelze otevřít"; goto end; }
-  // načteme hlavičku
-  $s= fgets($f, 5000);
-  $bom= pack('H*','EFBBBF');
-  $s= preg_replace("/^$bom/", '', $s);
-  if ($encoding!='UTF-8' && $encoding!='UTF-16LE') {
-    if ($encoding=='CP1250')
-      $s= win2utf($s,1);
-    else 
-      $s= mb_convert_encoding($s, "UTF-8", $encoding);
-  }
-  // diskuse oddělovače
-  $del= strstr($s,';') ? ';' : (strstr($s,',') ? ',' : '');
-  if ( !$del ) { $msg.= "v souboru $fpath jsou nestandardní oddělovače"; goto end; }
-  $head= str_getcsv($s,$del);
-  $n= 0;
-  while (($s= fgets($f, 5000)) !== false) {
+function aby_csv2array($fpath,&$data,$max=0,$encoding='UTF-8',$delimiter='',$nprefix=0,&$prefix=null) { trace();
+  $encode= function($s,$encoding) {
     if ($encoding!='UTF-8' && $encoding!='UTF-16LE') {
       if ($encoding=='CP1250')
         $s= win2utf($s,1);
       else 
         $s= mb_convert_encoding($s, "UTF-8", $encoding);
     }
+    return $s;      
+  };
+  $msg= '';
+//  display($fpath); fopen("C:/Ezer/beans/aby/doc/import/kontakty darci_2021.csv",'r');
+  $f= $encoding=='UTF-16LE' ? fopen_utf8($fpath, "r") : @fopen($fpath, "r");
+  if ( !$f ) { $msg.= "soubor $fpath nelze otevřít"; goto end; }
+  // načteme první řádek s korekcí na BOM
+  $s= fgets($f, 5000);
+  $bom= pack('H*','EFBBBF');
+  $s= preg_replace("/^$bom/", '', $s);
+  $s= $encode($s,$encoding);
+  if ($prefix!==null) $prefix[]= $s;
+  // přeskočíme případný prefix
+  for ($i=1; $i<$nprefix; $i++) {
+    $s= fgets($f, 5000);
+    $s= $encode($s,$encoding);
+    $prefix[]= $s;
+  }
+  // diskuse oddělovače
+  $del= $delimiter ?: strstr($s,';') ? ';' : (strstr($s,',') ? ',' : '');
+  if ( !$del ) { $msg.= "v souboru $fpath jsou nestandardní oddělovače"; goto end; }
+  $head= str_getcsv($s,$del);
+  $n= 0;
+  while (($s= fgets($f, 5000)) !== false) {
+    $s= $encode($s,$encoding);
 //    display("$n:$s");
     $d= str_getcsv($s,$del);
     foreach ($d as $i=>$val) {

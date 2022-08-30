@@ -333,6 +333,10 @@ table ukol { key_id:'id_ukol'
 }
 table vypis { key_id:'id_vypis'
   number id_vypis
+  number rok_vypis
+  number n_vypis
+  number stav_od
+  number stav_do
   date   datum_od { sql_pipe:'sql_date1' }
   date   datum_do { sql_pipe:'sql_date1' }
   text   soubor

@@ -243,35 +243,23 @@ function ch_bank_load_ucty () {
     }
   }
 }
-# -----------------------------------------------------------------------------------==> ch ban_load
+# ----------------------------------------------------------------------------------==> aby ban_load
 # ASK
 # načtení souboru CSV z ČSAS
-function ch_ban_load($file) {  //trace();
+function aby_ban_load($file) {  //trace();
   global $ezer_path_root;
   $y= (object)array('err'=>'','msg'=>'ok',idv=>0);
   // definice importovaných sloupců
-  $flds_0800= array(
-      "Datum zaúčtování"  => array(0,'d','castka_kdy'),
-      "Název protiúčtu"   => array(0,'n','ucet_popis'),
-      "Protiúčet"         => array(0,'u','ucet'),
-      "Částka"            => array(0,'c','castka'),
+  $flds_2010= array(
+      "Datum"             => array(0,'d','castka_kdy'),
+      "Objem"             => array(0,'c','castka'),
       "Měna"              => array(0,'m'),
-      "Zpráva pro příjemce" => array(0,'p0','zprava'),
-      "Zpráva pro mě"     => array(0,'p1','zprava')
-    );
-  $flds_0600= array(
-      "Číslo účtu"        => array(0),
-      "Splatnost"         => array(0,'d','castka_kdy'),
-      "Částka"            => array(0,'c','castka'),
-      "Měna"              => array(0,'m'),
+      "Protiúčet"         => array(0,'u1','ucet'),
       "Název protiúčtu"   => array(0,'n','ucet_popis'),
-      "Číslo protiúčtu"   => array(0,'u1','ucet'),
-      "Banka protiúčtu"   => array(0,'u2','ucet'),
-      "Variabilní Symbol" => array(0,'vs','vsym'),
+      "Kód banky"         => array(0,'u2','ucet'),
+      "VS"                => array(0,'vs','vsym'),
       "Zpráva pro příjemce" => array(0,'p0','zprava'),
-      "Popis 1"           => array(0,'p1','zprava'),
-//      "Popis 2"           => array(0,'p2','zprava'),
-//      "Popis 3"           => array(0,'p3','zprava')
+      "Poznámka"            => array(0,'p1','zprava') // bereme pouze pokus se liší od názvu protiúčtu
     );
   // načti vlastní účty
   $nase_ucty= array(); // účet -> ID
@@ -280,26 +268,39 @@ function ch_ban_load($file) {  //trace();
     $nase_ucty[$u_b]= $idu;
   }
 //  debug($nase_ucty,'$nase_ucty');
-  // rozlišení banky 0800/0600 podle jména souboru
-  $m= null;
-  $ok= preg_match("~(\d+)_(0800|0600)_(\d\d\d\d_\d\d_\d\d)_(\d\d\d\d_\d\d_\d\d)\.csv~",$file,$m);
-  if (!$ok) {
-    $y->err= "vložený soubor nemá standardní pojmenování:<br> 'účet-banka_od_do.csv', 
-      <br>kde od a do jsou datumy ve tvaru rrrr-mm-dd"; 
-    goto end;
-  }
-  $banka= $m[2];
-  $nas_ucet= "$m[1]/$banka";
-  $idu= isset($nase_ucty[$nas_ucet]) ? $nase_ucty[$nas_ucet] : 0;
-  if (!$idu) { $y->err= "'$nas_ucet' není mezi účty zapsanými v Nastavení"; goto end; }
-  $sod= str_replace('_','-',$m[3]);
-  $sdo= str_replace('_','-',$m[4]);
-  // načtení hlavičky a převodů do pole
   $csv= "$ezer_path_root/banka/$file";
-  $data= array();
-  ch_csv2array($csv,$data,0, $banka=='0800' ? 'UTF-16LE' : 'CP1250');
-  $flds= $banka=='0800' ? $flds_0800 : $flds_0600;
-  $od= '9999-99-99'; $do= '0000-00-00';
+  $data= $prefix= array();
+  $msg= aby_csv2array($csv,$data,0, 'UTF-8',';',10,$prefix); // 9 řádků před vlastními daty
+//  debug($data[0],"load:$msg"); 
+  debug($prefix,"prefix"); 
+  // rozbor prefixu 
+  // ------------- výpis
+  $m= null;
+  $ok= preg_match('~"Výpis č.\s*(\d+)/(\d+)\s*z účtu\s*""(\d+)/(\d+)""~',$prefix[0],$m);
+  $vypis_n= $m[1];
+  $vypis_rok= $m[2];
+  $banka= $m[4];
+  $nas_ucet= "$m[3]/$banka";
+  $idu= isset($nase_ucty[$nas_ucet]) ? $nase_ucty[$nas_ucet] : 0;
+//  debug($m,"ok=$ok, ucet=$nas_ucet, idu=$idu");
+  if (!$idu) { $y->err= "'$nas_ucet' není mezi účty zapsanými v Nastavení"; goto end; }
+  // -------------- od-do
+  $m= null;
+  $ok= preg_match('~"Období:\s*([\d\.]+)\s*-\s*([\d\.]+)"~',$prefix[3],$m);
+  $od= sql_date($m[1],1);
+  $do= sql_date($m[2],1);
+//  debug($m,"ok=$ok, od=$od, do=$do");
+  // -------------- počáteční stav
+  $m= null;
+  $ok= preg_match('~".*:\s*([\d\,]+)\s*CZK"~',$prefix[4],$m);
+  $stav_od= str_replace(',','.',$m[1]);
+//  // -------------- koncový stav
+  $m= null;
+  $ok= preg_match('~".*:\s*([\d\,]+)\s*CZK"~',$prefix[5],$m);
+  $stav_do= str_replace(',','.',$m[1]);
+  debug($m,"ok=$ok, stav od=$stav_od, do=$stav_do");
+  // zpracování výpisu
+  $flds= $flds_2010;
   $prevody= array(); // idc,
   foreach ($data as $i=>$rec) {
     // v prvním průchodu proveď kontroly a založ záznam pro výpis
@@ -312,14 +313,6 @@ function ch_ban_load($file) {  //trace();
         if (!$desc[0]) { $y->err= "ve výpisu chybí povinné pole '$fld'"; goto end; }
       }
     }
-    if ($banka=='0600') {
-      // kontrola čísla_účtu pro Monetu
-      if ($rec["Číslo účtu"]!=$nas_ucet) {
-        $y->err= "na řádku $i je převod na účet {$rec["Číslo účtu"]} 
-          což nesouhlasí s účtem výpisu $nas_ucet"; 
-        goto end;
-      }
-    }
     // vložení záznamu
     $set= ''; $castka= 0; $ucet= $popis= $pozn= $zprava= '';
     foreach ($rec as $fld=>$val) {
@@ -327,18 +320,10 @@ function ch_ban_load($file) {  //trace();
       switch ($fmt) {
         // společné
         case 'd': $datum= sql_date($val,1); 
-                  $od= strnatcmp($datum,$od)<0 ? $datum : $od; 
-                  $do= strnatcmp($datum,$do)>0 ? $datum : $do; 
                   $set.= ", $f='$datum'"; 
-                  // test, jestli je v hranicích daných jménem souboru
-                  if (strnatcmp($datum,$sod)<0 || strnatcmp($datum,$sdo)>0) {
-                    $y->err= "na řádku $i je platba s datem $datum, které neleží v intervalu $sod až $sdo"; 
-                    goto end;
-                  }
                   $nd= select('COUNT(*)','dar',"nas_ucet=$idu AND deleted='' AND castka_kdy='$datum'");
                   if ($nd) {
                     display("na řádku $i je platba s datem $datum, které již pro tento účet bylo zpracované"); 
-//                    $y->war= "na řádku $i je platba s datem $datum, které již pro tento účet bylo zpracované"; 
                     $y->err= "na řádku $i je platba s datem $datum, které již pro tento účet bylo zpracované"; 
                     goto end;
                   }
@@ -357,23 +342,12 @@ function ch_ban_load($file) {  //trace();
         case 'u1': $ucet= $val; break;
         case 'u2': $ucet.= "/$val"; 
                    $set.= ", ucet='$ucet'"; break;
-        case 'p0': $zprava= $val; break;
-        case 'p1': $pozn.= " $val"; break;
-        case 'p2': $pozn.= " $val"; break;
-        case 'p3': $pozn.= " $val"; break;
+        case 'p0': if ($val!=$popis && $val!=trim($pozn)) $zprava= $val; break;
+        case 'p1': if ($val!=$popis && $val!=trim($pozn)) $pozn.= " $val"; break; 
       }
     }
-    // dokončení převodu pro Moneta
-    if ($banka=='0600') {
-      $pozn= strtr($pozn,array('OKAMŽITÁ ÚHRADA'=>'','PŘEVOD PROSTŘEDKŮ'=>'',$popis=>''));
-      $pozn= trim("$zprava $pozn");
-      if ($pozn) $set.= ", zprava='$pozn'"; 
-    }
-    // dokončení převodu pro Moneta
-    if ($banka=='0800') {
-      $pozn= trim("$zprava $pozn");
-      if ($pozn) $set.= ", zprava='$pozn'"; 
-    }
+    $pozn= trim("$zprava $pozn");
+    if ($pozn) $set.= ", zprava='$pozn'"; 
     // určení typu a způsobu
     $typ= $castka<=0 ? 1 : ($ucet=='160987123/0300' && $popis=='CESKA POSTA, S.P.' ? 8 : 5);
     $zpusob= $typ==8 ? 3 : 2;
@@ -393,20 +367,33 @@ function ch_ban_load($file) {  //trace();
     }
     // vložení záznamu - pokud jde o příjem
     $set.= ", id_clen=$idc, typ= $typ, zpusob=$zpusob ";
-    if ($castka>0) {
+//    if ($castka>0) {
       $prevody[]= $set;
-    }
+//    }
   }
   debug($prevody);
   // pokud je vše v pořádku vlož výpis
   query("INSERT INTO vypis SET soubor='$file', nas_ucet=$idu, 
-      soubor_od='$sod', soubor_do='$sdo', datum_od='$od', datum_do='$do' ");
+      rok_vypis='$vypis_rok', n_vypis='$vypis_n', 
+      datum_od='$od', datum_do='$do', stav_od='$stav_od', stav_do='$stav_do'  ");
   $y->idv= pdo_insert_id();
   // a převody
   foreach ($prevody as $set) {
     query("INSERT INTO dar SET id_vypis=$y->idv, nas_ucet=$idu $set");    
   }
 end:
+  if ($y->err) {
+    // problém - smažeme import
+    unlink($csv);
+  }
+  else {
+    // úspěch - uklidíme
+    $path= "$ezer_path_root/banka/$banka/$vypis_rok";
+    if (!file_exists($path)) mkdir ($path);
+    $info= pathinfo($csv);
+    $ok= copy($csv,"$path/{$info['basename']}");
+    if ($ok) unlink($csv);
+  }
   return $y;
 }
 # =========================================================================================> PROJEKT
