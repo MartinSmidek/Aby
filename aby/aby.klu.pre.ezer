@@ -48,6 +48,7 @@ func zmena_typu(novy_typ,idc) { var y:object // idc může být *
 func Refresh() {
   p._prevody.browse_row();
   v._vypisy.browse_row();
+  if (p._prevody.idc) c.load_clen(p._prevody.idc); else c.init();
 }
 # --------------------------------------------------==> VÝPISY
 form _p_vypisy [,,1070,309] { css:'work'
@@ -137,60 +138,53 @@ form _p_prevody [,,774,262] {
     # -------------------------------------==> . kontextové menu
     menu { type:'context'
       item { title:'ukázat dárce'
-        func onclick () { 
-          if (idc) cle.show_clen(idc); 
-      }}
+        func onclick () {  if (idc) cle.show_clen(idc); }}
+      item { title:'ukázat změny platebních údajů'
+        func onclick () { track.back_show('dar',_prevody.browse_key()) }}
+      item { title:'-anonymní dar'
+        func onclick () {  c.load_clen(1); zmena_typu(9,1); }}
       item { title:'vložit jako nového dárce'
-        func onclick () { 
-          pop_novy.Vytvor(id_dar,vsym); 
-      }}
-      item { title:'-ukázat změny platebních údajů'
-        func onclick () { 
-          track.back_show('dar',_prevody.browse_key()) 
-      }}
-      item { title:'spojit s existujícím darem'
-        func onclick () { 
-          php.ch_bank_join_dar(_prevody.browse_key());
-          _prevody.browse_row();
-      }}
-      item { title:'... celý výpis' skill:'a'
-        func onclick () { 
-          php.ch_bank_join_dary(v._vypisy.browse_key());
-          _prevody.browse_refresh();
-      }}
+        func onclick () { pop_novy.Vytvor(id_dar,vsym); }}
+      item { title:'vložit jako firemního dárce'
+        func onclick () { pop_novy.Vytvor_fy(id_dar,vsym); }}
     }
   }
-  # --------------------------------------------------==> DROP
-  panel pop_novy [,,392,161] { title:'Vytvoření nového dárce', type:'popup', css:'dialog'
+  # --------------------------------------------------==> NOVÝ
+  panel pop_novy [,,300,80] { title:'Vytvoření nového dárce', type:'popup', css:'dialog'
+    var je_firma=0 // 1=firma
     func Vytvor(_idd,_vs) { var y:object
-      clear();
-      f.jmeno= ''; f.prijmeni= ''; f.telefon= ''; f.k_fld= '';
-      f.vs= _vs; f.idd= _idd;
+      clear(); f.display(2,'o'); je_firma= 0;
+      f.jmeno= ''; f.prijmeni= ''; f.idd= _idd;
       y= php.ch_bank_novy_darce(_idd);
       if (y.err) return(alert(y.err));
       f.jmeno= y.jmeno;
       f.prijmeni= y.prijmeni;
       panel.popup();
     }
+    func Vytvor_fy(_idd,_vs) { var y:object
+      clear(); f.display(2,'f'); je_firma= 1;
+      f.nazev= ''; f.idd= _idd;
+      y= php.ch_bank_novy_darce(_idd,je_firma);
+      if (y.err) return(alert(y.err));
+      f.nazev= y.nazev;
+      panel.popup();
+    }
     use f: form { css:'work'
-      var vs:text, idd:number
-      field jmeno [61,10,100,] { title:'jméno' }
-      field prijmeni [61,35,100,] { title:'příjmení' }
-      field telefon [61,60,100,] { title:'telefon' }
-      button [180,60,,] {title:'VS jako telefon'
-        func onclick () { telefon= vs; }
-      }
-      field k_fld [61,85,100,] { title:'kategorie' }
-      button [180,85,,] {title:'[fa-long-arrow-left]' func onclick () { k_fld= k_sel; }}
-      select k_sel [215,85,169,] { type:'map0', options:cis_kategorie.hodnota, format:'t'  }
+      var idd:number
+      field nazev [61,10,152,] { tag:'f', title:'firma' }
+      field jmeno [61,10,100,] { tag:'o', title:'jméno' }
+      field prijmeni [61,35,100,] { tag:'o', title:'příjmení' }
       // zapiš nebo odejdi
-      button [334,10,,] {title:'[fa-save] Ulož'
+      button [234,10,,] {title:'[fa-save] Ulož'
         func onclick () { 
-          php.ch_bank_uloz_darce(idd,jmeno,prijmeni,telefon,k_sel.key());
+          if (panel.je_firma)
+            php.ch_bank_uloz_darce_fy(idd,nazev);
+          else
+            php.ch_bank_uloz_darce(idd,jmeno,prijmeni);
           Refresh();
           panel.hide(1); 
       }}
-      button [334,40,,] {title:'[fa-undo] Zpět'
+      button [234,40,,] {title:'[fa-undo] Zpět'
         func onclick () { panel.hide(0); }
       }
     }
@@ -309,30 +303,19 @@ form _cmd [,,897,89] { css:'work'
       ram.set_css('aktivni','pasivni');
       rychle_start.enable(0); rychle_ano.enable(1);
       rychle_ne.enable(1); rychle_konec.enable(1);
-      p._prevody.browse_next(1); 
+      p._prevody.browse_next(1); // nastav 1. řádek
       if (eq(p._prevody.typ,5,7)) 
-        p._prevody.raise('onrowclick',p._prevody.id_dar)
+        p._prevody.onrowclick();
+//        p._prevody.raise('onrowclick',p._prevody.id_dar)
       else
         p_rychle_next()
   }}
-  func p_rychle_next () {
-    p._prevody.browse_next(); p_rychle_skip(); 
-    if (eq(p._prevody.typ.get,5,7))
-      p._prevody.raise('onrowclick',p._prevody.id_dar)
-    else
-      p_rychle_off()
-  }
   button rychle_ano [477,23,,] { title:'[fa-plus] Ano, další', format:'d',
     help:'zapiš platbu odsouhlasenému kontaktu a běž dál'
     func onclick () { var idd:number
       if (c.key()) zmena_typu(9,c.key());
       p_rychle_next()
   }}
-  func p_rychle_skip () {
-    if (eq(p._prevody.typ.get,5,7) && p._prevody.idc) {
-      p._prevody.browse_next(); p_rychle_skip()
-    }
-  }
   button rychle_ne [563,23,,] { title:'[fa-minus] Ne, další', format:'d', help:'běž dál'
     func onclick () {
       p_rychle_next()
@@ -341,6 +324,18 @@ form _cmd [,,897,89] { css:'work'
     func onclick () {
 //      p_rychle_off
   }}
+  func p_rychle_next () {
+    p._prevody.browse_next(); p_rychle_skip(); 
+    if (eq(p._prevody.typ.get,5,7))
+      p._prevody.raise('onrowclick',p._prevody.id_dar)
+    else
+      p_rychle_off()
+  }
+  func p_rychle_skip () {
+    while (!eq(p._prevody.typ.get,5,7) || !p._prevody.idc) {
+      if (!p._prevody.browse_next()) break; 
+    }
+  }
   func p_rychle_off () {
     rychle= 0; ram.set_css('pasivni','aktivni');
     rychle_start.enable(1); rychle_ano.enable(0);

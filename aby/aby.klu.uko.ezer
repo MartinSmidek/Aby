@@ -177,4 +177,9 @@ form _ukoly [,,400,50] {
     else
       form.init()
   }
+  # ------------------------==> . kontextové_menu
+  menu { type:'context'
+    item back { title:'ukázat všechny změny'
+      func onclick () { track.back_show('ukol',form.key()) } }
+  }
 }
