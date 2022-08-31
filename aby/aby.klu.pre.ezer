@@ -154,9 +154,10 @@ form _p_prevody [,,774,262] {
     var je_firma=0 // 1=firma
     func Vytvor(_idd,_vs) { var y:object
       clear(); f.display(2,'o'); je_firma= 0;
-      f.jmeno= ''; f.prijmeni= ''; f.idd= _idd;
+      f.titul= ''; f.jmeno= ''; f.prijmeni= ''; f.idd= _idd;
       y= php.ch_bank_novy_darce(_idd);
       if (y.err) return(alert(y.err));
+      f.titul= y.titul;
       f.jmeno= y.jmeno;
       f.prijmeni= y.prijmeni;
       panel.popup();
@@ -172,15 +173,16 @@ form _p_prevody [,,774,262] {
     use f: form { css:'work'
       var idd:number
       field nazev [61,10,152,] { tag:'f', title:'firma' }
-      field jmeno [61,10,100,] { tag:'o', title:'jméno' }
-      field prijmeni [61,35,100,] { tag:'o', title:'příjmení' }
+      field titul [61,7,100,] { tag:'o', title:'titul' }
+      field jmeno [61,32,100,] { tag:'o', title:'jméno' }
+      field prijmeni [61,57,100,] { tag:'o', title:'příjmení' }
       // zapiš nebo odejdi
       button [234,10,,] {title:'[fa-save] Ulož'
         func onclick () { 
           if (panel.je_firma)
             php.ch_bank_uloz_darce_fy(idd,nazev);
           else
-            php.ch_bank_uloz_darce(idd,jmeno,prijmeni);
+            php.ch_bank_uloz_darce(idd,titul,jmeno,prijmeni);
           Refresh();
           panel.hide(1); 
       }}

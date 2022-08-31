@@ -118,10 +118,23 @@ function ch_bank_novy_darce ($idd,$firma=0) {
   }
   else {
     // vytvoření návrhu osoby
-    list($jmeno,$prijmeni)= preg_split("/[\s,]+/u",trim($popis));
-  //  display("$popis:$jmeno,$prijmeni");
-  //  $jmeno= mb_ucfirst(mb_strtolower($jmeno));
-  //  $prijmeni= mb_ucfirst(mb_strtolower($prijmeni));
+    $titul= '';
+    $tituly= 'Bc|Mgr|Ing|JUDr|MUDr|MVDr|MsDr|Paedr|PHDr|ThDr|ThLic';
+    $m= null;
+    $ok= preg_match("~(?:($tituly)\.|)\s*(\w+)[\s,]+(\w+)~iu",trim($popis),$m);
+    if ($ok) {
+      if ($m[1]) {
+        $mtit= explode('|',$tituly);
+        $i= array_search(strtolower($m[1]), array_map('strtolower', $mtit));
+        $titul= $m[1] ? "$mtit[$i]." : '';
+      }
+      $jmeno= $m[2];
+      $prijmeni= $m[3];
+    }
+    else {
+      list($jmeno,$prijmeni)= preg_split("/[\s,]+/u",trim($popis));
+    }
+  //  display("$popis:$titul $jmeno $prijmeni");
     $jmeno= mb_convert_case($jmeno, MB_CASE_TITLE, 'UTF-8');
     $prijmeni= mb_convert_case($prijmeni, MB_CASE_TITLE, 'UTF-8');
     $zname= select('jmeno','_jmena',"jmeno='$jmeno'");
@@ -133,16 +146,18 @@ function ch_bank_novy_darce ($idd,$firma=0) {
       $ret->jmeno= $prijmeni;
       $ret->prijmeni= $jmeno;
     }
+    $ret->titul= $titul;
   }
 end:
   return $ret;
 }
-function ch_bank_uloz_darce($idd,$jmeno,$prijmeni) {
+function ch_bank_uloz_darce($idd,$titul,$jmeno,$prijmeni) {
   // vlož osobní kontakt 
   $upd= array();
   $idc= ezer_qry("INSERT",'clen',0,array(
     (object)array('fld'=>'zdroj',     'op'=>'i','val'=>'VYPIS'),
     (object)array('fld'=>'osoba',     'op'=>'i','val'=>1),
+    (object)array('fld'=>'titul',     'op'=>'i','val'=>$titul),
     (object)array('fld'=>'jmeno',     'op'=>'i','val'=>$jmeno),
     (object)array('fld'=>'prijmeni',  'op'=>'i','val'=>$prijmeni)
   ));
