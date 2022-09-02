@@ -447,7 +447,7 @@ function aby_donio_load($csv) { trace();
   if (!isset($data[0]['Datum příspěvku'])) {
     $res->err= "'$csv' asi není export z donio.cz"; goto end;
   }
-  // ochrana proti násobnému načtení
+  // ochrana proti násobnému načtení ALE nikoliv proti změně kódování
   $md5= md5_file($csv_path);
   $duplicita= select('soubor','projekt',"typ=1 AND md5='$md5'");
   if ($duplicita) {
@@ -529,6 +529,10 @@ function aby_donio_load($csv) { trace();
   query("UPDATE projekt SET suma='$suma' WHERE id_projekt=$res->idp");
   $res->war= "Bylo vloženo $n_clen lidí a $n_dar darů";
 end:
+  if ($res->err) {
+    // problém - smažeme neúspěšný import
+    unlink($csv_path);
+  }
   return $res;
 }
 # --------------------------------------------------------------------------------- aby darujme_load
@@ -547,7 +551,7 @@ function aby_darujme_load($csv,$typ=2) { trace();
   if (!isset($data[0]['Částka převedená na účet NNO (CZK)'])) {
     $res->err= "'$csv' asi není export z darujme.cz"; goto end;
   }
-  // ochrana proti násobnému načtení 
+  // ochrana proti násobnému načtení ALE nikoliv proti změně kódování
   $md5= md5_file($csv_path);
   $duplicita= select('COUNT(*)','projekt',"typ=$typ AND FIND_IN_SET('$md5',md5)");
   if ($duplicita) {
@@ -659,5 +663,9 @@ function aby_darujme_load($csv,$typ=2) { trace();
   }
   $res->war= "Bylo vloženo $n_clen lidí a $n_dar darů";
 end:
+  if ($res->err) {
+    // problém - smažeme neúspěšný import
+    unlink($csv_path);
+  }
   return $res;
 }

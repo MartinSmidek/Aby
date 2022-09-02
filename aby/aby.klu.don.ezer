@@ -93,7 +93,10 @@ form _drop [,,392,161] { css:'work'
       echo(`load: ${f.name}`);
       y= php.aby_donio_load(f.name); // => {idp,war,err}
       if (y.war) warning(y.war);
-      if (y.err) alert(y.err);
+      if (y.err) {
+        alert(y.err);
+        echo("výmaz souboru");
+      }
       else {
         nazev= prompt2('Pojmenujte projekt');
         if (nazev) php.query(`UPDATE projekt SET nazev='${nazev}' WHERE id_projekt=${y.idp}`);

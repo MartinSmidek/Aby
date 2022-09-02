@@ -222,6 +222,7 @@ function aby_import($par) { trace();
 # ------------------------------------------------------------------------------------ aby csv2array
 # načtení CSV-souboru do asociativního pole, při chybě navrací chybovou zprávu
 # obsahuje speciální kód pro soubory kódované UTF-16LE
+# ověřuje kódování souboru 
 function aby_csv2array($fpath,&$data,$max=0,$encoding='UTF-8',$delimiter='',$nprefix=0,&$prefix=null) { trace();
   $encode= function($s,$encoding) {
     if ($encoding!='UTF-8' && $encoding!='UTF-16LE') {
@@ -233,13 +234,19 @@ function aby_csv2array($fpath,&$data,$max=0,$encoding='UTF-8',$delimiter='',$npr
     return $s;      
   };
   $msg= '';
+  $utf8= false; 
 //  display($fpath); fopen("C:/Ezer/beans/aby/doc/import/kontakty darci_2021.csv",'r');
   $f= $encoding=='UTF-16LE' ? fopen_utf8($fpath, "r") : @fopen($fpath, "r");
   if ( !$f ) { $msg.= "soubor $fpath nelze otevřít"; goto end; }
   // načteme první řádek s korekcí na BOM
   $s= fgets($f, 5000);
-  $bom= pack('H*','EFBBBF');
-  $s= preg_replace("/^$bom/", '', $s);
+  if (mb_check_encoding($s,'UTF-8') || mb_check_encoding($s,'UTF-16LE')) {
+    $bom= pack('H*','EFBBBF');
+    $s= preg_replace("/^$bom/", '', $s);
+  }
+  else {
+    $encoding= 'CP1250';
+  }
   $s= $encode($s,$encoding);
   if ($prefix!==null) $prefix[]= $s;
   // přeskočíme případný prefix

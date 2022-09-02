@@ -529,13 +529,15 @@ form _ukoly [,,400,524] {
     help:'naplní položky základními hodnotami, vlastní vytvoření se provede uložením změn'
     func onclick () { _ukol_novy(); _form_state('bc','be|br') }
   }
-  func _ukol_novy () {
+  func _ukol_novy () { var ja:number
+    ja= sys('user','id_user'); 
+    if (!ja) error('patrně došlo k odhlášení - obnovte prosím okno prohlížeče');
     form.init(1); u_popis.change();
     stav= 1; stav.change();
     id_clen= C_clen.id; id_clen.change();
     u_od= now(); u_od.change(); // od teď
     u_do= now(); u_do.change(); // ASAP
-    u_kdo= sys('user','id_user'); u_kdo.change(); // já
+    u_kdo= ja; u_kdo.change(); // já
     u_komu.key(u_kdo); u_komu.change(); // sobě
   }
   func _ukol_uloz () {
