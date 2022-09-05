@@ -200,6 +200,7 @@ function ch_bank_kontrola ($cis_ucet,$rok) {
   }
   return $html;
 }
+/*
 # -------------------------------------------------------------------------------- ch bank_join_dary
 # spáruj dary výpisu 
 function ch_bank_join_dary ($idv) {
@@ -277,9 +278,10 @@ function ch_bank_load_ucty () {
     }
   }
 }
+*/
 # ----------------------------------------------------------------------------------==> aby ban_load
 # ASK
-# načtení souboru CSV z ČSAS
+# načtení souboru CSV z bankovního účtu
 function aby_ban_load($file) {  //trace();
   global $ezer_path_root;
   $y= (object)array('err'=>'','msg'=>'ok',idv=>0);
@@ -432,7 +434,7 @@ end:
 }
 # =========================================================================================> PROJEKT
 # ----------------------------------------------------------------------------------- aby donio_load
-# primární import dat => {idp,war,err}
+# import dat pro donio.cz => {idp,war,err}
 function aby_donio_load($csv) { trace();
   global $ezer_path_root;
   $res= (object)array('idp'=>0,'err'=>'','war'=>'');
