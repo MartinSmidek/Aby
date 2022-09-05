@@ -142,7 +142,7 @@ form _p_prevody [,,774,262] {
       item { title:'ukázat změny platebních údajů'
         func onclick () { track.back_show('dar',_prevody.browse_key()) }}
       item { title:'-anonymní dar'
-        func onclick () {  c.load_clen(1); zmena_typu(9,1); }}
+        func onclick () {  c.load_clen(1); zmena_typu(typ==8?8:9,1); }}
       item { title:'vložit jako nového dárce'
         func onclick () { pop_novy.Vytvor(id_dar,vsym); }}
       item { title:'vložit jako firemního dárce'
@@ -254,7 +254,7 @@ form _p_clen [,,464,123] { css:'work'
   button zmenit [27,88,,] {
     title:"<span class='pre_5'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span> rozpojit"
     func onclick () {
-      zmena_typu(5,0); c.init()
+      zmena_typu(p._prevody.typ==8?8:5,0); c.init()
   }}
   func load_clen (idc) {
     form.load(idc);
