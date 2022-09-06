@@ -21,34 +21,34 @@ func ukol_show(id_ukol,kdo,komu) {
 
 menu m {type:'left', active:*
   menu g1 {title:'Moje úkoly',type:'group', _sys:'*'
-    item a {title:'přehled všech'         ,par:°{cond:"kdo_pro=#I"} }
-    item i {title:'... nezrušených'       ,par:°{cond:"kdo_pro=#I AND stav<3"} }
-    item {title:'... nezahájených'        ,par:°{cond:"kdo_pro=#I AND stav=1 AND cas_bg='0000-00-00' AND cas_ok='0000-00-00'"} }
-    item {title:'... po termínu'          ,par:°{cond:"kdo_pro=#I AND stav=1 AND cas_do<=NOW() AND cas_ok='0000-00-00'"} }
-    item {title:'... plněných'            ,par:°{cond:"kdo_pro=#I AND stav=1 AND cas_bg!='0000-00-00' AND cas_ok='0000-00-00'"} }
-    item {title:'... splněných'           ,par:°{cond:"kdo_pro=#I AND stav=1 AND cas_ok!='0000-00-00'"} }
-    item {title:'... odložených'          ,par:°{cond:"kdo_pro=#I AND stav=2"} }
-    item {title:'... zrušených'           ,par:°{cond:"kdo_pro=#I AND stav=3"} }
+    item a {title:'přehled všech'         ,par:{cond:"kdo_pro=#I"} }
+    item i {title:'... nezrušených'       ,par:{cond:"kdo_pro=#I AND stav<3"} }
+    item {title:'... nezahájených'        ,par:{cond:"kdo_pro=#I AND stav=1 AND cas_bg='0000-00-00' AND cas_ok='0000-00-00'"} }
+    item {title:'... po termínu'          ,par:{cond:"kdo_pro=#I AND stav=1 AND cas_do<=NOW() AND cas_ok='0000-00-00'"} }
+    item {title:'... plněných'            ,par:{cond:"kdo_pro=#I AND stav=1 AND cas_bg!='0000-00-00' AND cas_ok='0000-00-00'"} }
+    item {title:'... splněných'           ,par:{cond:"kdo_pro=#I AND stav=1 AND cas_ok!='0000-00-00'"} }
+    item {title:'... odložených'          ,par:{cond:"kdo_pro=#I AND stav=2"} }
+    item {title:'... zrušených'           ,par:{cond:"kdo_pro=#I AND stav=3"} }
   }
   menu g2 {title:'Mnou zadané úkoly',type:'group', _sys:'*'
-    item a {title:'přehled všech'         ,par:°{cond:"kdo_od=#I"} }
-    item {title:'... nezrušených'         ,par:°{cond:"kdo_od=#I AND stav<3"} }
-    item {title:'... nezahájených'        ,par:°{cond:"kdo_od=#I AND stav=1 AND cas_bg='0000-00-00' AND cas_ok='0000-00-00'"} }
-    item {title:'... po termínu'          ,par:°{cond:"kdo_od=#I AND stav=1 AND cas_do<=NOW() AND cas_ok='0000-00-00'"} }
-    item {title:'... plněných'            ,par:°{cond:"kdo_od=#I AND stav=1 AND cas_bg!='0000-00-00' AND cas_ok='0000-00-00'"} }
-    item {title:'... splněných'           ,par:°{cond:"kdo_od=#I AND stav=1 AND cas_ok!='0000-00-00'"} }
-    item {title:'... odložených'          ,par:°{cond:"kdo_od=#I AND stav=2"} }
-    item {title:'... zrušených'           ,par:°{cond:"kdo_od=#I AND stav=3"} }
+    item a {title:'přehled všech'         ,par:{cond:"kdo_od=#I"} }
+    item {title:'... nezrušených'         ,par:{cond:"kdo_od=#I AND stav<3"} }
+    item {title:'... nezahájených'        ,par:{cond:"kdo_od=#I AND stav=1 AND cas_bg='0000-00-00' AND cas_ok='0000-00-00'"} }
+    item {title:'... po termínu'          ,par:{cond:"kdo_od=#I AND stav=1 AND cas_do<=NOW() AND cas_ok='0000-00-00'"} }
+    item {title:'... plněných'            ,par:{cond:"kdo_od=#I AND stav=1 AND cas_bg!='0000-00-00' AND cas_ok='0000-00-00'"} }
+    item {title:'... splněných'           ,par:{cond:"kdo_od=#I AND stav=1 AND cas_ok!='0000-00-00'"} }
+    item {title:'... odložených'          ,par:{cond:"kdo_od=#I AND stav=2"} }
+    item {title:'... zrušených'           ,par:{cond:"kdo_od=#I AND stav=3"} }
   }
   menu g3 {title:'Všechny úkoly',type:'group', _sys:'*', skill:'hduv|hduv'
-    item a {title:'přehled všech'         ,par:°{cond:"1"} }
-    item {title:'... nezrušených'         ,par:°{cond:"stav<3"} }
-    item {title:'... nezahájených'        ,par:°{cond:"stav=1 AND cas_bg='0000-00-00' AND cas_ok='0000-00-00'"} }
-    item {title:'... po termínu'          ,par:°{cond:"stav=1 AND cas_do<=NOW() AND cas_ok='0000-00-00'"} }
-    item {title:'... plněných'            ,par:°{cond:"stav=1 AND cas_bg!='0000-00-00' AND cas_ok='0000-00-00'"} }
-    item {title:'... splněných'           ,par:°{cond:"stav=1 AND cas_ok!='0000-00-00'"} }
-    item {title:'... odložených'          ,par:°{cond:"stav=2"} }
-    item {title:'... zrušených'           ,par:°{cond:"stav=3"} }
+    item a {title:'přehled všech'         ,par:{cond:"1"} }
+    item {title:'... nezrušených'         ,par:{cond:"stav<3"} }
+    item {title:'... nezahájených'        ,par:{cond:"stav=1 AND cas_bg='0000-00-00' AND cas_ok='0000-00-00'"} }
+    item {title:'... po termínu'          ,par:{cond:"stav=1 AND cas_do<=NOW() AND cas_ok='0000-00-00'"} }
+    item {title:'... plněných'            ,par:{cond:"stav=1 AND cas_bg!='0000-00-00' AND cas_ok='0000-00-00'"} }
+    item {title:'... splněných'           ,par:{cond:"stav=1 AND cas_ok!='0000-00-00'"} }
+    item {title:'... odložených'          ,par:{cond:"stav=2"} }
+    item {title:'... zrušených'           ,par:{cond:"stav=3"} }
   }
   func onclick(i:ezer) { var cond: text
     u.header(i);

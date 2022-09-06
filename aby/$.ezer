@@ -151,7 +151,7 @@ menu aby { type:'main', active:*
     }
   }
 }
-# =========================================================================================> TRACK
+# ===========================================================================================> TRACK
 # přehled provedených změn
 panel track [,,540,276] { title:'Historie oprav', type:'popup', css:'dialog'
   var reverted_table= '', reverted_key= 0
@@ -204,7 +204,7 @@ panel track [,,540,276] { title:'Historie oprav', type:'popup', css:'dialog'
     label [0,250,545,] { title:"ÚDAJE: i=vložení (insert), u=úprava, U= hromadná úprava<br>ZÁZNAM: x=smazano, o=obnoveno, r=různé od uvedeného záznamu" }
   }
 }
-# -------------------------------------------------------------------------------------------------- rightf
+# -------------------------------------------------------------------------------------------- right
 # formulář pro levostranné menu s postupným zápisem a spinnerem
 form right [,,*,50] {
   label head [0,0,,50]  { title:' ', style:'width:calc(100% - 24px)' }
@@ -225,7 +225,8 @@ form right [,,*,50] {
     style:'z-index:999', format:'n' }
   func work(on) { working.display(on) }
 }
-# -------------------------------------------------------------------------------------------------- TABLES
+# ------------------------------------------------------------------------------------------- TABLES
+# --------------------------------------------==> kontakty
 table clen { key_id:'id_clen'
   number id_clen        { key:'primary', help:'kontakt|jedinečné číslo kontaktu' },
   text zdroj
@@ -278,6 +279,37 @@ table role { key_id:'id_role'
   number id_osoba    { help:'ID osoby|připnutá osoba' }
   text   popis       { help:'popis role' }
 }
+table ukol { key_id:'id_ukol'
+  number id_ukol        { key:'primary', help:'dar|jedinečné číslo úkolu' }
+  number id_clen        { help:'ID kontaktu|kontakt, kterého se úkol týká' }
+  number kdo_od         { help:'zadavatel|uživatel zadávající úkol' }
+  number kdo_pro        { help:'provádějící|uživatel realizující úkol' }
+  date cas_od           { help:'den zadání|den uložení úkolu',  sql_pipe:'sql_date1' }
+  date cas_bg           { help:'den zahájení|den zahájení práce',  sql_pipe:'sql_date1' }
+  date cas_do           { help:'termín|termín dokončení úkolu', sql_pipe:'sql_date1' }
+  date cas_ok           { help:'dokončení|drn dokončení úkolu', sql_pipe:'sql_date1' }
+  number stav           { help:'stav|normální nebo odložený či zrušený' }
+  text popis            { help:'popis|popis úkolu' }
+  number je_diskuse     { help:'ukázat diskusi nad řešením' }
+  text diskuse          { help:'diskuse o průběhu řešení' }
+}
+# --------------------------------------------==> finanční
+table vypis { key_id:'id_vypis'
+  number id_vypis
+  number rok_vypis
+  number n_vypis
+  number stav_od
+  number stav_do
+  date   datum_od { sql_pipe:'sql_date1' }
+  date   datum_do { sql_pipe:'sql_date1' }
+  text   soubor
+}
+table projekt { key_id:'id_projekt'
+  number id_projekt     { key:'primary', help:'projekt|jedinečné číslo projektu' }
+  text nazev            { help:'pojmenování projektu' }
+  number suma           { help:'vybraná částka v Kč' }
+  text soubor           { help:'importovaný výpis projektu' }
+}
 table dar { key_id:'id_dar'
   number id_dar      { key:'primary', help:'dar|jedinečné číslo daru' },
   number id_clen     { help:'dárce|identifikace dárce' },
@@ -311,56 +343,36 @@ table dar { key_id:'id_dar'
   text   zmena_kdo   { help:'změna kým|značka autora poslední změny' },
   date   zmena_kdy   { help:'změna kdy|čas poslední změny' },
 }
-table projekt { key_id:'id_projekt'
-  number id_projekt     { key:'primary', help:'projekt|jedinečné číslo projektu' }
-  text nazev            { help:'pojmenování projektu' }
-  number suma           { help:'vybraná částka v Kč' }
-  text soubor           { help:'importovaný výpis projektu' }
-}
-table ukol { key_id:'id_ukol'
-  number id_ukol        { key:'primary', help:'dar|jedinečné číslo úkolu' }
-  number id_clen        { help:'ID kontaktu|kontakt, kterého se úkol týká' }
-  number kdo_od         { help:'zadavatel|uživatel zadávající úkol' }
-  number kdo_pro        { help:'provádějící|uživatel realizující úkol' }
-  date cas_od           { help:'den zadání|den uložení úkolu',  sql_pipe:'sql_date1' }
-  date cas_bg           { help:'den zahájení|den zahájení práce',  sql_pipe:'sql_date1' }
-  date cas_do           { help:'termín|termín dokončení úkolu', sql_pipe:'sql_date1' }
-  date cas_ok           { help:'dokončení|drn dokončení úkolu', sql_pipe:'sql_date1' }
-  number stav           { help:'stav|normální nebo odložený či zrušený' }
-  text popis            { help:'popis|popis úkolu' }
-  number je_diskuse     { help:'ukázat diskusi nad řešením' }
-  text diskuse          { help:'diskuse o průběhu řešení' }
-}
-table vypis { key_id:'id_vypis'
-  number id_vypis
-  number rok_vypis
-  number n_vypis
-  number stav_od
-  number stav_do
-  date   datum_od { sql_pipe:'sql_date1' }
-  date   datum_do { sql_pipe:'sql_date1' }
-  text   soubor
-}
-table ucet {
-  text protiucet { help:'protiúčet' },
-  text banka { help:'banka' },
-  text ksym { help:'KS' },
-  text vsym { help:'VS' },
-  text ssym { help:'SS' },
-  text jmeno { help:'jméno účtu' },
-  text nazev { help:'náš název účtu' },
-}
+//table ucet {
+//  text protiucet { help:'protiúčet' },
+//  text banka { help:'banka' },
+//  text ksym { help:'KS' },
+//  text vsym { help:'VS' },
+//  text ssym { help:'SS' },
+//  text jmeno { help:'jméno účtu' },
+//  text nazev { help:'náš název účtu' },
+//}
+# --------------------------------------------==> korespondence
 table dopis { key_id:'id_dopis'
   number id_dopis { key:'primary' },
-  text druh { help:'druh|P-dopis PDF, M-dopis mailem, V-vzor' }
-  date datum { help:'datum|vročení dopisu', sql_pipe:'sql_date1' },
-  number adresati // #adresati
-  number kategorie // pokud adresati=podle kategorie
   text nazev
-  text prilohy // pouze pro maily
+  text prilohy
+  number potvrzeni { help:"potvrzení|vyžádat zaslání potvrzení o přečtení" }
+  number kopie	{ help:"poslat slepou kopii 'odesílateli'" }
+  text druh { help:'druh|D-dopis, S-samolepka,legitimace, N-nesamostatná složka' },
+  text typ { help:'typ|značka dopisu' },
+  number nw
+  number nh
+  number komu     // pouze pro maily
+  number pocet    // pouze pro maily
+  text report { help:'vzor|identifikátor reportu' },
+  number aktualni { help:'aktualni|text dopisu je připraven k tisku' },
+  date datum { help:'datum|vročení dopisu', sql_pipe:'sql_date1' },
   text obsah { help:'obsah|text dopisu' },
   text var_list { help:'seznam proměnných'}
-  number pocet // pro druh=P počítaná položka po volbě adresátů
+  text post_vars { help:'seznam proměnných počítaných po generování'}
+  text nest_list { help:'seznam složek (druh=N)'}
+  text add_list
 }
 table dopis_cast { key_id:'id_dopis_cast'
   number id_dopis_cast { key:'primary' },
@@ -378,6 +390,25 @@ table dopis_cast { key_id:'id_dopis_cast'
   text bord
   text obsah
 }
+table davka { key_id:'id_davka'
+  number id_davka { key:'primary' }
+  number faze
+}
+table mail { key_id:'id_mail'
+  number id_mail { key:'primary' }
+  number id_clen
+  number id_dopis
+  number id_davka { help:'dávka|číslo rozesílání dávky dopisů' },
+  text jmeno { help:'první jméno|křestní jméno fyzické osoby nebo plné jméno kontaktu' }
+  text prijmeni { help:'druhé jméno|příjmení fyzické osoby nebo jméno organizace' }
+  text email
+  text body
+  text priloha { help:'jméno souboru ze složky ./docs/mailem_{davka.par_rok}'}
+  number dary
+  number state
+  text msg
+}
+# --------------------------------------------==> systémové
 table _cis { key_id:'id_cis'
   number id_cis { key:'primary' },
   text druh,

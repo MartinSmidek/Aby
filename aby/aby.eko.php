@@ -207,6 +207,7 @@ function eko_vyrocka($par,$ref=0) { trace();
 //  $den= select('ikona','_cis',"druh='uzaverky' AND data=1");
 //  return $den;
 //}
+/*
 # ------------------------------------------------------------------------------------- eko rok_dary
 # export=1 způsobí export do Excelu
 # parms.nuly - povolí nulové řádky
@@ -426,6 +427,7 @@ end:
   $html.= $tab;
   return $html;
 }
+*/
 # ------------------------------------------------------------------------------------ eko_histogram
 # histogram darů v daném období
 #   $par->deleni= sub1,sub2;main1;main2 středník odděluje hlavní dělení, čárka poddělení

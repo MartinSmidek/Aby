@@ -1,7 +1,7 @@
 <?php
 # Aplikace Aby pro Nadační fond sester františkánek
 # (c) 2022 Martin Smidek <martin@smidek.eu>
-/** =======================================================================================> TABLES */
+/*
 # ------------------------------------------------------------------------------------- aby truncate
 # inicializace db
 function aby_truncate() { trace();
@@ -83,7 +83,7 @@ function aby_import($par) { trace();
       $idc= select('id_clen','clen', $osoba||!$firma
           ? "prijmeni='$prijmeni' AND jmeno='$jmeno'"
   //        : "firma='$firma' AND prijmeni='$prijmeni' AND jmeno='$jmeno'"
-          : "firma='$firma' /*AND firma_info='$firma_info'*/ "
+          : "firma='$firma'  "
           );
     }
     if (!$idc) {
@@ -219,6 +219,7 @@ function aby_import($par) { trace();
   }
   return "Bylo vloženo $n_clen lidí a $n_dar darů";
 }
+ */
 # ------------------------------------------------------------------------------------ aby csv2array
 # načtení CSV-souboru do asociativního pole, při chybě navrací chybovou zprávu
 # obsahuje speciální kód pro soubory kódované UTF-16LE
@@ -294,7 +295,7 @@ function fopen_utf8($filename){ trace();
   }
   return $handle;
 } 
-/** ===========================================================================================> GIT */
+/*
 # ----------------------------------------------------------------------------------------- git make
 # provede git par.cmd>.git.log a zobrazí jej
 # fetch pro lokální tj. vývojový server nepovolujeme
@@ -358,9 +359,8 @@ function git_make($par) {
   $msg.= $lines ? '<hr>'.implode('<br>',$lines) : '';
   return $msg;
 }
-/** ================================================================================================ NASTAVENÍ */
 # -------------------------------------------------------------------------------------------------- sys_errata
-function sys_errata() {
+// function sys_errata() {
   $html= '';
   // 1
   $n= $k= 0;
@@ -401,6 +401,8 @@ function ezer_get_temp_dir() {
   global $ezer_path_root;
   return "$ezer_path_root/tmp";
 }
+ * 
+ */
 # -------------------------------------------------------------------------------------------------- psc
 // doplnění mezery do PSČ
 function psc ($psc,$user2sql=0) {
@@ -412,7 +414,7 @@ function psc ($psc,$user2sql=0) {
   }
   return $text;
 }
-/** ================================================================================================ OSLOVENÍ */
+/*
 # -------------------------------------------------------------------------------------------------- osl update
 # ASK
 # vygeneruje rod,osloveni,prijmeni5p do tabulky CLEN
@@ -470,7 +472,7 @@ function osl_kontakt_new ($op,$ids='',$limit=25000) { trace();
 //                                                 display("konec=$konec");
     $qry= "SELECT id_clen,osoba,c.jmeno,prijmeni,titul,rod,n.sex,anomalie,osloveni,prijmeni5p,vyjimka
            FROM clen AS c LEFT JOIN _jmena AS n ON c.jmeno=n.jmeno
-           WHERE id_clen>$konec AND vyjimka!=801 /*AND psc!='' AND psc!=0*/ and left(c.deleted,1)!='D'
+           WHERE id_clen>$konec AND vyjimka!=801  and left(c.deleted,1)!='D'
            and umrti=0 AND neposilat=0
            GROUP BY id_clen
            ORDER BY id_clen LIMIT $limit";
@@ -689,3 +691,4 @@ function osl_gen_oprava ($typ) {
   }
   return $txt;
 }
+*/

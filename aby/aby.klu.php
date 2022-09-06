@@ -70,21 +70,25 @@ end:
                                                         debug($ret,"klub_firma_ico($ico)");
   return $ret;
 }
+/*
 function dump($x) { trace();
   ob_start(); var_dump($x); display(ob_get_contents()); ob_end_clean();
 }
+*/
 # ---------------------------------------------------------------------------------- klub ukaz_clena
 # zobrazí odkaz na člena
 function klub_ukaz_clena($id_clen,$barva='') {
   $style= $barva ? "style='color:$barva'" : '';
   return "<b><a $style href='ezer://klu.cle.show_clen/$id_clen'>$id_clen</a></b>";
 }
+/*
 # -------------------------------------------------------------------------------- klub select_cleny
 # zobrazí odkaz, který zařídí aby členové byli selected
 function klub_select_cleny($ids_clen,$caption,$barva='') {
   $style= $barva ? "style='color:$barva'" : '';
   return "<b><a $style href='ezer://klu.cle.select_cleny/$ids_clen'>$caption</a></b>";
 }
+*/
 # ------------------------------------------------------------------------------------ klub ukaz_dar
 //# zobrazí odkaz na dar
 //function klub_ukaz_dar($id_dar,$barva='') {
@@ -133,13 +137,15 @@ function klub_clen_delete($idc) {
 function klub_role_odepni($idf,$ido) {
   query("DELETE FROM role WHERE id_firma=$idf AND id_osoba=$ido");
 }
+/*
 # -------------------------------------------------------------------------------- klub oprav_prevod
 # opraví dárce v převodu
-function klub_oprav_prevod($ident,$id_clen) {
+//function klub_oprav_prevod($ident,$id_clen) {
   query("UPDATE prevod SET clen=$id_clen WHERE ident='$ident' ");
   $opraveno= pdo_affected_rows() ? 1 : 0;
   return $opraveno;
 }
+*/
 # ---------------------------------------------------------------------------------- klub clen_udaje
 # ASK: vrátí jméno, příjmení a obec člena zadaného číslem
 function klub_clen_udaje ($id_clen) {
