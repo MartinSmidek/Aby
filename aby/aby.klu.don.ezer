@@ -76,7 +76,9 @@ form _dary [,,774,262] {
 # --------------------------------------------------==> DROP
 form _drop [,,392,161] { css:'work'
   #==> . vložení projektu
-  var  dfold='/banka/donio'      // podsložka bez koncového / se nastavuje dynamicky
+  var dfold='/banka/donio',   // podsložka bez koncového / se nastavuje dynamicky
+      idp=0,                  // ID projektu zvoleného v ondrop nebo 0 pro nový projekt
+      novy=''                 // jméno nového projektu
   label [10,7,371,] {title:'místo pro vložení souhrnu projektu - přesvědčte se prosím, že název 
     souboru má tvar "projekt.csv" a byl získán z "projekt.xlsx"
     příkazem Excelu <b>Uložit jako</b> s variantou "CSV UTF-8 (s oddělovači)"'
@@ -85,28 +87,60 @@ form _drop [,,392,161] { css:'work'
     func start() {
       drop.init('/banka/donio','U:'); 
     }
-    func ondrop(f:object) {  // možnost odmítnutí přenosu navrácením 0
-      if (match('csv$',f.name,'i')) return(1);
-      alert(`'${f.name}' není soubor typu CSV`); return(0)
+    func ondrop(f:object) {  var ok:number // možnost odmítnutí přenosu navrácením 0
+      if (match('csv$',f.name,'i')) {
+        ok= DonProjekt.Vyber(); echo(`ok=${ok}`);
+        if (ok) {
+          idp= DonProjekt.je.stary ? DonProjekt.je.vybrany.key() : 0;
+          novy= DonProjekt.je.novy ? DonProjekt.je.nazev : '';
+          return 1;
+        }
+        alert(`soubor nebude načten`); return 0;
+      }
+      alert(`'${f.name}' není soubor typu CSV`); return 0;
     }
-    func onload(f:object) { var y:object, nazev:text // po dokončení přenosu, jméno bude ASCII
+    func onload(f:object) { var y:object // po dokončení přenosu, jméno bude ASCII
       echo(`load: ${f.name}`);
-      y= php.aby_donio_load(f.name); // => {idp,war,err}
+      y= php.aby_donio_load(f.name,idp,novy); // => {idp,war,err}
       if (y.war) warning(y.war);
       if (y.err) {
         alert(y.err);
         echo("výmaz souboru");
       }
       else {
-        nazev= prompt2('Pojmenujte projekt');
-        if (nazev) php.query(`UPDATE projekt SET nazev='${nazev}' WHERE id_projekt=${y.idp}`);
         proj.Seek(y.idp);
         map_projekt.map_load();
+        map_projekt_donio.map_load();
         aby.dirty('klu.cle');
       }
     }
     func onerror(e:object) { 
-      warning(e.msg); return(1) 
+      warning(e.msg); return 1; 
     }
+  }
+}
+panel DonProjekt [0,0,410,100] { type:'popup', title:"Volba projektu", 
+      par:{close:'no'} 
+  const don_='DON_...'
+  func Vyber() {
+    je.nazev= don_;
+    panel.modal();
+  }
+  use je: form {
+    check novy [1,7,24,] { format:'t', value:'1', func onchange() { stary= !novy }}
+    field nazev [99,8,300,] {title:'nový projekt', format:'t'
+      func onfocus() { stary= 0; novy= 1; }}
+    check stary [1,37,24,] { format:'t', value:'0', func onchange() { novy= !stary }}
+    select vybrany [99,38,304,] {type:'map', title:'běžící projekt', format:'t', 
+        options:map_projekt_donio.nazev
+      func onfocus() { stary= 1; novy= 0; }}
+    button [97,68,,] {title:'[fa-save] Načti soubor' 
+      func onclick() { 
+        if (novy && (!trim(nazev) || nazev==don_)) 
+          alert('jméno nového projektu je povinné')
+        else
+          panel.hide(1) 
+    }}
+    button [210,68,,] {title:'[fa-undo] Zpět' func onclick() { panel.hide(0) }}
   }
 }

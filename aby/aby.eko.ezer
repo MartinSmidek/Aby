@@ -93,13 +93,13 @@ panel pre {type:'right', title:"[fa-pie-chart] Přehledy", _sys:'pri'
     // VS
 //    field VS [-336,6,45,] { tag:'VS', title:'VS:', format:'rt', help:'variabilní symbol: lze zapisovat pomocí ?,*'}
     // den
-    label [-214,0,158,30] { tag:'uz', css:'parm', style:'zIndex:1' }
-    field uzaverka [-224,6,87,] {tag:'uz', title:'uzávěrka:', type:'date', format:'Rrt', 
-      help:'datum uzávěrky darů', skill:'h|hddeu'
-      func onchanged() {
-        php.eko_uzaverka(date2sql(this));
-        this= sql2date(php.eko_uzaverka_den());
-    }}
+//    label [-214,0,158,30] { tag:'uz', css:'parm', style:'zIndex:1' }
+//    field uzaverka [-224,6,87,] {tag:'uz', title:'uzávěrka:', type:'date', format:'Rrt', 
+//      help:'datum uzávěrky darů', skill:'h|hddeu'
+//      func onchanged() {
+//        php.eko_uzaverka(date2sql(this));
+//        this= sql2date(php.eko_uzaverka_den());
+//    }}
     // osoby, firmy
     check fy [-331,4,50,] { title:'firmy' value:'1' }
     check os [-388,4,58,] { title:'osoby' value:'1' }

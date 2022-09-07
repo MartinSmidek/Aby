@@ -476,3 +476,4 @@ map cis_u_stavy:        table _cis { where:"druh='u_stavy'", order:'data', key_i
 map cis_kategorie:      table _cis { where:"druh='kategorie'", order:'zkratka', key_id:'data'}
 map cis_adresati:       table _cis {where:"druh='adresati'", order:'hodnota', key_id:'data'}
 map map_projekt:        table projekt { where:"1", order:'1', key_id:'id_projekt'}
+map map_projekt_donio:  table projekt { where:"typ=1", order:'nazev', key_id:'id_projekt'}
