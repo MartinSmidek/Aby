@@ -435,9 +435,12 @@ end:
 # =========================================================================================> PROJEKT
 # ----------------------------------------------------------------------------------- aby donio_load
 # import dat pro donio.cz => {idp,war,err}
-function aby_donio_load($csv) { trace();
+# pokud idp=0 bude vytvořen nový projekt
+# pokud idp!=0 budou dary přidány ke stávajícímu projektu
+function aby_donio_load($csv,$idp,$novy) { trace();
   global $ezer_path_root;
   $res= (object)array('idp'=>0,'err'=>'','war'=>'');
+  $typ= 1;
   $data= array();
   $csv_path= "$ezer_path_root/banka/donio/$csv";
   $msg= aby_csv2array($csv_path,$data,999999,'UTF-8');
@@ -451,12 +454,17 @@ function aby_donio_load($csv) { trace();
   }
   // ochrana proti násobnému načtení ALE nikoliv proti změně kódování
   $md5= md5_file($csv_path);
-  $duplicita= select('soubor','projekt',"typ=1 AND md5='$md5'");
+  $duplicita= select('COUNT(*)','projekt',"typ=$typ AND FIND_IN_SET('$md5',md5)");
   if ($duplicita) {
-    $res->err= "tento projekt již byl vložen ze souboru '$duplicita'"; goto end;
+    $res->err= "tento soubor již byl vložen"; goto end_bez_vymazu;
+  }
+  if ($idp) {
+    $res->idp= $idp;
+    query("UPDATE projekt SET md5=CONCAT(md5,',','$md5'),soubor=CONCAT(soubor,',','$csv') 
+      WHERE id_projekt=$idp");
   }
   else {
-    query("INSERT INTO projekt (nazev,typ,soubor,md5) VALUES ('',1,'$csv','$md5') ");
+    query("INSERT INTO projekt (nazev,typ,soubor,md5) VALUES ($novy,1,'$csv','$md5') ");
     $res->idp= pdo_insert_id();
   }
   // otestování a případné vytvoření ANONYM
@@ -535,6 +543,7 @@ end:
     // problém - smažeme neúspěšný import
     unlink($csv_path);
   }
+end_bez_vymazu:
   return $res;
 }
 # --------------------------------------------------------------------------------- aby darujme_load
@@ -557,7 +566,7 @@ function aby_darujme_load($csv,$typ=2) { trace();
   $md5= md5_file($csv_path);
   $duplicita= select('COUNT(*)','projekt',"typ=$typ AND FIND_IN_SET('$md5',md5)");
   if ($duplicita) {
-    $res->err= "tento soubor již byl vložen"; goto end;
+    $res->err= "tento soubor již byl vložen"; goto end_bez_vymazu;
   }
   // otestování a případné vytvoření ANONYM
   $anonym= select('id_clen','clen', "prijmeni='♥ANONYM'");
@@ -669,5 +678,6 @@ end:
     // problém - smažeme neúspěšný import
     unlink($csv_path);
   }
+end_bez_vymazu:
   return $res;
 }
