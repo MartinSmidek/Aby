@@ -87,10 +87,9 @@ form _drop [,,392,161] { css:'work'
     func start() {
       drop.init('/banka/donio','U:'); 
     }
-    func ondrop(f:object) {  var ok:number // možnost odmítnutí přenosu navrácením 0
+    func ondrop(f:object) {  // možnost odmítnutí přenosu navrácením 0
       if (match('csv$',f.name,'i')) {
-        ok= DonProjekt.Vyber(); echo(`ok=${ok}`);
-        if (ok) {
+        if (DonProjekt.Vyber()) {
           idp= DonProjekt.je.stary ? DonProjekt.je.vybrany.key() : 0;
           novy= DonProjekt.je.novy ? DonProjekt.je.nazev : '';
           return 1;
@@ -124,9 +123,11 @@ panel DonProjekt [0,0,410,100] { type:'popup', title:"Volba projektu",
   const don_='DON_...'
   func Vyber() {
     je.nazev= don_;
-    panel.modal();
+    je.novy= 1; je.stary= 0;
+    return panel.modal();
   }
-  use je: form {
+  use je: form _f 
+  form _f {
     check novy [1,7,24,] { format:'t', value:'1', func onchange() { stary= !novy }}
     field nazev [99,8,300,] {title:'nový projekt', format:'t'
       func onfocus() { stary= 0; novy= 1; }}
