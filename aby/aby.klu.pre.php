@@ -464,7 +464,7 @@ function aby_donio_load($csv,$idp,$novy) { trace();
       WHERE id_projekt=$idp");
   }
   else {
-    query("INSERT INTO projekt (nazev,typ,soubor,md5) VALUES ($novy,1,'$csv','$md5') ");
+    query("INSERT INTO projekt (nazev,typ,soubor,md5) VALUES ('$novy',1,'$csv','$md5') ");
     $res->idp= pdo_insert_id();
   }
   // otestování a případné vytvoření ANONYM
