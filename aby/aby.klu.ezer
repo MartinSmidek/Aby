@@ -10,8 +10,8 @@ panel cle {type:'plain', title:"[fa-home] Kontakty", _sys:'*',  include:'onload'
   func show_clen(id) { return(warning1); }
   func curr_clen(m) { return(warning1); }
   func zpet_clen() {}
-  form C_clen
-  form C_dar
+  form Clen
+  form Dar
 }
 # =========================================================================================> PŘEVODY
 panel pre {type:'plain', title:"[fa-bank] Převody", _sys:'*',  include:'onclick' }
@@ -86,7 +86,7 @@ panel Ctrack [,,572,564] { title:'Korekce oprav členů', type:'popup', css:'dia
         if (eq(op,'c','d')) 
           warning('změny v historii nelze vracet - pouze ručně opravit')
         else {
-          f= cle.C_clen[fld];
+          f= cle.Clen[fld];
           f.set(old); f.change()
         }
       }
@@ -118,7 +118,7 @@ panel Dtrack [,,572,564] { title:'Vkládání a opravy darů', type:'popup', css
         if (eq(DT_track.list.op,'c','d')) 
           warning('změny v historii nelze vracet - pouze ručně opravit')
         else {
-          f= cle.C_dar[fld];
+          f= cle.Dar[fld];
           f.set(old); f.change()
         }
       }

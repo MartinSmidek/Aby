@@ -1,62 +1,78 @@
 # Aplikace Aby ... pro Nadační fond sester františkánek
 # (c) 2022 Martin Šmídek <martin@smidek.eu>
 
+const use_onready=0
+
 # ========================================================================================> KONTAKTY
 
-use C_cleni: form _cleni [5,0,,] { tabindex:20 }
-use C_clen: form _clen [670,4,,] { tabindex:30 }
-use C_ukoly: form _ukoly [670,24,,] { tabindex:30
-  func u_show() { C_ukoly.display(1,'u|b') }
+use Cleni: form _cleni [5,0,,] { tabindex:20 }
+use Clen: form _clen [670,4,,] { tabindex:30 }
+use Ukoly: form _ukoly [670,24,,] { tabindex:30
+  func u_show() { Ukoly.display(1,'u|b') }
 }
-use C_clen_butt: form _clen_butt [670,580,,] { tabindex:30 }
-use C_dary: form _dary [5,340,,] { tabindex:50, skill:'hdd' }
-use C_dar: form _dar [270,340,,] {  skill:'hdd' }
+use Clen_butt: form _clen_butt [670,580,,] { tabindex:30 }
+use Dary: form _dary [5,340,,] { tabindex:50, skill:'hdd' }
+use Dar: form _dar [270,340,,] {  skill:'hdd' }
 
 func onstart () {
   modul_state.klu.cle= {active:1,dirty:0};   # poznačení, že modul je aktivní
-  C_cleni.cleni.osoba_firma(C_cleni.cond_os,C_cleni.cond_fy);
-  C_cleni.cond.Refresh();
-  C_clen.kon.onclick();
+  Cleni.cleni.osoba_firma(Cleni.cond_os,Cleni.cond_fy);
+  Cleni.cond.Refresh();
+  Clen.kon.onclick();
   has_skill('hdd');
-  C_dar.kas.stisk(1); C_dar.kas.set_css('','changed');
+  Dar.kas.stisk(1); Dar.kas.set_css('','changed');
 }
 
 # překreslení, pokud někdo zavolal dirty('klu.cle')
 func onfocus () {
   if (modul_state.klu.cle.dirty) {
-    C_clen.kategorie.set_attrib('options','cis_kategorie.hodnota'); 
-    C_dar.pro.set_attrib('options','map_projekt.nazev'); 
-    C_cleni.cleni.browse_refresh();
+    Clen.kategorie.set_attrib('options','cis_kategorie.hodnota'); 
+    Dar.pro.set_attrib('options','map_projekt.nazev'); 
+    Cleni.cleni.browse_refresh();
     modul_state.klu.cle.dirty= 0;
+  }
+}
+
+func onready() { var idc: number
+  if (!use_onready) return; // testování optimalizace načítání
+  idc= Cleni.cleni.browse_key();
+  echo(`onready: cleni:${idc}, clen=${Clen.id}, `);
+  if (Clen.id!=idc) {
+    Clen_butt._clen_load(idc);
+    if (has_skill('hdd')) Dary._dary_load();
+    Clen.Show(Clen.zalozka);
   }
 }
 
 # aktivace_zvenčí
 func refresh_vyber() {
-  C_cleni.cond.Refresh()
+  Cleni.cond.Refresh()
 }
 func select_cleny(ids) {
   panel.focus();
-  C_cleni.cleni.selected('set',ids);
-  C_cleni.cleni.raise('onrowclick')
+  Cleni.cleni.selected('set',ids);
+  Cleni.cleni.raise('onrowclick')
 }
 func show_clen (idc) {
-  C_cleni.cleni.init_queries(0);
+  Cleni.cleni.init_queries(0);
   panel.focus();
-  return C_cleni.cleni.browse_seek(`id_clen=${idc}`);  
+  Clen_butt._clen_load(idc);
+  if (has_skill('hdd')) Dary._dary_load();
+  Clen.Show(Clen.zalozka);
+  return Cleni.cleni.browse_seek(`id_clen=${idc}`);  
 }
 func curr_clen(mode) { // 1:id, 2:jméno
-  return(mode==1 ? C_clen.key() : (
-         mode==2 ? `'${C_clen.jmeno} ${C_clen.prijmeni}'` : ''));
+  return(mode==1 ? Clen.key() : (
+         mode==2 ? `'${Clen.jmeno} ${Clen.prijmeni}'` : ''));
 }
 func zpet_clen() {
-  C_clen.clen_lock('off');
-  if (C_cleni.cleni.browse_count()) {
-    C_cleni.cleni.browse_focus(); 
-    C_clen_butt._clen_load(C_cleni.cleni.id_clen)
+  Clen.clen_lock('off');
+  if (Cleni.cleni.browse_count()) {
+    Cleni.cleni.browse_focus(); 
+    Clen_butt._clen_load(Cleni.cleni.id_clen)
   }
   else {
-    C_clen.init(); C_clen_butt._form_state('be','bc|br') 
+    Clen.init(); Clen_butt._form_state('be','bc|br') 
   }
 }
 
@@ -117,8 +133,8 @@ form _cleni [,,660,330] {
       cond_os&&!cond_fy ? " AND osoba=1" : '',
       !cond_os&&cond_fy ? " AND osoba=0" : ''
     );
-    C_clen.init(); 
-    C_dary.dary.browse_init(); C_dar.init(); C_dar._form_state('','b.');
+    Clen.init(); 
+    Dary.dary.browse_init(); Dar.init(); Dar._form_state('','b.');
     if (idc) 
       cleni.browse_seek(`id_clen=${idc}`,where)
     else
@@ -143,11 +159,11 @@ form _cleni [,,660,330] {
     view rf: table role {join_type:'LEFT', join:"ON rf.id_osoba=c.id_clen"}
     view ro: table role {join_type:'LEFT', join:"ON ro.id_firma=c.id_clen"}
     show del [,,0,] { title:'D', data:c.deleted, format:'q=' }
-    show id_clen  [,, 43,] { title:'dárce', data:c.id_clen, format:'rq=s' }
+    show id_clen  [,, 43,] { title:'dárce', data:c.id_clen, format:'rq=s+' }
     show firma    [,,120,] { title:'firma', data:c.firma, format:'tq$s' 
         css_cell:'osoba,0:zluty' }
     show f_info   [,,120,] { title:'firma info.', data:c.firma_info, format:'tq$s' }
-    show prijmeni [,, 80,] { title:'příjmení', data:c.prijmeni, format:'tq$s+' }
+    show prijmeni [,, 80,] { title:'příjmení', data:c.prijmeni, format:'tq$s' }
     show jmeno    [,, 60,] { title:'jméno', data:c.jmeno, format:'tq$s' }
     show ulice    [,, 90,] { title:'ulice', data:c.ulice, format:'tq$s' }
     show psc      [,, 42,] { title:'psč', data:c.psc, format:'q$s', sql_pipe:'psc' }
@@ -197,61 +213,78 @@ form _cleni [,,660,330] {
       if (this.browse_count()) 
         znacka()
       else {
-        C_clen.init(); C_clen_butt._form_state('be','bc|br');
-        C_dary.dary.browse_init();
-        C_dar._dar_init(); C_dar._form_state('','b.'); C_dary.suma.set(''); 
+        Clen.init(); Clen_butt._form_state('be','bc|br');
+        Dary.dary.browse_init();
+        Dar._dar_init(); Dar._form_state('','b.'); 
+        Dary.suma.set(''); 
     }}
     func znacka () {
       if (cleni.browse_count()) {
-        C_clen_butt._clen_load(id_clen);
-        if (has_skill('hdd')) C_dary._dary_load();
-        C_clen.Show(C_clen.zalozka);
+        if (!use_onready) { // testování optimalizace načítání
+          Clen_butt._clen_load(id_clen);
+          if (has_skill('hdd')) Dary._dary_load();
+          Clen.Show(Clen.zalozka);
+        }
       }
       else {
-        C_clen.init(); C_dary.suma= '';  C_dary.dary.browse_init();  C_dar.init()
+        Clen.init(); 
+        Dary.suma= '';  
+        Dary.dary.browse_init();  Dar.init()
       }
     }
     # ---------------------------------------==> . kontextové menu
     menu { type:'context'
       item { title:'rozložit: příjmení=jméno-příjmení'
         func onclick () { 
-          if (C_clen.osoba=='osoba') { 
-            C_clen.jmeno= trim(split(C_clen.prijmeni,' ',0)); C_clen.jmeno.change(); 
-            C_clen.prijmeni= trim(split(C_clen.prijmeni,' ',1)); C_clen.prijmeni.change(); 
-            C_clen_butt._clen_uloz(0);
+          if (Clen.osoba=='osoba') { 
+            Clen.jmeno= trim(split(Clen.prijmeni,' ',0)); Clen.jmeno.change(); 
+            Clen.prijmeni= trim(split(Clen.prijmeni,' ',1)); Clen.prijmeni.change(); 
+            Clen_butt._clen_uloz(0);
           }
       } }
       item { title:'zaměnit: jméno <=> příjmení'
         func onclick () { var x:text
-          if (C_clen.osoba=='osoba') { 
-            x= C_clen.jmeno; 
-            C_clen.jmeno= C_clen.prijmeni; C_clen.jmeno.change(); 
-            C_clen.prijmeni= x; C_clen.prijmeni.change(); 
-            C_clen_butt._clen_uloz(0);
+          if (Clen.osoba=='osoba') { 
+            x= Clen.jmeno; 
+            Clen.jmeno= Clen.prijmeni; Clen.jmeno.change(); 
+            Clen.prijmeni= x; Clen.prijmeni.change(); 
+            Clen_butt._clen_uloz(0);
           }
       } }
       item { title:'zaměnit: příjmení <=> firma'
         func onclick () { 
-          if (C_clen.osoba=='osoba') { 
-            C_clen.osoba.key(0); C_clen.osoba.change();
-            if (!C_clen.firma) { 
-              C_clen.firma= C_clen.prijmeni; C_clen.firma.change(); 
-              C_clen.prijmeni= ''; C_clen.prijmeni.change(); 
+          if (Clen.osoba=='osoba') { 
+            Clen.osoba.key(0); Clen.osoba.change();
+            if (!Clen.firma) { 
+              Clen.firma= Clen.prijmeni; Clen.firma.change(); 
+              Clen.prijmeni= ''; Clen.prijmeni.change(); 
             }
           }
           else { // firma
-            C_clen.osoba.key(1); C_clen.osoba.change();
-            if (!C_clen.prijmeni) { 
-              C_clen.prijmeni= C_clen.firma; C_clen.prijmeni.change(); 
-              C_clen.firma= ''; C_clen.firma.change(); 
+            Clen.osoba.key(1); Clen.osoba.change();
+            if (!Clen.prijmeni) { 
+              Clen.prijmeni= Clen.firma; Clen.prijmeni.change(); 
+              Clen.firma= ''; Clen.firma.change(); 
             }
           }
-          C_clen_butt._clen_uloz(0);
+          Clen_butt._clen_uloz(0);
       } }
+      item { title:'-označ/odznač kontakt  (Insert)'
+        func onclick () { cleni.selected('toggle');  } }
+      item { title:'zrušit všechna označení'
+        func onclick () { cleni.selected('clear'); }} //_cleni_vyber(0) } }
       item { title:'-spojit vybrané kontakty'
-        func onclick () { alert('Gándí: funkce není hotová') } }
-      item { title:'zrušit výběr'
-        func onclick () { cleni.selected('clear'); _cleni_vyber(0) } }
+        func onclick () { var sel:array, idc:number
+          sel= cleni.selected('get');
+          sel= split(sel,',');
+          if ( array_length(sel)==2 ) {
+            idc= Duplicita.Spoj(sel[0],sel[1]); 
+            if ( idc ) cleni.browse_refresh(idc);
+          }
+          else 
+            warning(`Vyber právě 2 kontakty - je jich vybráno ${array_length(sel)}`)
+          }
+      }
     }
   }
   label zmena [12,-5,236,18] { title:'' },
@@ -272,24 +305,24 @@ form _clen [,,399,251] {
       case 'doc': tags('d|O|F','u|z|o|f|h|n|k',1,0); break;
       case 'ukl': tags('u|O|F','d|z|o|f|h|n|k',0,1); break;
     }
-    if (!C_cleni.cleni.browse_count()) {
-      C_clen.init();
+    if (!Cleni.cleni.browse_count()) {
+      Clen.init();
     }
     elseif (osoba.key()) {
-      C_clen.display(0,'f|F');
-      C_clen.display(1,'O');
-      C_clen.if_osoba.display(C_cleni.cleni.has_f?1:0);
+      Clen.display(0,'f|F');
+      Clen.display(1,'O');
+      Clen.if_osoba.display(Cleni.cleni.has_f?1:0);
     }
     else {
-      C_clen.display(0,'o|O');
-      C_clen.display(1,'F');
-      C_clen.if_firma.display(C_cleni.cleni.has_o?1:0);
+      Clen.display(0,'o|O');
+      Clen.display(1,'F');
+      Clen.if_firma.display(Cleni.cleni.has_o?1:0);
     }
     _zalozka.set_css('ae_butt_on','ae_butt_off'); 
   }
   # ---------------------------==> . ochrana editace více uživateli
   func onchanged () { clen_lock('on'); _onchanged() }
-  func _onchanged () { C_clen_butt._form_state('bc','be|br') }
+  func _onchanged () { Clen_butt._form_state('bc','be|br') }
   func clen_lock(on) { var lock:object 
     if (form.key()) {
       lock= php.table_lock(on,'clen',form.key()); 
@@ -303,11 +336,11 @@ form _clen [,,399,251] {
   func tags(on,off,butt,ukoly) {
     form.set_css('ae_butt_off','ae_butt_on','p');
     form.display(1,on); form.display(0,off);
-    C_clen_butt.display(butt);
-    C_ukoly.display(ukoly);
+    Clen_butt.display(butt);
+    Ukoly.display(ukoly);
     if (ukoly && id) {
-      C_ukoly._ukoly_load(id);
-      C_ukoly.u_show();
+      Ukoly._ukoly_load(id);
+      Ukoly.u_show();
     }
   }
   label kon [10,0,100,20] {tag:'p', title:'<b>Kontakt</b>', format:'c', css:'ae_butt_on'
@@ -330,7 +363,7 @@ form _clen [,,399,251] {
     }}
   }
   // ==> .. společné položky, které se zobrazují vždy
-  label [7,21,50,15] { tag:'k', title:'<h1>Kontakt</h1>' },
+  label nadpis [7,21,50,15] { tag:'k', title:'<h1>Kontakt</h1>' },
   label msg_del [4,39,75,15] { title:'je smazaný!', css:'chyba', format:'n' },
   field id       [349,0,40,]   { data:clen.id_clen, format:'or' }
   // ==> . jen firma
@@ -502,7 +535,7 @@ form _ukoly [,,400,524] {
     func onclick() { uko.ukol_show(id_ukol,u_kdo,u_komu.key())
   }}
   # ---------------------------==> . tlačítka a jejich obsluha - nezobrazuje se v Dary
-  # jsou dostupné pouze, pokud je formulář vnořen do ch.cle (pak je dostupný C_clen)
+  # jsou dostupné pouze, pokud je formulář vnořen do ch.cle (pak je dostupný Clen)
   label [94,446,218,37] { tag:'b', css:'ae_parm', format:'n' }
   func _form_state(on,off) {
     form.enable(1,on); form.enable(0,off);
@@ -534,7 +567,7 @@ form _ukoly [,,400,524] {
     if (!ja) error('patrně došlo k odhlášení - obnovte prosím okno prohlížeče');
     form.init(1); u_popis.change();
     stav= 1; stav.change();
-    id_clen= C_clen.id; id_clen.change();
+    id_clen= Clen.id; id_clen.change();
     u_od= now(); u_od.change(); // od teď
     u_do= now(); u_do.change(); // ASAP
     u_kdo= ja; u_kdo.change(); // já
@@ -558,8 +591,8 @@ form _clen_butt [,,400,35] {
   func _form_state(on,off) {
     form.enable(1,on); form.enable(0,off);
     if (!has_skill('hdcd')) return;
-    if (C_clen.id) {
-      if (substr(C_clen.del,0,1)=='D') {
+    if (Clen.id) {
+      if (substr(Clen.del,0,1)=='D') {
         zrus_clena.display(0); obnov_clena.display(1)
       }
       else {
@@ -574,36 +607,36 @@ form _clen_butt [,,400,35] {
     help:'provede uložení změněných (červeně orámovaných) položek'
     func onclick() { _clen_uloz(0) }  }
   func _clen_oslov() { var osl: object
-    if (C_clen.vyjimka.key()!=1 
-        && (C_clen.osoba.changed() || C_clen.jmeno.changed() || C_clen.prijmeni.changed)) {
-      osl= php.osl_insert(C_clen.osoba.key(),C_clen.titul,C_clen.jmeno,C_clen.prijmeni);
-      C_clen.rod.key(osl.rod); C_clen.rod.change(1);
-      C_clen.osloveni.key(osl.osloveni); C_clen.osloveni.change(1);
-      C_clen.prijmeni5p= osl.prijmeni5p; C_clen.prijmeni5p.change(1);
+    if (Clen.vyjimka.key()!=1 
+        && (Clen.osoba.changed() || Clen.jmeno.changed() || Clen.prijmeni.changed)) {
+      osl= php.osl_insert(Clen.osoba.key(),Clen.titul,Clen.jmeno,Clen.prijmeni);
+      Clen.rod.key(osl.rod); Clen.rod.change(1);
+      Clen.osloveni.key(osl.osloveni); Clen.osloveni.change(1);
+      Clen.prijmeni5p= osl.prijmeni5p; Clen.prijmeni5p.change(1);
     };
   }    
   func _clen_uloz (bez) { var integrity: object
     // bez => bez kontroly integrity (např. při mazání)
     form.enable(1,'br'); form.enable(0,'be|bc');
-    if (C_clen.same()) { warning('nebyla provedena žádná změna'); C_cleni._cleni_focus(); return }
+    if (Clen.same()) { warning('nebyla provedena žádná změna'); Cleni._cleni_focus(); return }
     if (!bez) { 
-      integrity= php.klub_check(C_clen.id,'',C_clen.darce);
+      integrity= php.klub_check(Clen.id,'',Clen.darce);
       if (!integrity.ok) { warning(integrity.msg); return }
     }
-    C_clen.kdo= sys('user','id_user'); C_clen.kdo.change();
-    C_clen.kdy= now_sql(1); C_clen.kdy.change();
+    Clen.kdo= sys('user','id_user'); Clen.kdo.change();
+    Clen.kdy= now_sql(1); Clen.kdy.change();
     _clen_oslov(); // je-li potřeba, oprav oslovení
-    if (C_clen.key()) {
-      C_clen.save(); 
-      C_clen.clen_lock('off');
-      C_clen.load(); C_cleni.cleni.browse_seek(); C_cleni.cleni.znacka()
+    if (Clen.key()) {
+      Clen.save(); 
+      Clen.clen_lock('off');
+      Clen.load(); Cleni.cleni.browse_seek(); Cleni.cleni.znacka()
     }
     else {
-      C_cleni._cleni_vyber(C_clen.insert());
+      Cleni._cleni_vyber(Clen.insert());
     }
     // doplnění ascii jména a příjmení
-    php.ch_remake_ascii_fields(C_clen.key());
-    C_cleni.cleni.browse_focus()
+    php.ch_remake_ascii_fields(Clen.key());
+    Cleni.cleni.browse_focus()
   }
   # Zpět
   button zpet_clena [65,9,,] { tag:'bc', title:'Zpět', skill:'hdce|hdce'
@@ -614,56 +647,56 @@ form _clen_butt [,,400,35] {
   button [121,9,,] { tag:'be', title:'Nová osoba', skill:'hdce|hdce'
     help:'naplní položky základními hodnotami pro fyzickou osobu, vlastní vytvoření se provede uložením změn'
     func onclick () { var elem:ezer
-      C_cleni.cond_os= 1; C_cleni.show_os_fy(0);
-      C_clen.init(1);
-      C_clen.display(1,'o'); C_clen.display(0,'f');
-      C_clen.osoba.key(1); C_clen.osoba.change(); 
-      for (elem of C_clen.tagged('O')) { elem.change(); }
-      _form_state('bc','be|br'); C_clen.focus();
+      Cleni.cond_os= 1; Cleni.show_os_fy(0);
+      Clen.init(1);
+      Clen.display(1,'o'); Clen.display(0,'f');
+      Clen.osoba.key(1); Clen.osoba.change(); 
+      for (elem of Clen.tagged('O')) { elem.change(); }
+      _form_state('bc','be|br'); Clen.focus();
   }}
   button [221,9,,] { tag:'be', title:'Nová firma', skill:'hdce|hdce'
     help:'naplní položky základními hodnotami pro firmu nebo organizaci, vlastní vytvoření se provede uložením změn'
     func onclick () { var ret:object, elem:ezer
-      C_cleni.cond_fy= 1; C_cleni.show_os_fy(0);
-      C_clen.init(1);
-      C_clen.display(0,'o'); C_clen.display(1,'f');
-      C_clen.osoba.key(0); C_clen.osoba.change(); 
-      for (elem of C_clen.tagged('F')) { elem.change(); }
-      C_clen.ico= prompt2("Zadejte IČ firmy, údaje se doplní samy");
-      if (C_clen.ico) {
-        ret= php.klub_firma_ico(C_clen.ico);
+      Cleni.cond_fy= 1; Cleni.show_os_fy(0);
+      Clen.init(1);
+      Clen.display(0,'o'); Clen.display(1,'f');
+      Clen.osoba.key(0); Clen.osoba.change(); 
+      for (elem of Clen.tagged('F')) { elem.change(); }
+      Clen.ico= prompt2("Zadejte IČ firmy, údaje se doplní samy");
+      if (Clen.ico) {
+        ret= php.klub_firma_ico(Clen.ico);
         if (ret.ok) { 
-          copy_by_name(ret,C_clen);
-          for (elem of C_clen.tagged('F')) { elem.change(); }
+          copy_by_name(ret,Clen);
+          for (elem of Clen.tagged('F')) { elem.change(); }
         }
         else warning(ret.err)
       }
-      _form_state('bc','be|br'); C_clen.focus();
+      _form_state('bc','be|br'); Clen.focus();
   }}
   # Smazat
   button zrus_clena [336,9,,] { tag:'br', skill:'hdcd|hdcd', title:'Smazat',
     help:'smaže kontakt po předchozím dotazu (je vhodné napsat předtím do historie důvod)'
     func onclick () { var msg:text
-      if (!confirm('opravdu smazat kontakt č.',C_clen.id,' ',
-        C_clen.osoba.key() ? `${C_clen.prijmeni} ${C_clen.jmeno}` : C_clen.firma,'?')) return;
-      msg= php.klub_clen_delete(C_clen.id);
+      if (!confirm('opravdu smazat kontakt č.',Clen.id,' ',
+        Clen.osoba.key() ? `${Clen.prijmeni} ${Clen.jmeno}` : Clen.firma,'?')) return;
+      msg= php.klub_clen_delete(Clen.id);
       if (msg) alert(msg)
-      else C_cleni._cleni_vyber(0);
+      else Cleni._cleni_vyber(0);
     }
   }
   # Obnovit
   button obnov_clena [336,9,,] { tag:'br', skill:'hdcd|hdcd', title:'Obnovit',
     help:'obnoví kontakt po předchozím dotazu (je vhodné uvést důvod) '
     func onclick () { var msg:text
-      if (!confirm('opravdu obnovit kontakt č.',C_clen.id,' ',
-        C_clen.osoba.key() ? `${C_clen.prijmeni} ${C_clen.jmeno}` : C_clen.firma,'?')) return;
-      C_clen.del= ''; C_clen.del.change();
-      C_clen_butt._clen_uloz(0)
+      if (!confirm('opravdu obnovit kontakt č.',Clen.id,' ',
+        Clen.osoba.key() ? `${Clen.prijmeni} ${Clen.jmeno}` : Clen.firma,'?')) return;
+      Clen.del= ''; Clen.del.change();
+      Clen_butt._clen_uloz(0)
     }
   }
   # procedury
   func _clen_load (id) {
-    C_clen.load(id); _form_state('br|be','bc'); }
+    Clen.load(id); _form_state('br|be','bc'); }
 }
 # ==============================================================================> R O L E VE FIRMÁCH
 panel ROLE [,,616,215] { title:'Seznam odob připnutých k ...', type:'popup', css:'dialog'
@@ -693,20 +726,20 @@ panel ROLE [,,616,215] { title:'Seznam odob připnutých k ...', type:'popup', c
     panel.popup(9,404);
   }
   func save_vyber() {
-    old_vyber= C_cleni.cond.key();
-    old_os= C_cleni.cond_os;
-    old_fy= C_cleni.cond_fy;
-    C_cleni.cond_fy= 1;
-    C_cleni.cond_os= 1;
-    C_cleni.cleni.osoba_firma(1,1);
-    C_cleni.ShowAll();
+    old_vyber= Cleni.cond.key();
+    old_os= Cleni.cond_os;
+    old_fy= Cleni.cond_fy;
+    Cleni.cond_fy= 1;
+    Cleni.cond_os= 1;
+    Cleni.cleni.osoba_firma(1,1);
+    Cleni.ShowAll();
   }
   func Back(on) {
-    C_cleni.cond_fy= old_fy;
-    C_cleni.cond_os= old_os;
-    C_cleni.cleni.osoba_firma(old_os,old_fy);
-    C_cleni.cond.key(old_vyber);
-    C_cleni._cleni_vyber(id_owner);
+    Cleni.cond_fy= old_fy;
+    Cleni.cond_os= old_os;
+    Cleni.cleni.osoba_firma(old_os,old_fy);
+    Cleni.cond.key(old_vyber);
+    Cleni._cleni_vyber(id_owner);
     panel.hide(on)
   }
   use fo: form {
@@ -738,9 +771,9 @@ panel ROLE [,,616,215] { title:'Seznam odob připnutých k ...', type:'popup', c
     }
     button pripni [505,10,,] { title:''
       func onclick () { var ret:object, osoba:number
-        id_member= C_cleni.cleni.browse_key(); 
-        if (typ=='F' && !C_cleni.cleni.osoba) alert("k firmě není možné připnout jinou firmu")
-        elseif (typ=='O' && C_cleni.cleni.osoba) alert("osobu je možné připnout jen k firmě")
+        id_member= Cleni.cleni.browse_key(); 
+        if (typ=='F' && !Cleni.cleni.osoba) alert("k firmě není možné připnout jinou firmu")
+        elseif (typ=='O' && Cleni.cleni.osoba) alert("osobu je možné připnout jen k firmě")
         else {
           ret= php.klub_role_pripni(typ=='F'?id_owner:id_member,typ=='F'?id_member:id_owner);
           if (ret.msg) 
@@ -784,6 +817,7 @@ panel ROLE [,,616,215] { title:'Seznam odob připnutých k ...', type:'popup', c
 }
 # ============================================================================================> Dary
 form _dary [,,260,256] {
+//  var dary_loaded=0, darce=0 // 
   label [9,6,50,15] { title:'<h1>Dary</h1>'}
   label [2,2,257,30] { css:'ae_parm' }
   label [60,4,20,] { title:'celkem' }
@@ -813,27 +847,32 @@ form _dary [,,260,256] {
     show kdy    { data:dd.zmena_kdy }
     func onrowclick() { dary_znacka(); }
     func onchange()   { dary_znacka(); }
-    func dary_znacka () { dary.browse_active(); C_dar._dar_load(iddar); set_zmena() }
+    func dary_znacka () { dary.browse_active(); Dar._dar_load(iddar); set_zmena() }
   }
   label zmena [12,242,236,18] { title:'' },
   # ==> . procedury
   func set_zmena() {
 //    zmena.set(conc('<small>poslední změna: ',dary.kdn.get,' ',dary.kdy.get,'</small>')) 
   }  
-  func _dary_load () {
-    C_dar._dar_init();
+  func _dary_load () { var darce: number
+//    evals= sys('..','evals');
+//    echo(`_dary_load.evals=${evals}, darce=${darce}, curr=${Cleni.cleni.browse_key()}`);
+//    if (evals>2) return;
+    darce= Cleni.cleni.browse_key();
+    Dar._dar_init();
     suma= '';
-    if (!C_cleni.cleni.browse_key()) return;
+    if (!darce) return;
     if (!dary.browse_load(conc(
-        C_dary.show_del ? '' : "left(deleted,1)!='D' AND ",
-        " typ IN (8,9) AND id_clen=",C_cleni.cleni.browse_key(),
-        C_dary.show_new ? " AND YEAR(castka_kdy)>=YEAR(CURDATE())-1" : ''
+        Dary.show_del ? '' : "left(deleted,1)!='D' AND ",
+        " typ IN (8,9) AND id_clen=",darce,
+        Dary.show_new ? " AND YEAR(castka_kdy)>=YEAR(CURDATE())-1" : ''
     ))) return;
     _dary_suma();
     dary.dary_znacka();
+//    dary_loaded= 1; 
   }
   func _dary_suma () {
-    suma= php.klub_dary_suma(C_cleni.cleni.browse_key()); 
+    suma= php.klub_dary_suma(Cleni.cleni.browse_key()); 
   }
   func _dary_focus () {
     dary.browse_focus()
@@ -915,7 +954,7 @@ form _dar [,,390,240] {
   # -----------------------------------------------==> . položky
   label    [1,16,388,225] { css:'ae_work'}
   view d: table dar
-  field id_clen { data:d.id_clen }
+  field id_clen [344,20,40,17] { data:d.id_clen, format:'or' }
   field zpusob  { data:d.zpusob, value:'1' }  // 1:pokladnou, 2:bankou, 3:složenkou, 4:věcný
   field typ  { data:d.typ, value:'9' }  // 8/9:přiřazený 
   field del { data:d.deleted }
@@ -924,7 +963,7 @@ form _dar [,,390,240] {
   field pot_typ { expr:"CASE WHEN  d.potvrz_kdy='0000-00-00' THEN 0 WHEN d.potvrz_txt='' THEN 1 ELSE 2 END" }
   field kdo     { data:d.zmena_kdo }
   field kdy     { data:d.zmena_kdy }
-  field iddar   [344,0,40,17] { data:d.id_dar, format:'or' },
+  field iddar   [344,0,40,17] { data:d.id_dar, format:'or' }
   # -----------------==> .. společné 
   field castka  [15,34,70,17] { title:'^hodnota daru', data:d.castka, format:'r', value:'' },
   select pro    [130,34,198,] { title:'^na projekt', type:'map', data:d.id_projekt, options:map_projekt.nazev }
@@ -956,17 +995,18 @@ form _dar [,,390,240] {
       help:'provede uložení změněných (červeně orámovaných) položek'
     func onclick() { var stav: number
       stav= dar_uloz();
-      echo('C_dar stav=',stav);
+      echo('Dar stav=',stav);
       //_dar_uloz: 0 - beze změny, 1 - uložení změny, 2 - vytvoření nového
       switch (stav) {
       case 1:
-        C_dary.dary.browse_row(); C_dary._dary_suma();
-        C_clen.load(); C_cleni.cleni.browse_seek();
+        Dary.dary.browse_row(); 
+        Dary._dary_suma();
+        Clen.load(); Cleni.cleni.browse_seek();
         break;
       case 2:
-        if (C_dary.dary.browse_seek(`id_dar=${C_dar.key()}`)) {
-          C_dary._dary_suma();
-          C_clen.load(); C_cleni.cleni.browse_seek();
+        if (Dary.dary.browse_seek(`id_dar=${Dar.key()}`)) {
+          Dary._dary_suma();
+          Clen.load(); Cleni.cleni.browse_seek();
         }
         else {
           warning("dar byl vytvořen ale není zobrazený v levém seznamu (nevyhovuje nastaveným podmínkám)")
@@ -1006,7 +1046,7 @@ form _dar [,,390,240] {
   button zpet_dar [69,Tt+9,,] {tag:'bcc', title:'Zpět', skill:'hdde|hdde',
       help:'zruší červené orámování a vrátí původní obsah'
     func onclick() { echo(3);
-      form.dar_zpet(C_dary.dary.browse_key()); 
+      form.dar_zpet(Dary.dary.browse_key()); 
     }
   }
   func dar_zpet (iddar) {
@@ -1025,7 +1065,7 @@ form _dar [,,390,240] {
       help:'naplní položky základními hodnotami pro nový dar, vlastní vytvoření se provede uložením změn' 
     func onclick() {
       form.init(2); autoswitch(0);
-      id_clen= C_cleni.cleni.browse_key(); id_clen.change(); 
+      id_clen= Cleni.cleni.browse_key(); id_clen.change(); 
       dar_dne= now(); dar_dne.change();
       _form_state('bc','be|br'); form.focus()
     }
@@ -1038,7 +1078,7 @@ form _dar [,,390,240] {
       if (novy_darce && confirm('opravdu přepsat dar ',castka,
           ' na ',php.klub_clen_udaje(novy_darce),'?')) {
         stary_darce= id_clen; id_clen= novy_darce; id_clen.change(); 
-        form.save(); C_dary._dary_load()
+        form.save(); Dary._dary_load()
       }
     }
   }
@@ -1049,7 +1089,7 @@ form _dar [,,390,240] {
       if (confirm('opravdu smazat dar ',castka,' Kč?')) {
         del= `D ${sys('user','abbr')} ${now()}`; del.change(); 
         dar_uloz(); 
-        C_dary._dary_load()
+        Dary._dary_load()
       }}
   }
   # ==> . obnovit dar
@@ -1059,7 +1099,7 @@ form _dar [,,390,240] {
       if (confirm('opravdu obnovit dar ',castka,' Kč smazaný ',substr(del,1),'?')) {
         del= ''; del.change(); 
         dar_uloz(); 
-        C_dary._dary_load()
+        Dary._dary_load()
       }}
   }
   # ------------------------==> . procedury
@@ -1102,5 +1142,77 @@ panel Tisk [0,0,650,540] { title:' Prohlížení a tisk dopisu', type:'popup', c
     label        [365,1,,] { title:'adresa' }
     label adresa [405,0,249,64] { style:'background-color:white' }
     edit html   [0,66,655,480] { type:'html', par:{toolbar:'CK_letter'} }
+  }
+}
+# =======================================================================================> Duplicita
+panel Duplicita [0,0,400,190] { title:' Eliminace duplicit', type:'popup', css:'dialog'
+    par:{close:'no'}
+  // k originálu budou přidány informace z kopie - společně s dary a úkoly
+  var orig:number,
+      kopie:number,
+      virgin=1
+  func Spoj (_orig,_copy) {
+    orig= _orig; kopie= _copy;
+    Clen.nadpis= '<h1>Originál</h1>'; show_clen(orig); k.load(kopie);
+    if (k.osoba.key()) {
+      k.display(0,'f|F');
+      k.display(1,'O');
+    }
+    if (virgin) {
+      virgin= 0;
+      js.on_dblclk_copy_to(k,Clen);
+    }
+    panel.modal(225,40);
+  }
+  func _exit() {
+    Clen.nadpis= '<h1>Kontakt</h1>';
+    panel.hide(0);
+  }
+  use k: form {
+    // ==> .. společné položky, které se zobrazují vždy
+    label [7,21,50,15] { tag:'k', title:'<h1>Kopie</h1>' },
+    field id       [349,0,40,]   { data:clen.id_clen, format:'or' }
+    // ==> . jen firma
+    label [16,48,15,15] { tag:'f', title:'<i class="fa fa-users fa-green"></i>' 
+      func onclick() { if_firma.onclick(); }}
+    button if_firma [10,45,,] { tag:'f', title:'[fa-users fa-green]' 
+      func onclick() { ROLE.Osoby(id,firma); }}
+    field firma    [80,45,201,] {tag:'f,F', title:'firma', data:clen.firma, format:'F' }
+    field ico      [314,45,74,] {tag:'f,F', title:'IČ', data:clen.ico, format:'r' },
+    field info     [80,68,308,] {tag:'f,F', title:'info.', data:clen.firma_info, format:'F' }
+    // ==> . jen osoba
+    field titul    [80,68,47,]   {tag:'o,O', title:'osoba', data:clen.titul },
+    field prijmeni [137,68,106,] {tag:'o,O', data:clen.prijmeni, format:'F' },
+    field jmeno    [251,68,100,] {tag:'o,O', data:clen.jmeno, format:'F' },
+    field titul_za [360,68,27,]   {tag:'o,O', data:clen.titul_za },
+    # ==> . každý kontakt
+    select osoba   [80,22,61,] { tag:'k', type:'map', data:clen.osoba,options:cis_k_osoba.hodnota, format:"td" }
+    select kategorie [209,22,185,] { tag:'k', type:'map+', data:clen.kategorie, title:'kategorie',
+      options:cis_kategorie.hodnota }
+    field ulice    [80, 91,111,] { tag:'k,O,F', title:'adresa', data:clen.ulice, format:'' },
+    field psc      [200,91,40,]  { tag:'k,O,F', data:clen.psc, format:'r', sql_pipe:'psc' },
+    field obec     [250,91,101,] { tag:'k,O,F', data:clen.obec, format:'F' },
+    field stat     [359,91,28,]  { tag:'k,O,F', data:clen.stat },
+    field telefony [80,114,160,] { tag:'k', title:'tel.,mail', type:'list', data:clen.telefony },
+    field email    [247,114,148,] { tag:'k', type:'list', par:{delim:';'}, data:clen.email },
+    field narozeni [80,137,87,] { tag:'o', title:'dat.narození', type:'date', data:clen.narozeni }
+    field nar_rok  [209,137,30,] { tag:'o', title:'jen rok' data:clen.narozeni_rok, format:'r' 
+                                      help:'rok narození, pokud neznáme přesnější datum'  }
+    field clen_od  [308,137,87,] {tag:'k', type:'date', title:'v Klubu od', data:clen.clen_od, format:'n' }
+    # ==> funkce eliminace
+    button [6,0,,] { title:"originál [fa-exchange] kopie" 
+      func onclick() { var x:number
+        x= orig; orig= kopie; kopie= x; 
+        k.load(kopie); show_clen(orig);
+    }}
+    button [83,166,,] { title:"[fa-save] Proveď sjednocení" 
+      func onclick() { 
+        php.klub_spoj(kopie,orig);
+        Clen_butt._clen_uloz(1);
+        _exit();
+    }}
+    button [227,166,,] { title:"[fa-undo] Zpět" 
+      func onclick() { _exit() }
+    }
   }
 }

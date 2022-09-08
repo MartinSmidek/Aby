@@ -2,6 +2,40 @@
 # Aplikace Aby pro Nadační fond sester františkánek
 # (c) 2022 Martin Smidek <martin@smidek.eu>
 /** *************************************************************************************==> CLENOVE */
+# ---------------------------------------------------------------------------------------- klub spoj
+# spojí kopii s originálem a potom kopii vymaže
+# přepíše odkazy z kopie na originál
+function klub_spoj($id_copy,$id_orig) {
+  global $USER;
+  user_test();
+  $ret= (object)array('err'=>'');
+  $now= date("Y-m-d H:i:s");
+  // dar: id_clen
+  $dar=   select("GROUP_CONCAT(id_dar)",  "dar",  "id_clen=$id_copy");
+  query("UPDATE dar SET id_clen=$id_orig WHERE id_clen=$id_copy");
+  // role: id_osoba + id_firma
+  $role= select("GROUP_CONCAT(id_role)","role","id_osoba=$id_copy OR id_firma=$id_copy");
+  query("UPDATE role SET id_osoba=$id_orig WHERE id_osoba=$id_copy");
+  query("UPDATE role SET id_firma=$id_orig WHERE id_firma=$id_copy");
+  // ukol: id_clen
+  $ukol= select("GROUP_CONCAT(id_ukol)","ukol","id_clen=$id_copy");
+  query("UPDATE ukol SET id_clen=$id_orig WHERE id_clen=$id_copy");
+  // mail: id_clen
+  $mail= select("GROUP_CONCAT(id_mail)","mail","id_clen=$id_copy");
+  query("UPDATE mail SET id_clen=$id_orig WHERE id_clen=$id_copy");
+  // zápis o ztotožnění osob do _track jako op=d (duplicita)
+  $info= "dar:$dar;role:$role;ukol:$ukol;mail:$mail";
+  // smazání kopie a zápis do _track
+  query("UPDATE clen SET deleted='D clen=$id_orig' WHERE id_clen=$id_copy");
+  $user= $USER->abbr;
+  query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+         VALUES ('$now','$user','clen',$id_orig,'clen','d','$info',$id_copy)");
+  // zápis o smazání kopie do _track jako op=x (eXtract)
+  query("INSERT INTO _track (kdy,kdo,kde,klic,fld,op,old,val)
+         VALUES ('$now','$user','clen',$id_copy,'','x','smazaná kopie',$id_orig)");
+end:
+  return $ret;
+}
 # --------------------------------------------------------------------------------------- klub vyber
 # pro cmd='options' sestaví podmínky výběru kontaktů 
 # pro cmd='cond' vrací SQL vybrané podmínky pro daný klíč

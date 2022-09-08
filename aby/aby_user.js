@@ -1,5 +1,27 @@
 // Aplikace Aby pro Nadační fond sester františkánek
 // (c) 2022 Martin Smidek <martin@smidek.eu>
+// ------------------------------------------------------------------------------- on_dblclk_copy_to
+// Pro elementy při DblClk zkopíruje hodnotu do stejnojmenného elementu formuláře goal
+// (funguje pro field, edit)
+function on_dblclk_copy_to(form,goal) {
+  form= form instanceof Var ? form.value : form;
+  goal= goal instanceof Var ? goal.value : goal;
+//   $each(form.part,function(field,id) {
+  for (let id in form.part) { let field= form.part[id];
+    if ( (field instanceof Field || field instanceof FieldList 
+      || field instanceof Edit || field instanceof Select)
+      && field.DOM_Input ) {
+      field.DOM_Input
+        .dblclick( function(el) {
+          let field2= goal.part[this.id];
+          if ( field2 ) {
+            field2.set(this.value);
+            field2.change();
+          }
+        }.bind(field));
+    }
+  }
+}
 // ----------------------------------------------------------------------------------------- date_gt
 // vrátí date2sql(a)>date2sql(b) ? 1 : 0
 function date_gt(a,b) {
