@@ -1151,13 +1151,13 @@ panel Duplicita [0,0,400,190] { title:' Eliminace duplicit', type:'popup', css:'
   var orig:number,
       kopie:number,
       virgin=1
-  func Spoj (_orig,_copy) {
-    orig= _orig; kopie= _copy;
-    Clen.nadpis= '<h1>Originál</h1>'; show_clen(orig); k.load(kopie);
-    if (k.osoba.key()) {
-      k.display(0,'f|F');
-      k.display(1,'O');
-    }
+  func Spoj (_orig,_copy) { var je_firma:number
+    orig= _orig; kopie= _copy; 
+    Clen.nadpis= '<h1>Originál</h1>'; 
+    show_clen(orig); 
+    k.load(kopie); je_firma= !k.osoba.key();
+    k.display(1,je_firma ? 'f' : 'o'); 
+    k.display(0,je_firma ? 'o' : 'f'); 
     if (virgin) {
       virgin= 0;
       js.on_dblclk_copy_to(k,Clen);
@@ -1169,34 +1169,31 @@ panel Duplicita [0,0,400,190] { title:' Eliminace duplicit', type:'popup', css:'
     panel.hide(0);
   }
   use k: form {
+    label [120,0,229,28] {title:"Dvojklik na položku provede její zkopírování do originálu"}
     // ==> .. společné položky, které se zobrazují vždy
-    label [7,21,50,15] { tag:'k', title:'<h1>Kopie</h1>' },
+    label [7,30,50,15] { tag:'k', title:'<h1>Kopie</h1>' },
     field id       [349,0,40,]   { data:clen.id_clen, format:'or' }
     // ==> . jen firma
-    label [16,48,15,15] { tag:'f', title:'<i class="fa fa-users fa-green"></i>' 
-      func onclick() { if_firma.onclick(); }}
-    button if_firma [10,45,,] { tag:'f', title:'[fa-users fa-green]' 
-      func onclick() { ROLE.Osoby(id,firma); }}
-    field firma    [80,45,201,] {tag:'f,F', title:'firma', data:clen.firma, format:'F' }
-    field ico      [314,45,74,] {tag:'f,F', title:'IČ', data:clen.ico, format:'r' },
-    field info     [80,68,308,] {tag:'f,F', title:'info.', data:clen.firma_info, format:'F' }
+    field firma    [80,55,201,] {tag:'f', title:'firma', data:clen.firma, format:'F' }
+    field ico      [314,55,74,] {tag:'f', title:'IČ', data:clen.ico, format:'r' },
+    field info     [80,78,308,] {tag:'f', title:'info.', data:clen.firma_info, format:'F' }
     // ==> . jen osoba
-    field titul    [80,68,47,]   {tag:'o,O', title:'osoba', data:clen.titul },
-    field prijmeni [137,68,106,] {tag:'o,O', data:clen.prijmeni, format:'F' },
-    field jmeno    [251,68,100,] {tag:'o,O', data:clen.jmeno, format:'F' },
-    field titul_za [360,68,27,]   {tag:'o,O', data:clen.titul_za },
+    field titul    [80,77,47,]   {tag:'o', title:'osoba', data:clen.titul },
+    field prijmeni [137,77,106,] {tag:'o', data:clen.prijmeni, format:'F' },
+    field jmeno    [251,77,100,] {tag:'o', data:clen.jmeno, format:'F' },
+    field titul_za [360,77,27,]   {tag:'o', data:clen.titul_za },
     # ==> . každý kontakt
-    select osoba   [80,22,61,] { tag:'k', type:'map', data:clen.osoba,options:cis_k_osoba.hodnota, format:"td" }
-    select kategorie [209,22,185,] { tag:'k', type:'map+', data:clen.kategorie, title:'kategorie',
+    select osoba   [80,31,61,] { tag:'k', type:'map', data:clen.osoba,options:cis_k_osoba.hodnota, format:"td" }
+    select kategorie [209,31,185,] { tag:'k', type:'map+', data:clen.kategorie, title:'kategorie',
       options:cis_kategorie.hodnota }
-    field ulice    [80, 91,111,] { tag:'k,O,F', title:'adresa', data:clen.ulice, format:'' },
-    field psc      [200,91,40,]  { tag:'k,O,F', data:clen.psc, format:'r', sql_pipe:'psc' },
-    field obec     [250,91,101,] { tag:'k,O,F', data:clen.obec, format:'F' },
-    field stat     [359,91,28,]  { tag:'k,O,F', data:clen.stat },
-    field telefony [80,114,160,] { tag:'k', title:'tel.,mail', type:'list', data:clen.telefony },
-    field email    [247,114,148,] { tag:'k', type:'list', par:{delim:';'}, data:clen.email },
-    field narozeni [80,137,87,] { tag:'o', title:'dat.narození', type:'date', data:clen.narozeni }
-    field nar_rok  [209,137,30,] { tag:'o', title:'jen rok' data:clen.narozeni_rok, format:'r' 
+    field ulice    [80,100,111,] { tag:'k', title:'adresa', data:clen.ulice, format:'' },
+    field psc      [200,100,40,]  { tag:'k', data:clen.psc, format:'r', sql_pipe:'psc' },
+    field obec     [250,100,101,] { tag:'k', data:clen.obec, format:'F' },
+    field stat     [359,100,28,]  { tag:'k', data:clen.stat },
+    field telefony [80,123,160,] { tag:'k', title:'tel.,mail', type:'list', data:clen.telefony },
+    field email    [247,123,148,] { tag:'k', type:'list', par:{delim:';'}, data:clen.email },
+    field narozeni [80,146,87,] { tag:'o', title:'dat.narození', type:'date', data:clen.narozeni }
+    field nar_rok  [209,146,30,] { tag:'o', title:'jen rok' data:clen.narozeni_rok, format:'r' 
                                       help:'rok narození, pokud neznáme přesnější datum'  }
     field clen_od  [308,137,87,] {tag:'k', type:'date', title:'v Klubu od', data:clen.clen_od, format:'n' }
     # ==> funkce eliminace
@@ -1205,13 +1202,13 @@ panel Duplicita [0,0,400,190] { title:' Eliminace duplicit', type:'popup', css:'
         x= orig; orig= kopie; kopie= x; 
         k.load(kopie); show_clen(orig);
     }}
-    button [83,166,,] { title:"[fa-save] Proveď sjednocení" 
+    button [83,175,,] { title:"[fa-save] Proveď sjednocení" 
       func onclick() { 
         php.klub_spoj(kopie,orig);
         Clen_butt._clen_uloz(1);
         _exit();
     }}
-    button [227,166,,] { title:"[fa-undo] Zpět" 
+    button [227,175,,] { title:"[fa-undo] Zpět" 
       func onclick() { _exit() }
     }
   }
