@@ -403,7 +403,7 @@ function ezer_get_temp_dir() {
 }
  * 
  */
-# -------------------------------------------------------------------------------------------------- psc
+# ---------------------------------------------------------------------------------------------- psc
 // doplnění mezery do PSČ
 function psc ($psc,$user2sql=0) {
   if ( $user2sql )                            // převeď uživatelskou podobu na sql tvar
@@ -414,31 +414,26 @@ function psc ($psc,$user2sql=0) {
   }
   return $text;
 }
-/*
-# -------------------------------------------------------------------------------------------------- osl update
+# ----------------------------------------------------------------------------------- osl update_all
 # ASK
-# vygeneruje rod,osloveni,prijmeni5p do tabulky CLEN
-function osl_update($id_clen) {
-  $qry= "SELECT id_clen,osoba,c.jmeno,prijmeni,titul,rod,n.sex,anomalie,osloveni,prijmeni5p,vyjimka
-         FROM clen AS c LEFT JOIN _jmena AS n ON c.jmeno=n.jmeno
-         WHERE id_clen=$id_clen AND vyjimka!=801 ";
-  $res= pdo_qry($qry);
-  if ( $res && ($x= pdo_fetch_object($res)) ) {
-    osl_kontakt($rod,$typ,$ano,$x->osoba,$x->titul,$x->jmeno,$x->prijmeni,$x->sex);
-    $prijmeni5p= osl_prijmeni5p($x->titul,$x->prijmeni,$rod,$ano);
-    $prijmeni5p= pdo_real_escape_string($prijmeni5p);
-    $osloveni= osl_osloveni($rod,$typ);
-    $r= $rod=='m' ? 1 : ( $rod=='f' ? 2 : 0);
-    $qr1= "UPDATE clen SET rod=$r,osloveni='$osloveni',prijmeni5p='$prijmeni5p'
-           WHERE id_clen=$id_clen ";
-    $re1= pdo_qry($qr1);
+# vygeneruje rod,osloveni,prijmeni5p do tabulky CLEN kde to lze a není zakázáno
+function osl_update_all() {
+  $res= pdo_qry("
+      SELECT id_clen,osoba,titul,jmeno,prijmeni FROM clen 
+      WHERE deleted='' AND osoba=1 AND jmeno!='' AND prijmeni!=''
+        AND vyjimka!=1 AND osloveni=0 AND prijmeni5p='' ");
+  while ($res && (list($idc,$osoba,$titul,$jmeno,$prijmeni)= pdo_fetch_row($res)) ) {
+    $x= osl_insert($osoba,$titul,$jmeno,$prijmeni);
+    if ($x->osloveni) {
+      query("UPDATE clen SET rod=$x->rod,osloveni='$x->osloveni',prijmeni5p='$x->prijmeni5p'
+           WHERE id_clen=$idc");
+    }
   }
-  return 1;
 }
-# -------------------------------------------------------------------------------------------------- osl insert
+# --------------------------------------------------------------------------------------- osl insert
 # ASK
 # vygeneruje rod,osloveni,prijmeni5p do tabulky CLEN
-function osl_insert($osoba,$titul,$jmeno,$prijmeni) {
+function osl_insert($osoba,$titul,$jmeno,$prijmeni) { trace();
   $result= (object)array();
   $qry= "SELECT jmeno,sex FROM _jmena WHERE jmeno='$jmeno' ORDER BY cetnost DESC LIMIT 1";
   $res= pdo_qry($qry);
@@ -447,6 +442,7 @@ function osl_insert($osoba,$titul,$jmeno,$prijmeni) {
     $s= pdo_fetch_object($res);
     $sex= $s->sex;
   }
+  $rod= $typ= $ano= null;
   osl_kontakt($rod,$typ,$ano,$osoba,$titul,$jmeno,$prijmeni,$sex);
   $result->prijmeni5p= $prijmeni ? osl_prijmeni5p($titul,$prijmeni,$rod,$ano) : '';
   $result->osloveni= osl_osloveni($rod,$typ);
@@ -454,6 +450,7 @@ function osl_insert($osoba,$titul,$jmeno,$prijmeni) {
 //                                         debug($result,"osl_insert($osoba,$titul,$jmeno,$prijmeni)");
   return $result;
 }
+/*
 # -------------------------------------------------------------------------------------------------- osl_kontakt_new
 # ASK
 # vygeneruje rod,osloveni,prijmeni5p do tabulky OSLOVENI
@@ -544,7 +541,8 @@ function osl_kontakt_new ($op,$ids='',$limit=25000) { trace();
   }
   return $msg;
 }
-# -------------------------------------------------------------------------------------------------- osl oslovení
+ * */
+# ------------------------------------------------------------------------------------- osl oslovení
 // generování oslovení
 function osl_osloveni ($rod,$typ) {
   $oslo= 0;
@@ -557,7 +555,7 @@ function osl_osloveni ($rod,$typ) {
   }
   return $oslo;
 }
-# -------------------------------------------------------------------------------------------------- osl prijmeni5p
+# ----------------------------------------------------------------------------------- osl prijmeni5p
 // generování 5. pádu z $prijmeni,$rod
 function osl_prijmeni5p ($titul,$prijmeni,$rod,&$ano) {  
   $y= '';
@@ -604,7 +602,7 @@ function osl_prijmeni5p ($titul,$prijmeni,$rod,&$ano) {
 //                                                 display("osl_prijmeni5p($p,$rod)=$y ($len:$p1,$p_1,$p2,$p_2,$p3,$p_3:$p)");
   return $y;
 }
-# -------------------------------------------------------------------------------------------------- osl kontakt
+# -------------------------------------------------------------------------------------- osl kontakt
 # rozeznání kategorie člena - kvůli oslovení (vstupem db hodnoty $osoba,$titul,$jmeno,$prijmeni,$sex)
 # rod: ?|m|f|mm|ff|mf
 # typ: l|ll|s|ss|p
@@ -663,6 +661,7 @@ function osl_kontakt (&$rod,&$typ,&$ano,$osoba,$titul,$jmeno,$prijmeni,$sex) {
   }
 //                                                 display("osl_kontakt ($rod,$typ,$ano,$osoba,$titul,$jmeno,$prijmeni,$sex)");
 }
+/*
 # -------------------------------------------------------------------------------------------------- osl_gen_oprava
 // opravy anomálií a informace o jejich počtu
 function osl_gen_oprava ($typ) {
