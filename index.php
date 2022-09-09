@@ -37,11 +37,6 @@
 //      . "text-align: center; font-size: 38px; line-height: 44px; z-index: 16; opacity: .5;";
 //  $demo= "<div id='DEMO' onmouseover=\"$click\" style='$dstyle'>testovací data<br>funkce bez záruky</div>";
 
-  $favicon= array(
-      "aby_local.png",
-      "aby.png",
-    )[$ezer_server];
-
   $add_pars= array(
     'favicon' => $favicon,
 //    'title_right' => "<span$title_style>$title_flag $app_name ...</span>$demo",
@@ -56,8 +51,8 @@
     }"
   );
   $add_options= (object)array(
-    'login_interval' => 8*60,          // povolená nečinnost v minutách - 8 hodin
-    'path_files_u'    => "'{$abs_roots[$ezer_server]}'",   // absolutní cesta do kořene aplikace
+    'login_interval' => 8*60,           // povolená nečinnost v minutách - 8 hodin
+    'path_files_u'    => "'$abs_root'", // absolutní cesta do kořene aplikace
   );
 
   

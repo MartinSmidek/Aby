@@ -9,9 +9,9 @@ if ( !isset($_SESSION) ) session_start();
 
 # -------------------------------------------------------------------- identifikace ladícího serveru
 // definice podporovaných serverů
-global $ezer_server, $paths_log;
-//$deep_root= "../files/answer";
-//require_once("$deep_root/db2.dbs.php");
+global $ezer_server, $path_log;
+$deep_root= "../files/$ezer_root";
+require_once("$deep_root/$ezer_root.dbs.php");
 $ezer_local= $ezer_server==0;
 # ----------------------------------------------------------------------------------------------- js
 $js= <<<__EOD
@@ -41,13 +41,13 @@ if ( isset($_GET['op']) ) {
     phpinfo();
     break;
   case 'log':
-    $log= isset($log_path) ? tailCustom($paths_log[$ezer_server],$arg) 
+    $log= isset($log_path) ? tailCustom($path_log,$arg) 
       : "cannot find log_path for server $ezer_server";
-//    $log= isset($paths_log[$ezer_server]) ? tailShell($paths_log[$ezer_server],$arg) : '---';
+//    $log= isset($path_log) ? tailShell($path_log,$arg) : '---';
     $log= nl2br($log);
     goto render;
   case 'down':
-    copy($paths_log[$ezer_server],"docs/error.log");
+    copy($path_log,"docs/error.log");
     goto render;
     break;
   case 'cookie':

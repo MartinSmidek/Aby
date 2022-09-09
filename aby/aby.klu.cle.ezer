@@ -1,7 +1,7 @@
 # Aplikace Aby ... pro Nadační fond sester františkánek
 # (c) 2022 Martin Šmídek <martin@smidek.eu>
 
-const use_onready=0
+//const use_onready=0  // možnost OPTIMALIZACE
 
 # ========================================================================================> KONTAKTY
 
@@ -33,16 +33,16 @@ func onfocus () {
   }
 }
 
-func onready() { var idc: number
-  if (!use_onready) return; // testování optimalizace načítání
-  idc= Cleni.cleni.browse_key();
-  echo(`onready: cleni:${idc}, clen=${Clen.id}, `);
-  if (Clen.id!=idc) {
-    Clen_butt._clen_load(idc);
-    if (has_skill('hdd')) Dary._dary_load();
-    Clen.Show(Clen.zalozka);
-  }
-}
+//func onready() { var idc: number // možnost OPTIMALIZACE
+//  if (!use_onready) return; // testování optimalizace načítání
+//  idc= Cleni.cleni.browse_key();
+//  echo(`onready: cleni:${idc}, clen=${Clen.id}, `);
+//  if (Clen.id!=idc) {
+//    Clen_butt._clen_load(idc);
+//    if (has_skill('hdd')) Dary._dary_load();
+//    Clen.Show(Clen.zalozka);
+//  }
+//}
 
 # aktivace_zvenčí
 func refresh_vyber() {
@@ -171,6 +171,12 @@ form _cleni [,,660,330] {
     show has_f {data:rf.id_role}
     show has_o {data:ro.id_role}
     show osoba {data:c.osoba}
+//    // položky pro podbloky možnost OPTIMALIZACE
+//    show kapri {data:c.psc,sql_pipe:'select_kapri2'}
+//    show dary  {data:c.id_clen,sql_pipe:'pipe_dary:new,valid'}
+//    show dar1  {data:c.id_clen,sql_pipe:'pipe_dar:new,valid'}
+//#     show celkem {data:c.id_clen,sql_pipe:'form_dar_new'}
+//    // položky pro form
     // výběrové položky
     show zdroj    [,, 0,] { title:'(zdroj)',   data:c.zdroj,       format:'q$rs' }
     show ucet     [,, 0,] { title:'účet',      data:c.ucet,       format:'q$rs' }
@@ -220,11 +226,12 @@ form _cleni [,,660,330] {
     }}
     func znacka () {
       if (cleni.browse_count()) {
-        if (!use_onready) { // testování optimalizace načítání
+//        if (!use_onready) { // možnost OPTIMALIZACE
+//          copy_by_name(cleni,Clen); // možnost OPTIMALIZACE podle FiS
           Clen_butt._clen_load(id_clen);
           if (has_skill('hdd')) Dary._dary_load();
           Clen.Show(Clen.zalozka);
-        }
+//        }
       }
       else {
         Clen.init(); 
@@ -872,7 +879,7 @@ form _dary [,,260,256] {
 //    dary_loaded= 1; 
   }
   func _dary_suma () {
-    suma= php.klub_dary_suma(Cleni.cleni.browse_key()); 
+//    suma= php.klub_dary_suma(Cleni.cleni.browse_key()); 
   }
   func _dary_focus () {
     dary.browse_focus()
