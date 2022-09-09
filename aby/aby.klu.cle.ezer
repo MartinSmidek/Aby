@@ -879,7 +879,7 @@ form _dary [,,260,256] {
 //    dary_loaded= 1; 
   }
   func _dary_suma () {
-//    suma= php.klub_dary_suma(Cleni.cleni.browse_key()); 
+    suma= php.klub_dary_suma(Cleni.cleni.browse_key()); 
   }
   func _dary_focus () {
     dary.browse_focus()
