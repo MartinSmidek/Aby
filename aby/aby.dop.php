@@ -1665,4 +1665,14 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
 end:  
   return $result;
 }
-# --------------------------------------------------------------------------------- mail2 mai_attach
+# ------------------------------------------------------------------------------------- dop_mai_stav
+# úprava stavu mailové adresy
+# $id_clen = 0 -- jen stav
+# $id_clen!= 0 -- včetně znovuzískání mailové adresy člena
+function dop_mai_stav($id_mail,$id_clen,$email,$stav) {  trace();
+  $novy_email= $id_clen ? ",email='".select("email","clen","id_clen=$id_clen")."'" : '';
+  $qry= "UPDATE mail SET state=$stav$novy_email WHERE id_mail=$id_mail ";
+  $res= pdo_qry($qry);
+  if ( !$res ) fce_error("dop_mai_stav: změna stavu mailu pro člena '$id_clen' se nepovedla");
+  return true;
+}
