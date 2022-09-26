@@ -428,12 +428,15 @@ form _maily [,,500,200] {
     }
     menu {type:'context'
       item {title:"změnit na 'poslat znovu'", func onclick() {
+        if (!maily.browse_count()) return;
         php.dop_mai_stav(id_mail,0,0,3); maily.browse_row() }
       }
       item {title:"změnit na 'neposílat'", func onclick() {
+        if (!maily.browse_count()) return;
         php.dop_mai_stav(id_mail,0,0,5); maily.browse_row() }
       }
       item {title:"-přejít na kontakt'", func onclick() {
+        if (!maily.browse_count()) return;
         klu.cle.show_clen(id_clen); }
       }
     }
