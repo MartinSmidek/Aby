@@ -1194,3 +1194,475 @@ function dop_show_vars($idd=0) {  trace();
 //                                                       debug($vars,"dop_show_vars($idd)");
   return $vars;
 }
+# ==========================================================================================> DOPISY
+# -------------------------------------------------------------------------------------- rz_mai_info
+# ASK
+# přečtení mailu
+function rz_mai_info($id_dopis,$id_mail=null) {  //trace();
+  $ret= (object)array('info'=>'','mail'=>'');
+  $d= $m= null;
+  $html= $info= '';
+  $d= select('*','dopis',"id_dopis=$id_dopis");
+  if ( $id_mail ) $m= select('*','mail',"id_mail=$id_mail");
+  // text mailu
+  $html.= "<hr/>";
+  $html.= $m->body ?: $d->obsah;
+  // přílohy
+  if ( $d->prilohy ) {
+    foreach ( explode(',',$d->prilohy) as $priloha ) {
+      $priloha= $priloha;
+      $html.= "<hr/><b>Příloha:</b> $priloha";
+      $typ= strtolower(substr($priloha,-4));
+      if ( $typ=='.jpg' || $typ=='.gif' || $typ=='.png' ) {
+        $html.= "<img src='docs/$priloha' />";
+      }
+    }
+  }
+  // informace o adresátovi
+  if ( $id_mail ) {
+    $c= select('*','clen',"id_clen={$m->id_clen}");
+//    $vars= explode(',',$d->vars);
+//    $vals= explode(',',$m->vars);
+    $jmeno= $c->osoba ? " {$c->jmeno} {$c->prijmeni}" : "$c->firma";
+    $ret->info= xx_ukaz_clena($m->id_clen)." $jmeno";
+    if ( $m->vars ) {
+      $ret->info.= "<hr/><b>proměnné</b> ".str_replace('"','',substr(substr($m->vars,1),0,-1));
+    }
+  }
+  $ret->mail= $html;
+//                                                         debug($ret,"rz_mai_info");
+  return $ret;
+}
+# ------------------------------------------------------------------------------------ xx_ukaz_clena
+# zobrazí odkaz na řádek se členem
+function xx_ukaz_clena($id,$barva='') {
+  $style= $barva ? "style='color:$barva'" : '';
+  return "<b><a $style href='ezer://klu.cle.show_clena/$id'>$id</a></b>";
+}
+# -------------------------------------------------------------------------------------- xx mai_smaz
+# ASK
+# smazání mailu v DOPIS včetně jeho rozesílání v MAIL
+function xx_mai_smaz($id_dopis) {  trace();
+  query("DELETE FROM dopis WHERE id_dopis=$id_dopis");
+  query("DELETE FROM mail WHERE id_dopis=$id_dopis");
+  return true;
+}
+# -------------------------------------------------------------------------------------==> . přílohy
+# ASK
+# přidá další přílohu k mailu (soubor je v docs/$ezer_root)
+function rz_mai_attach($id_dopis,$f) { trace();
+  // nalezení záznamu v tabulce a přidání názvu souboru
+  $names= select('prilohy','dopis',"id_dopis=$id_dopis");
+  $names= ($names ? "$names," : '')."{$f->name}:{$f->size}";
+  query("UPDATE dopis SET prilohy='$names' WHERE id_dopis=$id_dopis");
+  return 1;
+}
+# odstraní všechny přílohy mailu
+function rz_mai_detach_all($id_dopis) { trace();
+  query("UPDATE dopis SET prilohy='' WHERE id_dopis=$id_dopis");
+  return 1;
+}
+# odebere soubor z příloh
+function rz_mai_detach($id_dopis,$name) { trace();
+  // nalezení záznamu v tabulce a odebrání názvu souboru
+  $names= select('prilohy','dopis',"id_dopis=$id_dopis");
+  $as= explode(',',$names);
+  $as2= array();
+  foreach($as as $a) {
+    list($an,$ab)= explode(':',$a);
+    if ( $an!=$name )$as2[]= $a;
+  }
+  $names2= implode(',',$as2);
+  query("UPDATE dopis SET prilohy='$names2' WHERE id_dopis=$id_dopis");
+  return 1;
+}
+# ----------------------------------------------------------------------------------==> . generování
+# ASK
+# do tabulky MAIL dá seznam emailových adres pro rozeslání, pokud je $regenerate přepíše staré
+# záznamy, pokud ne a jsou dá zprávu do ret.again.
+function rz_mai_generuj($id_dopis,$regenerate=0) {  trace();
+  $TEST= 0;
+  $LIMIT= '';
+  $ret= (object)array();
+  // zjisti jestli text obsahuje proměnné
+  $d= select('*','dopis',"id_dopis=$id_dopis");
+  $idd= $d->id_dopis;
+  $obsah= $d->obsah;
+  $is_vars= preg_match_all("/[\{]([^}]+)[}]/",$obsah,$list);
+  $vars= $list[1];
+//                                                         debug($vars);
+  if ( !$regenerate ) {
+    // zjištění přepsatelnosti vygenerovaných mailů
+    $maily= select('COUNT(*)','mail',"id_dopis=$idd");
+    if ( $maily ) {
+      $ret->again= "K tomuto dopisu již byly vygenerovány maily a adresy - chceš je přegenerovat?";
+      goto end;
+    }
+  }
+  // vygenerování mailů
+  $nm= 0;
+  query("DELETE FROM mail WHERE id_dopis=$idd");
+  // zatím všem
+  display("SELECT clen");
+  $rm= pdo_qry("SELECT id_clen,email FROM clen 
+    WHERE deleted='' AND email!='' 
+    $LIMIT");
+  while ($rm && (list($idc,$emails)= pdo_fetch_row($rm))) {
+    
+//  $ids= rz_mai_ids($d->komu);
+//  $fname= "dopis_$idd.csv";
+//  $fpath= "docs/$fname";
+//  $f= @fopen($fpath,'w');
+//  if ( !$f ) { $ret->msg.= "soubor '$fpath' nelze vytvořit"; goto end; }
+//  $csv= array('titul','organizace','jmeno','prijmeni','ulice','psc','obec');
+//  if ( $is_vars ) $csv= array_merge($csv,$vars);
+//  fputs($f,chr(0xEF).chr(0xBB).chr(0xBF));
+//  fputcsv($f,$csv,';','"');
+////                                                         display("ids=$ids");
+//  foreach(explode(',',$ids) as $idc) {
+//    list($emails,$titul,$organizace,$jmeno,$prijmeni,$ulice,$psc,$obec,$dostava,$dostava_do)=
+//      select('email,titul,organizace,jmeno,prijmeni,ulice,psc,obec,dostava,dostava_do',
+//          'ctenar',"id_ctenar=$idc");
+//    // pokud komu=nesolventní tak vynecháme obdarované
+//    if ($d->komu=='9' && $dostava && ($dostava_do=='' || strcmp($dostava_do,"$rocnik/$cislo")>0)) {
+//      continue;
+//    }
+    $pairs_json= '';
+    if ( $is_vars ) {
+      $pairs= rz_mai_compute($vars,$idc,$err);
+      $pairs_json= json_encode($pairs);
+    }
+    $body= $obsah;
+    $emails= explode(',',$emails);
+    foreach ($emails as $email) {    
+      $email= trim($email);
+      if ( $email && $email[0]!='*' ) {
+        // vlož do MAIL - pokud nezačíná * a je to validní mail
+        if ( !emailIsValid($email,$chyba) ) {
+          $ret->msg.= "V mailech jsou chyby (např. u ID=$idc) - proveď napřed kontrolu";
+          goto end;
+        }
+//        // pokud dopis obsahuje proměnné, personifikuj obsah
+//        if ( $is_vars ) {
+//          $body= strtr($body,$pairs);
+//        }
+        query("INSERT mail (state,vars,id_dopis,id_clen,email,body)
+               VALUE (0,'$pairs_json',$idd,$idc,'$email','$body')");
+        $nm++;
+      }
+//      else {
+//        // pokud neznáme email, zapiš proměnné do těla
+//        $ne++;
+//        $adresa= "$organizace $jmeno $prijmeni, $obec";
+//        // a přidej do souboru
+//        $csv= array($titul,$organizace,$jmeno,$prijmeni,$ulice,$psc,$obec);
+//        if ( $is_vars ) foreach ($pairs as $val) {
+//          $csv[]= $val;
+//        }
+//        fputcsv($f,$csv,';','"');
+//        // a do mailu
+//        query("INSERT mail (stav,vars,id_dopis,id_ctenar,email)
+//               VALUE (9,'$pairs_json',$idd,$idc,'$adresa')");
+//      }
+    }
+//    if ( $TEST && $nm && $ne ) break;
+  }
+//  fclose($f);
+//  // doplnění odkazu na server a seznamu proměnných do dopis
+//  $var_lst= implode(',',$vars);
+//  query("UPDATE dopis SET vars='$var_lst' WHERE id_dopis=$idd");
+  $ret->msg= "Bylo vygenerováno $nm mailů";
+end:
+//                                                         debug($ret);
+  return $ret;
+}
+# -------------------------------- vygeneruje seznam id_clen podle kriteria $komu, podle číselníku
+function rz_mai_ids($komu) { trace();
+  $ids= '';
+  $kody= map_cis('rz_mail_komu','hodnota');
+  $kod= $kody[$komu];
+                                              debug($kody,$komu);
+  $x= rz_op('vyber2');
+  if ( $kod && isset($x->$kod) ) {
+    $ids= $x->$kod;
+  }
+  else fce_error("nepodporovaný výběr adresátů mailů - $kod");
+  return $ids;
+}
+# ------------------------------------------------------------------------------------==> . proměnné
+# spočítá hodnoty proměnných pro id_clen
+function rz_mai_compute($vars,$id_clen,$err) {  trace();
+  $pairs= array();
+  foreach ($vars as $var) {
+    $val= '???';
+//    switch ($var) {
+//    case 'stav':
+//      $val= select1("SUBSTR(MAX(CONCAT(datum,castka)),20)","historie","id_ctenar=$id_ctenar");
+//      break;
+//    case 'potreba':
+//      xx_posledni($x,'R');
+//      $kusy= select("sobe","ctenar","id_ctenar=$id_ctenar");
+//      $val= $kusy * $x->cena;
+//      break;
+//    case 'VS':
+//      $val= $id_ctenar;
+//      break;
+//    }
+    $pairs['{'."$var}"]= $val;
+  }
+//                                                         debug($pairs);
+  return $pairs;
+}
+# ------------------------------------------------------------------------------ mail2 new_PHPMailer
+# nastavení parametrů pro SMTP server podle user.options.smtp
+function mail2_new_PHPMailer() {  
+  global $ezer_path_serv, $ezer_root;
+  // získání parametrizace SMTP
+  $idu= $_SESSION[$ezer_root]['user_id'];
+  $i_smtp= sys_user_get($idu,'opt','smtp') ?: 1;
+  $smtp_json= select1('hodnota','_cis',"druh='smtp_srv' AND data=$i_smtp");
+  $smtp= json_decode($smtp_json);
+  if ( json_last_error() != JSON_ERROR_NONE ) {
+    $mail= null;
+    fce_warning("chyba ve volbe SMTP serveru" . json_last_error_msg());
+    goto end;
+  }
+  // inicializace phpMailer
+  $phpmailer_path= "$ezer_path_serv/licensed/phpmailer";
+  require_once("$phpmailer_path/class.phpmailer.php");
+  require_once("$phpmailer_path/class.smtp.php");
+  $mail= new PHPMailer;
+  $mail->SetLanguage('cs',"$phpmailer_path/language/");
+  $mail->IsSMTP();
+  $mail->CharSet = "UTF-8";
+  $mail->IsHTML(true);
+  $mail->Mailer= "smtp";
+  foreach ($smtp as $part=>$value) {
+    $mail->$part= $value;
+  }
+end:  
+  return $mail;
+}
+# -------------------------------------------------------------------------------- mail2 mai_sending
+// y je paměť procesu, který bude krok za krokem prováděn 
+// y.todo - celkový počet kroků
+// y.done - počet provedených kroků 
+// y.sent - počet skutečně odeslaných mailů
+// y.error = text chyby, způsobí konec
+function mail2_mai_sending($y) { 
+  global $ezer_root;
+  // získání případného omezení použitého SMTP
+  $idu= $_SESSION[$ezer_root]['user_id'];
+  $i_smtp= sys_user_get($idu,'opt','smtp') ?: 1;
+  $max_per_day= select1('ikona','_cis',"druh='smtp_srv' AND data=$i_smtp");
+  // pokud je y.todo=0 provede se inicializace procesu podle y.par
+  if ( $y->todo==0 ) {
+    $_SESSION[$ezer_root]['mail_par']= $y->par;
+    $y->done= 0;
+    $n= select('COUNT(*)','mail',"id_dopis={$y->par->id_dopis} AND state IN (0,3)");
+    $y->todo= $y->par->davka ? ceil($n/$y->par->davka) : 0;
+    $y->last= 0; // poslední poslaný id_mail
+    $y->sent= 0; // počet poslaných
+    $y->error= '';
+    unset($y->par);
+  }
+  if ( $y->error ) { goto end; }
+  if ( $y->done >= $y->todo ) { $y->done= $y->todo; $y->msg= 'konec+'; goto end; }
+  $par= (object)$_SESSION[$ezer_root]['mail_par'];
+  // pokud by odeslání překročilo omezení ukonči je
+   if ( $max_per_day && ($y->sent+$par->davka)>$max_per_day ) {
+     $res->max= $max_per_day;
+   } 
+  // vlastní proces
+  $res= mail2_mai_send($par->id_dopis,$par->davka,$par->from,$par->name,'',0,$par->foot);
+  $y->done++;
+  $y->sent= $res->_sent;
+  // zpráva
+  $y->msg= $y->done==$y->todo ? 'konec' : "ještě ".($y->todo-$y->done)." x {$par->davka}"; 
+  // poslední mail pro refresh
+  $y->last= $res->_last;
+  if ( $res->_error ) {
+    if ($res->_over_quota) {
+      $y->error= "<b style='color:#700;background:#ff0'>Byla překročena kvóta pro odesílání GMailů. 
+        Pokračujte zítra.</b>";
+    }
+    else {
+      $y->error= $res->_html;
+    }
+    goto end;
+  }
+  // před skončením počkej 1s aby šlo velikostí dávky řídit zátěž
+  sleep(1);
+end:  
+  return $y;
+}
+# ----------------------------------------------------------------------------------- mail2 mai_send
+# ASK
+# odešli dávku $kolik mailů ($kolik=0 znamená testovací poslání)
+# $from,$fromname = From,ReplyTo
+# $test = 1 mail na tuto adresu (pokud je $kolik=0)
+# pokud je definováno $id_mail s definovaným text MAIL.body, použije se - jinak DOPIS.obsah
+# pokud je definováno $foot tj. patička, připojí se na konec
+# použije se SMTP server podle SESSION
+function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$foot='') { trace();
+  $TEST= 1;
+  // připojení případné přílohy
+  $attach= function($mail,$fname) {
+    global $ezer_root;
+    if ( $fname ) {
+      foreach ( explode(',',$fname) as $fnamesb ) {
+        list($fname,$bytes)= explode(':',$fnamesb);
+        $fpath= "docs/$ezer_root/".trim($fname);
+        $mail->AddAttachment($fpath);
+  } } };
+  //
+  $result= (object)array('_error'=>0,'_sent'=>0,'_over_quota'=>0);
+  $pro= '';
+  // přečtení rozesílaného mailu
+  $qry= "SELECT * FROM dopis WHERE id_dopis=$id_dopis ";
+  $res= pdo_qry($qry,1,null,1);
+  $d= pdo_fetch_object($res);
+  // napojení na mailer
+  $html= '';
+//   $klub= "klub@proglas.cz";
+  $martin= "martin@smidek.eu";
+//   $jarda= "cerny.vavrovice@seznam.cz";
+//   $jarda= $martin;
+  // poslání mailů
+  $mail= mail2_new_PHPMailer();
+  if ( !$mail ) { 
+    $result->_html.= "<br><b style='color:#700'>odesílací adresa nelze použít (SMTP)</b>";
+    $result->_error= 1;
+    goto end;
+  }
+  $mail->From= $from;
+  $mail->AddReplyTo($from);
+//   $mail->ConfirmReadingTo= $jarda;
+  $mail->FromName= "$fromname";
+  $mail->Subject= $d->nazev;
+//                                         display($mail->Subject);
+  $attach($mail,$d->prilohy);
+//   if ( $d->prilohy ) {
+//     foreach ( explode(',',$d->prilohy) as $fnamesb ) {
+//       list($fname,$bytes)= explode(':',$fnamesb);
+//       $fpath= "docs/$ezer_root/".trim($fname);
+//       $mail->AddAttachment($fpath);
+//     }
+//   }
+  if ( $kolik==0 ) {
+    // testovací poslání sobě
+    if ( $id_mail ) {
+      // přečtení personifikace rozesílaného mailu
+      $qry= "SELECT * FROM mail WHERE id_mail=$id_mail ";
+      $res= pdo_qry($qry,1,null,1);
+      $m= pdo_fetch_object($res);
+      if ( $m->body ) {
+        $obsah= $m->body;
+        $pro= "s personifikací pro {$m->email}";
+      }
+      else {
+        // jinak obecný z DOPIS
+        $obsah= $d->obsah;
+        $pro= '';
+      }
+      $attach($mail,$m->priloha);
+    }
+    $mail->Body= $obsah . $foot;
+    $mail->AddAddress($test);   // pošli sám sobě
+    // pošli
+     if ( $TEST ) {
+       $ok= 1;
+                                        display("jako odeslaný testovací mail pro $test");
+     }
+     else {
+      // zkus poslat mail
+      try { $ok= $mail->Send(); } catch(Exception $e) { $ok= false; }
+    }
+    if ( $ok  )
+      $html.= "<br><b style='color:#070'>Byl odeslán mail na $test $pro - je zapotřebí zkontrolovat obsah</b>";
+    else {
+      $err= $mail->ErrorInfo;
+      $ze= isset($mail->Username) ? $mail->Username : '?';
+      $html.= "<br><b style='color:#700'>Při odesílání mailu přes '$ze' došlo k chybě: $err</b>";
+      display("Send failed: $err<br>from={$mail->From} username={$mail->Username} SMTPserver=$ze");
+      $result->_error= 1;
+    }
+//                                                 display($html);
+  }
+  else {
+    // poslání dávky $kolik mailů
+    $n= $nko= 0;
+    $qry= "SELECT * FROM mail WHERE id_dopis=$id_dopis AND state IN (0,3) ORDER BY email";
+    $res= pdo_qry($qry);
+    while ( $res && ($z= pdo_fetch_object($res)) ) {
+      // posílej mail za mailem
+      if ( $n>=$kolik ) break;
+      $result->_last= $z->id_mail; // pro refresh
+      $i= 0;
+      $mail->ClearAddresses();
+      $mail->ClearCCs();
+      if ( $z->body ) {
+        // pokud má mail definován obsah (personifikovaný mail) ber z MAIL
+        $obsah= $z->body;
+      }
+      else {
+        // jinak obecný z DOPIS
+        $obsah= $d->obsah;
+      }
+      // přílohy - pokud jsou vlastní, pak je třeba staré vymazat a vše vložit
+      if ( $z->priloha ) {
+        $mail->ClearAttachments();
+        $attach($mail,$d->prilohy);
+        $attach($mail,$z->priloha);
+      }
+      $mail->Body= $obsah . $foot;
+      foreach(preg_split("/,\s*|;\s*|\s+/",trim($z->email," ,;"),-1,PREG_SPLIT_NO_EMPTY) as $adresa) {
+        if ( !$i++ )
+          $mail->AddAddress($adresa);   // pošli na 1. adresu
+        else                            // na další jako kopie
+          $mail->AddCC($adresa);
+      }
+//       $mail->AddBCC($klub);
+       if ( $TEST ) {
+         $ok= 1;
+                                          display("jako odeslaný mail pro $adresa");
+       }
+       else {
+        // zkus poslat mail
+        try { $ok= $mail->Send(); } catch(Exception $e) { $ok= false; }
+      }
+      if ( !$ok  ) {
+        $ident= $z->id_clen ? $z->id_clen : $adresa;
+        $err= $mail->ErrorInfo;
+        $html.= "<br><b style='color:#700'>Při odesílání mailu pro $ident došlo k chybě: $err</b>";
+        $result->_error= 1;
+        $nko++;
+      }
+      else {
+        $n++;
+      }
+      // zapiš výsledek do tabulky
+      $stav= $ok ? 4 : 5;
+      $msg= $ok ? '' : $mail->ErrorInfo;
+      if (preg_match("/Daily user sending quota exceeded/",$msg)) {
+        $result->_over_quota= 1;
+      }
+      else {
+        $qry1= "UPDATE mail SET state=$stav,msg=\"$msg\" WHERE id_mail={$z->id_mail}";
+        $res1= pdo_qry($qry1);
+      }
+      // po chybě přeruš odesílání
+      if ( !$ok ) break;
+    }
+    $result->_sent= $n;
+    $html.= "<br><b style='color:#070'>Bylo odesláno $n emailů ";
+    $html.= $nko ? "s $nko chybami " : "bez chyb";
+    $html.= "</b>";
+  }
+  // zpráva o výsledku
+  $result->_html= $html;
+//                                                 debug($result,"mail2_mai_send");
+end:  
+  return $result;
+}
+# --------------------------------------------------------------------------------- mail2 mai_attach

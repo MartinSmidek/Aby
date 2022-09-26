@@ -1,0 +1,424 @@
+# Aplikace Aby ... pro Nadační fond sester františkánek
+# (c) 2022 Martin Šmídek <martin@smidek.eu>
+
+# ----------------------------------------------------------------------------------==> inicializace
+var E_info: text,
+    dopis_id:number,
+    virgin=1
+
+func onfirstfocus() { if (virgin) { virgin= 0; m.g.i.click() } }
+proc onfocus() { }
+# ------------------------------------------------------------------------------------------==> MENU
+use ii: form right [12,4,,]
+menu m {type:'left', format:'f'
+  menu g {title:'Maily', type:'group'
+    item i {title:'[fa-file-text-o] vytváření a editace'
+      proc onclick (i) {
+        Dopisy.et.drop_init; Maily.hide; Dopisy.popup(10,40);
+        ii.fill("Příprava skupinových emailů"," ");
+      }
+    }
+    item {title:'[fa-send-o] rozesílání připravených'
+      proc onclick (i) {
+        Dopisy.hide; Maily.popup(10,40);
+        ii.fill("Rozesílání připravených emailů"," ");
+      }
+    }
+  }
+}
+# ==========================================================================================> DOPISY
+panel Dopisy /*[0,0,*,*]*/ { title:' maily', style:'overflow:unset'
+  var et_prazdy: number
+  use et: form dopisy [0,0,,],
+  func onfocus () {
+    et.form_init();
+    et.texty.browse_load("typ='PR'");
+//    if (dopis_id.get; et.texty.raise('onrowclick',dopis_id.get) | et.texty.raise('onrowclick')
+  }
+}
+# ----------------------------------------------------------------------------------==> dopisy
+form dopisy [0,0,180,267] {
+  var adopis: number
+  # obslužné procedury stavu tlačítek
+  proc form_init() {
+    texty.browse_init; form.init; drop.set(''); form_state('n','u|z|s') }
+  proc form_state(on,off) {
+    form.enable(1,on); form.enable(0,off); }
+  func onchanged () {
+//    or(uloz.enable,oprav.enable); 
+    form_state('u|z','n|s')
+  }
+  #==> . seznam dopisů
+  view etd: table dopis
+  view etm: table mail {join_type:'LEFT' join:'USING(id_dopis)'}
+  browse texty [0,0,150,200] { rows:12, qry_rows:1, group_by:'id_dopis',
+      css_rows:'stav1,3:zluty,4:zeleny,5:cerveny'
+    show id_dopis { data:etd.id_dopis }
+    show stav1    { expr:'min(etm.state)', format:'rsq' }
+    show stav2    { expr:'max(etm.state)', format:'rsq' }
+    show datum    [,,70,] { title:'datum', data:etd.datum, format:'rs-' }
+    show predmet [,,145,] { title:'předmět', data:etd.nazev, format:'sq'
+                            css_cell:'stav2,3:zluty,4:zeleny,5:cerveny' }
+    show komu    [,,110,] { title:'komu' , data:etd.komu, format:'sq#', map_pipe:map_komu.zkratka }
+    show pocet    [,,30,] { title:'#', expr:"SUM(IF(ISNULL(etm.state),0,1))", format:'rs' }
+    func onrowclick () { refresh() }
+    func refresh() { var ret:object
+      dopis_id= id_dopis;
+      form_state('n|s','u|z');
+      form.load(dopis_id);
+      drop_init();
+      ret= php.rz_mai_info(dopis_id);
+      obsah.fill(predmet,ret.mail);
+      ret= php.dop_show_vars(id_dopis);
+      vars= ret.html;
+    }
+  }
+  const L=395
+  label  [L+0,0,446,159] { css:'work' }
+  field typ { data:dopis.typ }
+  field datum [L+9,20,115,] { type:'date', title:'^datum odeslání', data:dopis.datum,
+    format:'r', help:'datum|datum emailu' }
+  select komu  [L+135,20,297,] { title:'^výběr adresátů', type:'map', options:map_komu.zkratka,
+    data:dopis.komu, help:'komu|skupina adresátů' }
+  field predmet [L+10,59,340,] { title:'^předmět mailu', data:dopis.nazev,
+    help:'předmět|předmět emailu' },
+  # text mailu
+  label obsah [0,263,626,300] { title:'zobrazení předmětu a textu mailu' 
+    func fill(nadpis,telo) {
+      obsah= `<div style='padding:0 10px;border:1px solid #56a15a'>
+              <h3 class='work'>${nadpis}</h3>${telo}</div>`;
+  }}
+
+  #==> . připojení příloh
+  field attach {data:dopis.prilohy}                     // datové pole se seznamem příloh
+  label [L+10,86,422,] {title:'sem lze myší přetáhnout přílohy, zrušit je lze kontextovým menu'}
+  label drop [L+10,103,423,45] { type:'drop'
+    proc onload(f) {                                    // po dokončení přenosu
+      ask('rz_mai_attach',form.key,f);                  // přidání souboru k dávce
+      texty.refresh;
+    }
+    proc onmenu(op,name,ref) {  // op=remove|remove-all
+      { eq(op,'remove');                                // odebrání přílohy
+        ask('rz_mai_detach',form.key,name);
+        texty.refresh;
+      | eq(op,'remove-all');                            // odebrání všech příloh
+        ask('rz_mai_detach_all',form.key);
+        texty.refresh;
+      | warning('zatím neimplementovaná operace')
+      };
+      attach.set(ask('select','prilohy','dopis',conc("id_dopis=",form.key)));
+      drop_init
+    }
+  }
+  proc drop_init() {                                    // inicializace - je třeba na začátku
+    drop.init('','S:');                                 // naplnit pole drag&drop a definovat dir
+    drop.set(attach.get);
+  }
+
+  #--------------------------------------==> . příkazy 1
+  label  [L+0,167,200,78] { css:'parm' }
+  label [L+8,219,184,] { title:"přegenerováním jsou také přepočteny všechny {proměnné}" }
+  button uloz [L+8,173,,] { tag:'u', type:'submit', title:'Uložit',
+    help:'uložit opravené hodnoty'
+    proc onclick () {
+      form.same
+    | // oprava
+      form.key; form.save; form.load; texty.browse_seek;
+      form_state('n|s','u|z'); texty.browse_focus;
+    | // přidání
+      form.insert; form.load;
+      texty.raise('onrowclick',texty.browse_seek(conc(form.id_key,'=',form.key)));
+      form_state('n|s','u|z');
+    }
+  }
+  button [L+64,173,,] { tag:'z', title:'Zpět', help:'neukládat hodnoty'
+    func onclick () {
+      if (texty.browse_count()) { 
+        form.load(texty.id_dopis); form_state('n|s','u|z'); texty.browse_focus() }
+      else {
+        form.init(); drop.set(''); form_state('n','u|z|s') }
+    }
+//    proc onclick () {
+//      adopis.get; form.load(adopis.get); form_state('n|s','u|z'); texty.browse_focus
+//    | form.init; drop.set(''); form_state('n','u|z|s')
+//    }
+  }
+  button oprav [L+113,173,,] { tag:'s', title:'Opravit text', help:'opravit text mailu',
+    proc onclick () {
+      gt(texty.stav2.get,2); not(confirm("Tento dopis již byl rozesílán, opravdu chceš opravit jeho text?"))
+    | Editor.start(dopis_id.get); texty.raise('onrowclick',dopis_id.get)
+    }
+  }
+  #==> .. generování
+  button generovat [L+8,198,,] { tag:'s', title:'Vygenerovat rozesílací seznam',
+    help:'připravit rozesílání'
+    func onclick () { var ret:object
+      clear();
+      ret= php.rz_mai_generuj(dopis_id,0);
+      if (ret.again) {
+        if (confirm(ret.again)) {
+          ret= php.rz_mai_generuj(dopis_id,1);
+          alert(ret.msg);
+          texty.browse_refresh(dopis_id);
+        }
+      }
+      else {
+        alert(ret.msg);
+        texty.browse_refresh(dopis_id);
+      }
+    }
+  }
+  #--------------------------------------==> . příkazy 2
+  label  [L+246,165,120,32] { css:'parm' }
+  button novy [L+256,172,,] { tag:'n', title:'Nový', help:'vytvořit nový e-mail',
+    func onclick () {
+      form.init(); 
+      drop= ''; form_state('u|z','n|s'); drop_init();
+      texty.blur(1); adopis= 0;
+      typ= 'PR'; typ.change();
+      datum= now(); datum.change();
+      komu.key(1); komu.change();
+    }
+  }
+  button smaz [L+305,172,,] { tag:'s', title:'Smazat', help:'smazat mail a jeho rozesílání',
+    proc onclick () {
+      confirm(conc("Opravdu smazat mail '",texty.predmet.get,"' a jeho rozesílací seznam?"));
+      ask('xx_mai_smaz',texty.id_dopis.get);
+      reload
+    }
+  }
+  #--------------------------------------==> .. test
+  label [L+378,165,68,33] { css:'parm2' }
+  button test [L+387,172,,] { tag:'s', title:'Ukázka',
+    help:'vyzkoušet na nastavené osobě či firmě na kartě Osoby,firmy'
+    func onclick () { var idc:number, ret:object
+      clear();
+//      idc= klu.cle.curr_clen(1);
+//      ret= php.dop_show_vars(texty.id_dopis); vars= ret.html;
+//      ret= php.dop_ukazka(texty.id_dopis,idc);
+//      obsah.fill(`ukázka dopisu '${predmet}' pro ${idc}, PDF ke stažení je ${ret.ref}`,ret.html);
+    }
+  }
+  # -------------------------------------==> . proměnné
+  label vars [643,208,180,400] { title:'seznam proměnných',
+    style:'padding:0 10px;border:1px solid #56a15a;overflow:auto;z-index:3' }
+  # -------------------------------------==> . reload karty
+  proc reload() {
+    form.init;
+    obsah.set(''); texty.browse_init;
+    texty.browse_refresh;
+    reload2
+  }
+  proc reload2() {
+    texty.browse_count; drop.set(''); drop_init;
+    { dopis_id.get; texty.raise('onrowclick',dopis_id.get) | texty.raise('onrowclick') }
+  }
+}
+# ==========================================================================================> EDITOR
+panel Editor [0,0,645,520] { title:' Úprava textu mailu', type:'popup', css:'dialog'
+  use mail: form editor [0,0,,],
+  proc start(idd) {
+    mail.load(idd);
+    panel.modal(10,10);
+  }
+}
+# ----------------------------------------------------------------------------------------==> editor
+# oprava textu, data, předmětu a adresátů mailu v popup menu
+form editor [10,10,600,460] {
+  label [0,12,60,20] { title:'Předmět:' }
+  field nazev [50,10,480,20] { data:dopis.nazev },
+  button  [540,9,,] { title:'Uložit', help:'ukončit editor a uložit změny'
+    proc onclick() {
+      form.save; panel.hide(1);
+    }
+  }
+  button  [600,9,,] { title:'Zpět', help:'ukončit editor bez uložení změn'
+    proc onclick() {
+      panel.hide(0);
+    }
+  }
+  edit [0,40,645,480] {type:'html', data:dopis.obsah, par:°{toolbar:'EzerMail'} },
+}
+# ===========================================================================================> MAILY
+panel Maily [0,0,*,*] { title:' maily'
+  use es: form _maily [0,0,,]
+  proc onstart () { es.davka.init(1) }
+  func onfocus () {
+    es.msg= '';
+    es.texty.browse_load("typ='PR'");
+//    dopis_id.get; es.texty.raise('onrowclick',dopis_id.get) | es.texty.raise('onrowclick')
+  }
+}
+# ----------------------------------------------------------------------------------------==> _maily
+# rozesílání připraveného mailu - zakládání, aktualizace a rušení - obsluha front s maily
+form _maily [,,500,200] {
+  #==> . funkce
+  proc Init() { msg.set(''); info.set(''); obsah.set(''); }
+  #==> . seznam dopisů
+  view etd: table dopis
+  view etm: table mail {join_type:'LEFT' join:'USING(id_dopis)'}
+  browse texty [0,0,150,200] { rows:9, qry_rows:1, group_by:'id_dopis',
+      css_rows:'stav1,3:zluty,4:zeleny,5:cerveny'
+    show id_dopis { data:etd.id_dopis }
+//    show soubor   { data:etd.soubor }
+    show stav1    { expr:'min(etm.state)', format:'rsq' }
+    show stav2    { expr:'max(etm.state)', format:'rsq' }
+    show datum    [,,60,] { title:'datum', data:etd.datum, format:'s-' }
+    show predmet [,,160,] { title:'předmět', data:etd.nazev, format:'sq',
+                            css_cell:'stav2,3:zluty,4:zeleny,5:cerveny' }
+    show komu    [,,100,] { title:'komu' , data:etd.komu, format:'s', map_pipe:map_komu.zkratka }
+    show pocet    [,,30,] { title:'#', expr:"SUM(IF(ISNULL(etm.state),0,1))", format:'rs' }
+    proc onrowclick () {
+      Init;
+      eq(this.browse_count,0);
+      dopis_id.set(0);
+    | dopis_id.set(id_dopis.get);
+      maily.browse_load(conc("m.id_dopis=",dopis_id.get));
+      zkus.set(sys('user','options','email'));
+      from.set(sys('user','options','email'));
+      name.set(sys('user','options','vyrizuje'));
+      davka.set(20); davka.change;
+//      ref.set(conc("odkaz pro stáhnutí: <a href='docs/",soubor.get,"'>",soubor.get,"</a>"));
+    }
+  }
+  #==> . příkazy
+  const To=250
+//  label [8,To+-12,317,58] { css:'work' }
+//  label ref [19,To+-6,285,] { title:"odkaz pro stáhnutí souboru s adresami a údaji" }
+//  label [18,To+16,92,17] { title:'Testovací adresa:' }
+//#   label [41,To+50,66,17] { title:'Odeslat jako:' }
+//  field zkus [111,To+13,200,17] { help:'email z osobního nastavení', format:'t' }
+//#   field from [111,To+39,200,17] { help:'email z osobního nastavení', format:'t'  }
+//#   field name [111,To+58,200,17] { help:"'vyřizuje' z osobního nastavení", format:'t'  }
+//  label [8,To+60,317,37] { css:'parm' }
+//  button test [19,To+70,,] { title:'1 mail testovací'
+//    help:'pro kontrolu - posílá se na testovací adresu'
+//    proc onclick () { var ret:object
+//      msg.set('');
+//#       alert('ještě není zprovozněno'); return;
+//      confirm('Poslat zkušební mail na ',zkus.get,' ?');
+//      ret.set(ask('rz_mai_send',1,maily.id_dopis.get,maily.id_mail.get,zkus.get));
+//      msg.set(ret.msg);
+//    }
+//  }
+//  field davka [129,To+70,30,17] { format:'rt', value:'10'
+//    proc onchange () {
+//      send.set(conc('až ',davka.get,'  ještě neposlaných'));
+//    }
+//  }
+//  button send [164,To+70,,] { title:'xx ještě neposlaných'
+//    help:'pošle další dávku - počet lze měnit políčkem vlevo'
+//    proc onclick () { var ret:object
+//      msg.set('');
+//      //alert('ještě není zprovozněno'); return;
+//      confirm(conc('Opravdu poslat dalších ',davka.get,' mailů ?'));
+//      ret.set(ask('rz_mai_send',davka.get,maily.id_dopis.get,0));
+//      msg.set(ret.msg);
+//      maily.browse_seek; texty.browse_refresh(maily.id_dopis.get);
+//    }
+//  }
+  // výběr SMTP serveru
+  select smtp [125,212,202,17] { type:'map', options:map_smtp_srv.zkratka, title:'odesílat z adresy:'
+    help:'smtp|použitý odesílací server', format:'t'
+    proc onchanged() { var ok:text
+      ask('sys_user_change',sys('user','id_user'),'opt','smtp',smtp.key);
+    }
+  }
+  // odpovědi na adresu, použít patičku
+  field from [125,231,200,17] { title:'adresa pro odpovědi:'
+    help:'email z osobního nastavení', format:'t'  }
+  field name [125,250,200,17] { title:'... jméno:'
+    help:"'vyřizuje' z osobního nastavení", format:'t'  }
+//  check foo [312,230,59,] { title:'patička', value:'0', format:'t', 
+//    proc onchange() {
+//      pata.display(this.get); this.get; pata.set(sys('user','options','email_foot'));
+//    } 
+//  }
+  // test
+  label [0,274,380,2] { style:'border-top:1px solid green' }
+  field zkus [125,280,200,17] { title:'poslat test na adresu:' 
+    help:'email z osobního nastavení', format:'t' }
+  button test [335,280,,] { title:'[fa-send-o] test', 
+    help:'pro kontrolu - posílá se 1 mail na testovací adresu'
+    proc onclick () { var foot:text
+      msg.set(''); foot.set('');
+      confirm('Poslat zkušební mail na ',zkus.get,' ?');
+//      [ foo.get; foot.set(sys('user','options','email_foot')) ]; 
+      E_info.set(ask('mail2_mai_send',
+          dopis_id.get,0,from.get,name.get,zkus.get,maily.id_mail.get,foot.get));
+      msg.set(E_info.get('_html'));
+    }
+  }
+  // postupné odesílání - nové
+  label  [47,306,304,31] { css:'ae_parm' }
+  field davka [122,313,30,17] { title:'odesílat po:' value:'1' format:'r'  
+    proc onchange () {
+      gt(davka.get,20); alert("dávky by měly být malé (do 20) aby nezahltily odesílací server");
+    | send.set(replace_fa(conc('[fa-send-o] pošli všechny maily (po ',davka.get,')')));
+    }
+  }
+  button send [164,313,,] { 
+    help:'budu posílat mail za mailem tak, aby se server nezahltil'
+    proc onclick () { var foot:text, par:object
+      msg.set(''); foot.set('');
+      confirm(conc('Opravdu postupně po ',davka.get,' mailech "z adresy" ',from.get,'?'));
+//      [ foo.get; foot.set(sys('user','options','email_foot')) ]; 
+      par.set(object(
+          'id_dopis',dopis_id.get,'davka',davka.get,
+          'from',from.get,'name',name.get,'foot',foot.get));
+      // před nastartováním procesu odesílání je třeba zajistit dostupnost procedury mail_refresh
+      Proces.parent.set(panel);
+      Proces.refresh.set('mail_refresh');
+      [ Proces.Start(par,"Postupné odesílání připravených mailů") ];
+      msg.set(conc("Bylo odesláno ",Proces.sent.get," mailů",
+          cconc(Proces.problem.get,conc(", s chybou ",Proces.problem.get))));
+      texty.browse_refresh;
+    }
+  }
+
+  #==> . informace
+  const Ti=350
+  label msg [0,Ti+-8,377,52]
+  label info [0,Ti+49,367,90]   { style:"overflow:auto;border:1px solid grey;padding:5px" }
+  label obsah [0,Ti+150,716,246] { style:"overflow:auto;border:1px solid grey;padding:5px" }
+  #==> . seznam mailů
+  const Lo=395
+  label [Lo,473,342,19] { title:"
+    <span class='zeleny'> posláno </span>&nbsp;&nbsp;
+    <span class='cerveny' title='pravá myš na řádku'> chyba - kontextové menu</span>&nbsp;&nbsp;
+    <span class='zluty' title='bude znovu odesláno'> poslat znovu </span>"
+  }
+  view m: table mail
+  browse maily [Lo,0,120,200] { rows:24, qry_rows:1, css_rows:'state,3:zluty,4:zeleny,5:cerveny'
+    show id_mail  { data:m.id_mail }
+    show id_dopis { data:m.id_dopis }
+    show state      [,,20,] { title:'s.', data:m.state, format:'rsq' }
+    show id_clen [,,50,] { title:'člen', data:m.id_clen, format:'rs+q' }
+    show email    [,,180,] { title:'email', data:m.email, format:'sq'
+                             css_cell:'state,9:pre_7' }
+    show msg       [,,50,] { title:'chyba', data:m.msg, format:'sq' }
+    proc onrowclick () { var ret:object
+      ret.set(ask('rz_mai_info',id_dopis.get,id_mail.get));
+      info.set(ret.info);
+      obsah.set(cconc(eq(state.get,9),"<i>poslat papírovou poštou</i>",ret.mail));
+    }
+    func onsubmit() {
+      klu.cle.show_clen(id_clen);
+    }
+    menu {type:'context'
+      item {title:"změnit na 'poslat znovu'", proc onclick() {
+#         ask('dop_mai_stav',id_mail.get,0,0,3);
+        maily.browse_row }
+      }
+    }
+  }
+}
+# ------------------------------------------------------------------------------------------- _esady
+# rozesílání připraveného mailu - zakládání, aktualizace a rušení - obsluha front s maily
+# procedura mail_refresh je volána po odeslání dávky mailů pomocí Proces
+func mail_refresh(idm) {
+  Maily.es.maily.browse_seek(`id_mail=${idm}`);
+}
+# ============================================================================================> mapy
+map map_komu:     table _cis {where:"druh='m_adresati'", order:'poradi', key_id:'data'}
+map map_smtp_srv: table _cis {where:"druh='smtp_srv'",          order:'poradi', key_id:'data'}
