@@ -130,7 +130,7 @@ form dopisy [0,0,180,267] {
       else {
         // přidání
         form.insert(); form.load();
-        texty.raise('onrowclick',texty.browse_seek(`${form.id_key}=${form.key()}`));
+        texty.raise('onrowclick',texty.browse_seek(`${form.id_key()}=${form.key()}`));
         form_state('n|s','u|z');
       }
     }
