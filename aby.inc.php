@@ -26,9 +26,9 @@
       'options'=>(object)array(
           'mail' => "martin@smidek.eu",
           'phone' => "603&nbsp;150&nbsp;565",
-          'author' => "Martin"
+          'author' => "Martin",
       ),
-      'activity'=>(object)array());
+      'activity'=>(object)array('skip'=>'MSM'));
   
   // databáze
   $deep_root= "../files/aby";
