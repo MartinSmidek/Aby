@@ -118,7 +118,7 @@ form dopisy [0,0,180,267] {
   }
 
   #--------------------------------------==> . příkazy 1
-  label  [L+0,167,200,78] { css:'parm' }
+  label  [L+0,167,207,78] { css:'parm' }
   label [L+8,219,184,] { title:"přegenerováním jsou také přepočteny všechny {proměnné}" }
   button uloz [L+8,173,,] { tag:'u', type:'submit', title:'Uložit',
     help:'uložit opravené hodnoty'
@@ -137,7 +137,7 @@ form dopisy [0,0,180,267] {
       }
     }
   }
-  button [L+64,173,,] { tag:'z', title:'Zpět', help:'neukládat hodnoty'
+  button [L+71,173,,] { tag:'z', title:'Zpět', help:'neukládat hodnoty'
     func onclick () {
       if (texty.browse_count()) { 
         form.load(texty.id_dopis); form_state('n|s','u|z'); texty.browse_focus() }
@@ -149,7 +149,7 @@ form dopisy [0,0,180,267] {
 //    | form.init; drop.set(''); form_state('n','u|z|s')
 //    }
   }
-  button oprav [L+113,173,,] { tag:'s', title:'Opravit text', help:'opravit text mailu',
+  button oprav [L+127,173,,] { tag:'s', title:'Opravit text', help:'opravit text mailu',
     func onclick () {
       // pokud byl odeslán ujisti se o záměru
       if (texty.stav2<3 
@@ -159,7 +159,10 @@ form dopisy [0,0,180,267] {
     }
   }
   #==> .. generování
-  button generovat [L+8,198,,] { tag:'s', title:'Vygenerovat rozesílací seznam',
+  button [L+8,198,,] { tag:'s', title:'Kontrola @', help:'zkontroluj korektnost mailových adres'
+    func onclick() { alert(php.rz_mai_testuj(dopis_id)); }
+  }
+  button generovat [L+90,198,,] { tag:'s', title:'Vygenerovat maily',
     help:'připravit rozesílání'
     func onclick () { var ret:object
       clear();

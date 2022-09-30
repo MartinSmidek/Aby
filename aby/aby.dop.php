@@ -201,9 +201,10 @@ function mail_davka_get() {
 }
 # -------------------------------------------------------------------------------------- mail verify
 # hloubová kontrola správnosti emailů
-function mail_verify($posilame,$cond,$having) {
-  $ret= (object)array('errors'=>0,'done'=>0);
-  query("TRUNCATE TABLE mail");
+function mail_verify($posilame,$cond,$having,$change_mails=true) {
+  $ret= (object)array('errors'=>0,'done'=>0, 'list'=>'');
+  $list= '';
+  if ($change_mails) query("TRUNCATE TABLE mail");
   // kontrola správnosti mailu a zjištění výše darů
   $qry= $posilame=='potvrzeni'
       ? "SELECT id_clen, c.email, c.jmeno, c.prijmeni,
@@ -228,12 +229,14 @@ function mail_verify($posilame,$cond,$having) {
       if (!emailIsValid($email,$chyba)) {
         $ret->errors++;
         $chyby.= "$chyba ";
+        $ret->list.= "<br>ID=$idc $chyba";
       }
     }
     $jmeno= str_replace("'",'"',$jmeno);
     $prijmeni= str_replace("'",'"',$prijmeni);
-    query("INSERT INTO mail (id_clen,id_dopis,jmeno,prijmeni,email,dary,ids_dar,state,msg) 
-      VALUE ($idc,0,'$jmeno','$prijmeni','$email',$dary,'$idds',0,'$chyby')");
+    if ($change_mails)
+      query("INSERT INTO mail (id_clen,id_dopis,jmeno,prijmeni,email,dary,ids_dar,state,msg) 
+        VALUE ($idc,0,'$jmeno','$prijmeni','$email',$dary,'$idds',0,'$chyby')");
   }
   return $ret;
 }
@@ -1324,11 +1327,12 @@ function rz_mai_detach($id_dopis,$name) { trace();
   query("UPDATE dopis SET prilohy='$names2' WHERE id_dopis=$id_dopis");
   return 1;
 }
-# ----------------------------------------------------------------------------------==> . generování
-# vrátí {d,query,vars}
+# ----------------------------------------------------------------------------------==> . rz mai_sql
+# vrátí {d,cond,query,vars}
 function rz_mai_sql($id_dopis) {  //trace();
-  $ret= (object)array('d'=>null,'query'=>'','vars'=>null);
-  $LIMIT= 'LIMIT 1';
+  $ret= (object)array('d'=>null,'cond'=>null,'query'=>'','vars'=>null);
+  $LIMIT= '';
+//  $LIMIT= 'LIMIT 1';
   // zjisti podmínku výběru
   $map_adresati= map_cis('m_adresati','ikona');
   // zjisti jestli text obsahuje proměnné
@@ -1336,18 +1340,28 @@ function rz_mai_sql($id_dopis) {  //trace();
   $list= null;
   $is_vars= preg_match_all("/[\{]([^}]+)[}]/",$ret->d->obsah,$list);
   $ret->vars= $is_vars ? $list[1] : '';
-  $cond= $map_adresati[$ret->d->komu];
-  $ret->query= "SELECT * FROM clen WHERE deleted='' AND email!='' AND $cond $LIMIT";
+  $ret->cond= $map_adresati[$ret->d->komu];
+  $ret->query= "SELECT * FROM clen WHERE deleted='' AND email!='' AND $ret->cond $LIMIT";
                                                   debug($ret,"rz_mai_sql($id_dopis)");
   return $ret;
 }
-# ----------------------------------------------------------------------------------==> . generování
+# ---------------------------------------------------------------------------------==> rz mai_testuj
+# ASK
+# 
+# vrátí seznam chybných @ madres
+function rz_mai_testuj($id_dopis) {  trace();
+  $dop= rz_mai_sql($id_dopis);
+  $chyby= mail_verify('dopisy',$dop->cond,'',false);
+  return $chyby->errors ? $chyby->list : 'Mailové adresy vypadají spolehlivě';
+}
+# --------------------------------------------------------------------------------==> rz mai_generuj
 # ASK
 # 
 # do tabulky MAIL dá seznam emailových adres pro rozeslání, pokud je $regenerate přepíše staré
 # záznamy, pokud ne a jsou dá zprávu do ret.again.
 function rz_mai_generuj($id_dopis,$regenerate=0) {  trace();
-  $TEST= 1;
+  $TEST= 0;
+//  $TEST= 1;
   $ret= (object)array();
   // zjisti podmínku výběru
   $dop= rz_mai_sql($id_dopis);
