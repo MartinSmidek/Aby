@@ -1394,7 +1394,8 @@ function rz_mai_generuj($id_dopis,$regenerate=0) {  trace();
   while ($rm && ($c= pdo_fetch_object($rm))) {
     $idc= $c->id_clen;
     $emails= $c->email;
-    if ($TEST) $emails= "martin@smidek.eu";
+//    if ($TEST) 
+      $emails= "martin@smidek.eu";
 //  $ids= rz_mai_ids($d->komu);
 //  $fname= "dopis_$idd.csv";
 //  $fpath= "docs/$fname";
@@ -1616,7 +1617,8 @@ end:
 # pokud je definováno $foot tj. patička, připojí se na konec
 # použije se SMTP server podle SESSION
 function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$foot='') { trace();
-  $TEST= 1;
+  $TEST= 0;
+//  $TEST= 1;
   // připojení případné přílohy
   $attach= function($mail,$fname) {
     global $ezer_root;
@@ -1687,7 +1689,11 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
      }
      else {
       // zkus poslat mail
-      try { $ok= $mail->Send(); } catch(Exception $e) { $ok= false; }
+      try { 
+        $ok= $mail->Send();       
+      } catch(Exception $e) { 
+        $ok= false; 
+      }
     }
     if ( $ok  )
       $html.= "<br><b style='color:#070'>Byl odeslán mail na $test $pro - je zapotřebí zkontrolovat obsah</b>";
