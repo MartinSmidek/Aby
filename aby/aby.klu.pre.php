@@ -91,15 +91,27 @@ function ch_search_popis_fy($popis) {
 # ------------------------------------------------------------------------==> ch remake_ascii_fields
 # zajistí korektní nastavení ascii-položek
 function ch_remake_ascii_fields($given_idc=0) {
+  $n= 0;
   $only_one= $given_idc ? "AND id_clen=$given_idc" : '';
   $rc= pdo_qry("SELECT id_clen,prijmeni,ascii_prijmeni,jmeno,ascii_jmeno 
     FROM clen WHERE deleted='' $only_one");
   while ($rc && (list($idc,$p,$ap,$j,$aj)=pdo_fetch_row($rc))) {
+    $change= 0;
     $oap= trim(utf2ascii($p,' .'));
-    if ($oap!=$ap) query("UPDATE clen SET ascii_prijmeni='$oap' WHERE id_clen=$idc");
+    $oap= str_replace('.','\.',$oap);
+    if ($oap!=$ap) {
+      query("UPDATE clen SET ascii_prijmeni='$oap' WHERE id_clen=$idc");
+      $change++;
+    }
     $oaj= trim(utf2ascii($j,' .'));
-    if ($oaj!=$aj) query("UPDATE clen SET ascii_jmeno='$oaj' WHERE id_clen=$idc");
+    $oaj= str_replace('.','\.',$oaj);
+    if ($oaj!=$aj) {
+      query("UPDATE clen SET ascii_jmeno='$oaj' WHERE id_clen=$idc");
+      $change++;
+    }
+    if ($change) $n++;
   }
+  return "Změněno $n ascii variant jmen";
 }
 # ===========================================================================================> BANKA
 # ------------------------------------------------------------------------------- ch bank_novy_darce
@@ -153,13 +165,17 @@ end:
 }
 function ch_bank_uloz_darce($idd,$titul,$jmeno,$prijmeni) {
   // vlož osobní kontakt 
+  $osl= osl_insert(1,$titul,$jmeno,$prijmeni);
   $upd= array();
   $idc= ezer_qry("INSERT",'clen',0,array(
     (object)array('fld'=>'zdroj',     'op'=>'i','val'=>'VYPIS'),
     (object)array('fld'=>'osoba',     'op'=>'i','val'=>1),
     (object)array('fld'=>'titul',     'op'=>'i','val'=>$titul),
     (object)array('fld'=>'jmeno',     'op'=>'i','val'=>$jmeno),
-    (object)array('fld'=>'prijmeni',  'op'=>'i','val'=>$prijmeni)
+    (object)array('fld'=>'prijmeni',  'op'=>'i','val'=>$prijmeni),
+    (object)array('fld'=>'prijmeni5p','op'=>'i','val'=>$osl->prijmeni5p),
+    (object)array('fld'=>'osloveni',  'op'=>'i','val'=>$osl->osloveni),
+    (object)array('fld'=>'rod',       'op'=>'i','val'=>$osl->rod)
   ));
   // proveď změnu daru
   ezer_qry("UPDATE",'dar',$idd,array(

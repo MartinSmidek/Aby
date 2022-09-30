@@ -433,7 +433,8 @@ function osl_update_all() {
 # --------------------------------------------------------------------------------------- osl insert
 # ASK
 # vygeneruje rod,osloveni,prijmeni5p do tabulky CLEN
-function osl_insert($osoba,$titul,$jmeno,$prijmeni) { trace();
+# pro $explain vysvětlí postup
+function osl_insert($osoba,$titul,$jmeno,$prijmeni,$explain='') { trace();
   $result= (object)array();
   $qry= "SELECT jmeno,sex FROM _jmena WHERE jmeno='$jmeno' ORDER BY cetnost DESC LIMIT 1";
   $res= pdo_qry($qry);
@@ -448,7 +449,9 @@ function osl_insert($osoba,$titul,$jmeno,$prijmeni) { trace();
   $result->osloveni= osl_osloveni($rod,$typ);
   $result->rod= $rod=='m' ? 1 : ( $rod=='f' ? 2 : 0);
 //                                         debug($result,"osl_insert($osoba,$titul,$jmeno,$prijmeni)");
-  return $result;
+  return 
+    $explain? "rod=$rod podle $jmeno<br>5.pád=$result->prijmeni5p<br>oslovení=$result->osloveni"
+            : $result;
 }
 /*
 # -------------------------------------------------------------------------------------------------- osl_kontakt_new
@@ -578,7 +581,7 @@ function osl_prijmeni5p ($titul,$prijmeni,$rod,&$ano) {
     // obecné případy
     switch ( $rod ) {
     case 'm':
-      if ( mb_strpos(' eěíýoůú',$p_1,0,'UTF-8') ) $y= $p;
+      if ( mb_strpos(' eěíýyoůú',$p_1,0,'UTF-8') ) $y= $p;
       // změny
       else if ( mb_strpos(' a',$p_1,0,'UTF-8') ) $y= $p1.'o';
       else if ( mb_strpos(' ek',$p_2,0,'UTF-8') ) $y= $p2.'ku';

@@ -1018,7 +1018,7 @@ function clen_adresa($c) {
 function clen_osloveni($c) {
   global $map_osloveni;
   if ( !isset($map_osloveni) || !$map_osloveni )
-    $map_osloveni= map_cis('osloveni','zkratka');
+    $map_osloveni= map_cis('k_osloveni','zkratka');
   return
     $c->osloveni!=0 && $c->prijmeni5p!='' ? "{$map_osloveni[$c->osloveni]} {$c->prijmeni5p}" : (
     $c->osloveni!=0                       ? $map_osloveni[$c->osloveni] : 'Milí');
@@ -1096,52 +1096,53 @@ function dop_substituce($vars,$params,$c,$idc=0,$idd=0) {  trace();
   // výpočet proměnných
   foreach ($vars as $var) {
     switch ($var) {
-    // -------------------------------- informace z params
-    case 'rocni_rok': $val= $params->rok; break;
-    case 'datum': $val= sql_date1($params->datum,0,'. '); break;
-    // -------------------------------- informace z browse
-    case 'rocni_dary':  $val= str_replace('.',',',$c->dary). ' Kč'; break;
+//    // -------------------------------- informace z params
+//    case 'rocni_rok': $val= $params->rok; break;
+//    case 'datum': $val= sql_date1($params->datum,0,'. '); break;
+//    // -------------------------------- informace z browse
+//    case 'rocni_dary':  $val= str_replace('.',',',$c->dary). ' Kč'; break;
     // -------------------------------- informace z clen
-    case 'ID':
-      $val= $c->id_clen;
-      break;
-    case 'adresa':
-      $psc= $c->psc ? substr($c->psc,0,3).' '.substr($c->psc,3,2) : '';
-      $val= $c->osoba
-          ? trim("$c->titul $c->jmeno")." $c->prijmeni"
-          : "$c->firma".($c->ico ? "<br>IČO: $c->ico" : '');
-      $val.= "<br>$c->ulice<br>$psc $c->obec";
-      break;
+//    case 'ID':
+//      $val= $c->id_clen;
+//      break;
+//    case 'adresa':
+//      $psc= $c->psc ? substr($c->psc,0,3).' '.substr($c->psc,3,2) : '';
+//      $val= $c->osoba
+//          ? trim("$c->titul $c->jmeno")." $c->prijmeni"
+//          : "$c->firma".($c->ico ? "<br>IČO: $c->ico" : '');
+//      $val.= "<br>$c->ulice<br>$psc $c->obec";
+//      break;
     case 'osloveni':
       $map_osloveni= map_cis('k_osloveni','zkratka');
-      $val= ( $c->osloveni!=0 && $c->prijmeni5p!='' ) 
+      $val1= $val2= ( $c->osloveni!=0 && $c->prijmeni5p!='' ) 
           ? "{$map_osloveni[$c->osloveni]} {$c->prijmeni5p}" : 'Milí';
       break;
-    // -------------------------------- informace z dar
-    case 'adresa_darce':
-      $psc= $c->psc ? substr($c->psc,0,3).' '.substr($c->psc,3,2) : '';
-      $val= $c->osoba
-          ? ($d->darce ? $d->darce : trim("$c->titul $c->jmeno")." $c->prijmeni")
-          : "$c->firma".($c->ico ? "<br>IČO: $c->ico" : '');
-      $val.= "<br>$c->ulice<br>$psc $c->obec";
-      break;
-    case 'dar_castka':
-      $castka= $d->castka;
-      $castka= ceil($castka)-$castka==0 ? round($castka).",-" : number_format($castka,2,',',' ');
-      $val= $castka;
-      break;
-    case 'dar_datum':
-      $val= sql_date1($d->castka_kdy,0,'. ');
-      break;
-    case 'dar_potvrzeni':
-      $val= sql_date1($d->potvrz_kdy,0,'. ');
-      break;
+//    // -------------------------------- informace z dar
+//    case 'adresa_darce':
+//      $psc= $c->psc ? substr($c->psc,0,3).' '.substr($c->psc,3,2) : '';
+//      $val= $c->osoba
+//          ? ($d->darce ? $d->darce : trim("$c->titul $c->jmeno")." $c->prijmeni")
+//          : "$c->firma".($c->ico ? "<br>IČO: $c->ico" : '');
+//      $val.= "<br>$c->ulice<br>$psc $c->obec";
+//      break;
+//    case 'dar_castka':
+//      $castka= $d->castka;
+//      $castka= ceil($castka)-$castka==0 ? round($castka).",-" : number_format($castka,2,',',' ');
+//      $val= $castka;
+//      break;
+//    case 'dar_datum':
+//      $val= sql_date1($d->castka_kdy,0,'. ');
+//      break;
+//    case 'dar_potvrzeni':
+//      $val= sql_date1($d->potvrz_kdy,0,'. ');
+//      break;
     default:
-      $val= "<b style='color:red' title='$var'>???</b>";
+      $val1= '???';
+      $val2= "<b style='color:red' title='$var'>???</b>";
       break;
     }
-    $ret->strtr['{'."$var}"]= $val;
-    $ret->value[$var]= $val;
+    $ret->strtr['{'."$var}"]= $val1;
+    $ret->value[$var]= $val2;
   }
 //                                                         debug($ret);
   return $ret;
@@ -1152,15 +1153,15 @@ function dop_substituce($vars,$params,$c,$idc=0,$idd=0) {  trace();
 function dop_show_vars($idd=0) {  trace();
   $html= '';
   $vars= array(
-    'rocni_rok'         => 'roční potvrzení: rok potvrzení',
-    'rocni_dary'        => 'roční potvrzení: suma za rok',
-    'adresa'            => 'adresa odběratele',
-    'datum'             => 'datum odeslání',
+//    'rocni_rok'         => 'roční potvrzení: rok potvrzení',
+//    'rocni_dary'        => 'roční potvrzení: suma za rok',
+//    'adresa'            => 'adresa odběratele',
+//    'datum'             => 'datum odeslání',
     'osloveni'          => 'oslovení odběratele z karty Odběratelé',
-    'ID'                => 'ID kontaktu',
-    'adresa'            => 'adresa u firmy doplněná o IČO',
-    'adresa_darce'      => 'jednotlivý dar: případná změna podle údaje u daru',
-    'dar_povrzeni'      => 'jednotlivý dar: datum potvrzení'
+//    'adresa'            => 'adresa u firmy doplněná o IČO',
+//    'adresa_darce'      => 'jednotlivý dar: případná změna podle údaje u daru',
+//    'dar_povrzeni'      => 'jednotlivý dar: datum potvrzení',
+    'ID'                => 'ID kontaktu'
   );
   $all= array_keys($vars);
   $use= array();
@@ -1193,6 +1194,34 @@ function dop_show_vars($idd=0) {  trace();
   $vars= (object)array('html'=>$html,'all'=>$all,'use'=>$use);
 //                                                       debug($vars,"dop_show_vars($idd)");
   return $vars;
+}
+# --------------------------------------------------------------------------------------==> . ukázka
+# ASK
+# uloží dopis idd personifikovaný pro idc
+function dop_ukazka($idd,$idc) {  trace();
+  global $ezer_path_docs;
+  $vars= dop_show_vars($idd);
+  $dopis= select('*','dopis',"id_dopis=$idd");
+  $params= (object)array('datum'=>$dopis->datum);
+  $subs= dop_substituce($vars->use,$params,null,$idc);
+  // pro testování doplň title se jménem proměnné
+  if ( $vars ) foreach ($subs->strtr as $var=>$pair) {
+    $pairs[$var]= "<span style='background:orange' title='$var'>$pair</span>";
+  }
+  // pokud dopis obsahuje proměnné, personifikuj obsah
+  $html= $dopis->obsah;
+  if ( $vars ) {
+    $html= strtr($html,$pairs);
+  }
+  // generování PDF a předání odkazu
+//  $fname= -$idc."_ukazka_".date('ymd_Hi').".pdf";
+//  $f_abs= "$ezer_path_docs/$fname";
+//  $f_rel= "docs/$fname";
+//  tc_html_open();
+//  tc_html_write($html,'');
+//  tc_html_close($f_abs);
+//  $ref= "<a target='dopis' href='$f_rel'>zde</a>";
+  return (object)array('html'=>$html); //,'ref'=>$ref);
 }
 # ==========================================================================================> DOPISY
 # -------------------------------------------------------------------------------------- rz_mai_info
@@ -1281,16 +1310,19 @@ function rz_mai_detach($id_dopis,$name) { trace();
 # do tabulky MAIL dá seznam emailových adres pro rozeslání, pokud je $regenerate přepíše staré
 # záznamy, pokud ne a jsou dá zprávu do ret.again.
 function rz_mai_generuj($id_dopis,$regenerate=0) {  trace();
-  $TEST= 0;
-  $LIMIT= '';
+  $TEST= 1;
+  $LIMIT= 'LIMIT 1';
   $ret= (object)array();
+  // zjisti podmínku výběru
+  $map_adresati= map_cis('m_adresati','ikona');
   // zjisti jestli text obsahuje proměnné
   $d= select('*','dopis',"id_dopis=$id_dopis");
   $idd= $d->id_dopis;
   $obsah= $d->obsah;
+  $cond= $map_adresati[$d->komu];
   $is_vars= preg_match_all("/[\{]([^}]+)[}]/",$obsah,$list);
   $vars= $list[1];
-//                                                         debug($vars);
+                                                         debug($vars);
   if ( !$regenerate ) {
     // zjištění přepsatelnosti vygenerovaných mailů
     $maily= select('COUNT(*)','mail',"id_dopis=$idd");
@@ -1304,11 +1336,13 @@ function rz_mai_generuj($id_dopis,$regenerate=0) {  trace();
   query("DELETE FROM mail WHERE id_dopis=$idd");
   // zatím všem
   display("SELECT clen");
-  $rm= pdo_qry("SELECT id_clen,email FROM clen 
-    WHERE deleted='' AND email!='' 
+  $rm= pdo_qry("SELECT * FROM clen 
+    WHERE deleted='' AND email!='' AND $cond
     $LIMIT");
-  while ($rm && (list($idc,$emails)= pdo_fetch_row($rm))) {
-    
+  while ($rm && ($c= pdo_fetch_object($rm))) {
+    $idc= $c->id_clen;
+    $emails= $c->email;
+    if ($TEST) $emails= "martin@smidek.eu";
 //  $ids= rz_mai_ids($d->komu);
 //  $fname= "dopis_$idd.csv";
 //  $fpath= "docs/$fname";
@@ -1329,9 +1363,13 @@ function rz_mai_generuj($id_dopis,$regenerate=0) {  trace();
 //    }
     $pairs_json= '';
     if ( $is_vars ) {
-      $pairs= rz_mai_compute($vars,$idc,$err);
-      $pairs_json= json_encode($pairs);
+//      $pairs= rz_mai_compute($vars,$c);
+      $params= null;
+      $subst= dop_substituce($vars,$params,$c);
+      $pairs= $subst->strtr;
+      $pairs_json= json_encode($pairs,JSON_UNESCAPED_UNICODE);
     }
+                                                        debug($pairs,"idc=$idc: json=$pairs_json");
     $body= $obsah;
     $emails= explode(',',$emails);
     foreach ($emails as $email) {    
@@ -1342,10 +1380,12 @@ function rz_mai_generuj($id_dopis,$regenerate=0) {  trace();
           $ret->msg.= "V mailech jsou chyby (např. u ID=$idc) - proveď napřed kontrolu";
           goto end;
         }
-//        // pokud dopis obsahuje proměnné, personifikuj obsah
-//        if ( $is_vars ) {
-//          $body= strtr($body,$pairs);
-//        }
+        // pokud dopis obsahuje proměnné, personifikuj obsah
+        if ( $is_vars ) {
+          $body= strtr($body,$pairs);
+        }
+        $body= pdo_real_escape_string($body);
+//        $pairs_json= '';
         query("INSERT mail (state,vars,id_dopis,id_clen,email,body)
                VALUE (0,'$pairs_json',$idd,$idc,'$email','$body')");
         $nm++;
@@ -1389,13 +1429,24 @@ function rz_mai_ids($komu) { trace();
   else fce_error("nepodporovaný výběr adresátů mailů - $kod");
   return $ids;
 }
-# ------------------------------------------------------------------------------------==> . proměnné
-# spočítá hodnoty proměnných pro id_clen
-function rz_mai_compute($vars,$id_clen,$err) {  trace();
-  $pairs= array();
-  foreach ($vars as $var) {
-    $val= '???';
+//# ------------------------------------------------------------------------------------==> . proměnné
+//# spočítá hodnoty proměnných pro $c->id_clen
+//# pro $list vrátí seznam všech - ty, co jsou ve $vars zvýrazní
+//function rz_mai_compute($vars,$c,$list='') {  trace();
+////                                             debug($c);
+//  $pairs= array();
+//  if ($list) return $vars;
+//  foreach ($vars as $var) {
+//    $val= '???';
 //    switch ($var) {
+//      case 'osloveni':
+//        global $map_osloveni;
+//        if (!isset($map_osloveni)) $map_osloveni= map_cis('k_osloveni','zkratka');
+////                  debug($map_osloveni,'osloveni');
+//        $val=  
+//          $c->osloveni!=0 && $c->prijmeni5p!='' ? "{$map_osloveni[$c->osloveni]} {$c->prijmeni5p}" : (
+//          $c->osloveni!=0                       ? $map_osloveni[$c->osloveni] : 'Milí');
+//        break;
 //    case 'stav':
 //      $val= select1("SUBSTR(MAX(CONCAT(datum,castka)),20)","historie","id_ctenar=$id_ctenar");
 //      break;
@@ -1408,10 +1459,18 @@ function rz_mai_compute($vars,$id_clen,$err) {  trace();
 //      $val= $id_ctenar;
 //      break;
 //    }
-    $pairs['{'."$var}"]= $val;
-  }
-//                                                         debug($pairs);
-  return $pairs;
+//    $pairs['{'."$var}"]= $val;
+//  }
+////                                                         debug($pairs);
+//  return $pairs;
+//}
+# --------------------------------------------------------------------------------- dop extract_vars
+function dop_extract_vars($obsah) {
+  $list= null; $vars= '';
+  $is_vars= preg_match_all("/[\{]([^}]+)[}]/",$obsah,$list);
+  $vars= $is_vars ? $list[1] : '';
+  debug($vars);
+  return '$vars';
 }
 # ------------------------------------------------------------------------------ mail2 new_PHPMailer
 # nastavení parametrů pro SMTP server podle user.options.smtp

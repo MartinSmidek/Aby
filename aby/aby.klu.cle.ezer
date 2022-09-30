@@ -368,6 +368,10 @@ form _clen [,,399,251] {
     item { title:'zobrazit připínání'
       func onclick () { if (osoba) if_firma.onclick() else if_osoba.onclick();
     }}
+    item { title:'-vysvětlit oslovení'
+      func onclick () { if (osoba) 
+        alert(php.osl_insert(Clen.osoba.key(),Clen.titul,Clen.jmeno,Clen.prijmeni,'explain'));
+    }}
   }
   // ==> .. společné položky, které se zobrazují vždy
   label nadpis [7,21,50,15] { tag:'k', title:'<h1>Kontakt</h1>' },
@@ -854,13 +858,13 @@ form _dary [,,260,256] {
     show kdy    { data:dd.zmena_kdy }
     func onrowclick() { dary_znacka(); }
     func onchange()   { dary_znacka(); }
-    func dary_znacka () { dary.browse_active(); Dar._dar_load(iddar); set_zmena() }
+    func dary_znacka () { dary.browse_active(); Dar._dar_load(iddar); Dar.autoswitch(1); } //set_zmena() }
   }
   label zmena [12,242,236,18] { title:'' },
   # ==> . procedury
-  func set_zmena() {
+//  func set_zmena() {
 //    zmena.set(conc('<small>poslední změna: ',dary.kdn.get,' ',dary.kdy.get,'</small>')) 
-  }  
+//  }  
   func _dary_load () { var darce: number
 //    evals= sys('..','evals');
 //    echo(`_dary_load.evals=${evals}, darce=${darce}, curr=${Cleni.cleni.browse_key()}`);
@@ -888,7 +892,7 @@ form _dary [,,260,256] {
 # -------------------------------------------------------------------------------------------==> Dar
 form _dar [,,390,240] {
   # --------------------------- události
-  func onload () { autoswitch(1) }
+//  func onload () { autoswitch(1) }
   func onsave () { var s: number, ok: number
     _form_state('bc','be|br');
     return 1;

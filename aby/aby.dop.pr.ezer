@@ -54,6 +54,7 @@ form dopisy [0,0,180,267] {
   browse texty [0,0,150,200] { rows:12, qry_rows:1, group_by:'id_dopis',
       css_rows:'stav1,3:zluty,4:zeleny,5:cerveny'
     show id_dopis { data:etd.id_dopis }
+    show var_list { data:etd.var_list }
     show stav1    { expr:'min(etm.state)', format:'rsq' }
     show stav2    { expr:'max(etm.state)', format:'rsq' } // maximální stav rozeslání mailů
     show datum    [,,70,] { title:'datum', data:etd.datum, format:'rs-' }
@@ -71,6 +72,7 @@ form dopisy [0,0,180,267] {
       obsah.fill(predmet,ret.mail);
       ret= php.dop_show_vars(id_dopis);
       vars= ret.html;
+//      vars= php.rz_mai_compute(var_list,0,'list');
     }
   }
   const L=395
@@ -152,7 +154,7 @@ form dopisy [0,0,180,267] {
       // pokud byl odeslán ujisti se o záměru
       if (texty.stav2<3 
         ||texty.stav2>2 && confirm("Tento dopis již byl rozesílán, opravdu chceš opravit jeho text?")) {
-        Editor.start(dopis_id); texty.raise('onrowclick',dopis_id)
+        Editor.start(dopis_id); texty.raise('onrowclick',dopis_id);
       }
     }
   }
@@ -185,6 +187,7 @@ form dopisy [0,0,180,267] {
       typ= 'PR'; typ.change();
       datum= now(); datum.change();
       komu.key(1); komu.change();
+      predmet.change();
     }
   }
   button smaz [L+305,172,,] { tag:'s', title:'Smazat', help:'smazat mail a jeho rozesílání',
@@ -201,10 +204,10 @@ form dopisy [0,0,180,267] {
     help:'vyzkoušet na nastavené osobě či firmě na kartě Osoby,firmy'
     func onclick () { var idc:number, ret:object
       clear();
-//      idc= klu.cle.curr_clen(1);
-//      ret= php.dop_show_vars(texty.id_dopis); vars= ret.html;
-//      ret= php.dop_ukazka(texty.id_dopis,idc);
-//      obsah.fill(`ukázka dopisu '${predmet}' pro ${idc}, PDF ke stažení je ${ret.ref}`,ret.html);
+      idc= klu.cle.curr_clen(1);
+      ret= php.dop_show_vars(texty.id_dopis); vars= ret.html;
+      ret= php.dop_ukazka(texty.id_dopis,idc);
+      obsah.fill(`ukázka dopisu '${predmet}' pro ${idc}`/*, PDF ke stažení je ${ret.ref}`*/,ret.html);
     }
   }
   # -------------------------------------==> . proměnné
@@ -240,11 +243,16 @@ form _dopis [10,10,600,460] {
   field [52,10,453,] { title:'Předmět', data:dopis.nazev }
   label [517,0,141,33] { css:'ae_parm' }
   button [532,8,,] { title:'Uložit', help:'ukončit editor a uložit změny'
-    func onclick() { form.save(); panel.hide(1); }
+    func onclick() { 
+//      var_list= php.dop_extract_vars(obsah); var_list.change();
+      form.save(); 
+      panel.hide(1); 
+    }
   }
   button  [598,8,,] { title:'Zpět', help:'ukončit editor bez uložení změn'
     func onclick() { panel.hide(0); }
   }
+//  field var_list {data:dopis.var_list }
   edit obsah [0,40,660,480] {type:'html', data:dopis.obsah, par:{toolbar:'EzerMail'} }
 }
 //form editor [10,10,600,460] {
