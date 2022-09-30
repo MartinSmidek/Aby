@@ -1096,6 +1096,11 @@ function dop_substituce($vars,$params,$c,$idc=0,$idd=0) {  trace();
   // výpočet proměnných
   foreach ($vars as $var) {
     switch ($var) {
+    // -------------------------------- obecně
+    case 'logo': 
+      $val1= '<img alt="Nadační fond sester františkánek" src="http://nffrantiskanky.smidek.eu/aby/img/logo-mailem.png" />'; 
+      $val2= 'logo v rozlišení pro mail';
+      break;
 //    // -------------------------------- informace z params
 //    case 'rocni_rok': $val= $params->rok; break;
 //    case 'datum': $val= sql_date1($params->datum,0,'. '); break;
@@ -1153,6 +1158,7 @@ function dop_substituce($vars,$params,$c,$idc=0,$idd=0) {  trace();
 function dop_show_vars($idd=0) {  trace();
   $html= '';
   $vars= array(
+    'logo'              => 'logo NF',
 //    'rocni_rok'         => 'roční potvrzení: rok potvrzení',
 //    'rocni_dary'        => 'roční potvrzení: suma za rok',
 //    'adresa'            => 'adresa odběratele',
@@ -1198,18 +1204,29 @@ function dop_show_vars($idd=0) {  trace();
 # --------------------------------------------------------------------------------------==> . ukázka
 # ASK
 # uloží dopis idd personifikovaný pro idc
+# zkontroluje zda je to adresát dopisu
 function dop_ukazka($idd,$idc) {  trace();
   global $ezer_path_docs;
   $vars= dop_show_vars($idd);
-  $dopis= select('*','dopis',"id_dopis=$idd");
-  $params= (object)array('datum'=>$dopis->datum);
+  $dop= rz_mai_sql($idd);
+//  $dopis= select('*','dopis',"id_dopis=$idd");
+  // ověření, zda idd je adresátem
+  $dop= rz_mai_sql($idd);
+  $query= str_replace('WHERE',"WHERE id_clen=$idc AND ",$dop->query);
+  $ok= sql_query($query);
+  if (!$ok->id_clen) { 
+    $html= "<span style='background:yellow;color:red'>
+      Nastavený kontakt s ID=$idd není adresátem tohoto dopisu</span>"; 
+    goto end; 
+  }
+  $params= (object)array('datum'=>$dop->d->datum);
   $subs= dop_substituce($vars->use,$params,null,$idc);
   // pro testování doplň title se jménem proměnné
   if ( $vars ) foreach ($subs->strtr as $var=>$pair) {
     $pairs[$var]= "<span style='background:orange' title='$var'>$pair</span>";
   }
   // pokud dopis obsahuje proměnné, personifikuj obsah
-  $html= $dopis->obsah;
+  $html= $dop->d->obsah;
   if ( $vars ) {
     $html= strtr($html,$pairs);
   }
@@ -1221,6 +1238,7 @@ function dop_ukazka($idd,$idc) {  trace();
 //  tc_html_write($html,'');
 //  tc_html_close($f_abs);
 //  $ref= "<a target='dopis' href='$f_rel'>zde</a>";
+end:  
   return (object)array('html'=>$html); //,'ref'=>$ref);
 }
 # ==========================================================================================> DOPISY
@@ -1255,7 +1273,8 @@ function rz_mai_info($id_dopis,$id_mail=null) {  //trace();
     $jmeno= $c->osoba ? " {$c->jmeno} {$c->prijmeni}" : "$c->firma";
     $ret->info= xx_ukaz_clena($m->id_clen)." $jmeno";
     if ( $m->vars ) {
-      $ret->info.= "<hr/><b>proměnné</b> ".str_replace('"','',substr(substr($m->vars,1),0,-1));
+      $ret->info.= str_replace('{','<br>{',"<hr/><b>proměnné</b> "
+          .htmlentities(str_replace('"','',substr(substr($m->vars,1),0,-1))));
     }
   }
   $ret->mail= $html;
@@ -1306,23 +1325,41 @@ function rz_mai_detach($id_dopis,$name) { trace();
   return 1;
 }
 # ----------------------------------------------------------------------------------==> . generování
+# vrátí {d,query,vars}
+function rz_mai_sql($id_dopis) {  //trace();
+  $ret= (object)array('d'=>null,'query'=>'','vars'=>null);
+  $LIMIT= 'LIMIT 1';
+  // zjisti podmínku výběru
+  $map_adresati= map_cis('m_adresati','ikona');
+  // zjisti jestli text obsahuje proměnné
+  $ret->d= select('*','dopis',"id_dopis=$id_dopis");
+  $list= null;
+  $is_vars= preg_match_all("/[\{]([^}]+)[}]/",$ret->d->obsah,$list);
+  $ret->vars= $is_vars ? $list[1] : '';
+  $cond= $map_adresati[$ret->d->komu];
+  $ret->query= "SELECT * FROM clen WHERE deleted='' AND email!='' AND $cond $LIMIT";
+                                                  debug($ret,"rz_mai_sql($id_dopis)");
+  return $ret;
+}
+# ----------------------------------------------------------------------------------==> . generování
 # ASK
+# 
 # do tabulky MAIL dá seznam emailových adres pro rozeslání, pokud je $regenerate přepíše staré
 # záznamy, pokud ne a jsou dá zprávu do ret.again.
 function rz_mai_generuj($id_dopis,$regenerate=0) {  trace();
   $TEST= 1;
-  $LIMIT= 'LIMIT 1';
   $ret= (object)array();
   // zjisti podmínku výběru
-  $map_adresati= map_cis('m_adresati','ikona');
-  // zjisti jestli text obsahuje proměnné
-  $d= select('*','dopis',"id_dopis=$id_dopis");
-  $idd= $d->id_dopis;
-  $obsah= $d->obsah;
-  $cond= $map_adresati[$d->komu];
-  $is_vars= preg_match_all("/[\{]([^}]+)[}]/",$obsah,$list);
-  $vars= $list[1];
-                                                         debug($vars);
+  $dop= rz_mai_sql($id_dopis);
+//  $map_adresati= map_cis('m_adresati','ikona');
+//   zjisti jestli text obsahuje proměnné
+//  $d= select('*','dopis',"id_dopis=$id_dopis");
+  $idd= $dop->d->id_dopis;
+  $obsah= $dop->d->obsah;
+//  $cond= $map_adresati[$d->komu];
+//  $is_vars= preg_match_all("/[\{]([^}]+)[}]/",$obsah,$list);
+//  $vars= $list[1];
+//                                                         debug($dop); goto end;
   if ( !$regenerate ) {
     // zjištění přepsatelnosti vygenerovaných mailů
     $maily= select('COUNT(*)','mail',"id_dopis=$idd");
@@ -1336,9 +1373,10 @@ function rz_mai_generuj($id_dopis,$regenerate=0) {  trace();
   query("DELETE FROM mail WHERE id_dopis=$idd");
   // zatím všem
   display("SELECT clen");
-  $rm= pdo_qry("SELECT * FROM clen 
-    WHERE deleted='' AND email!='' AND $cond
-    $LIMIT");
+//  $rm= pdo_qry("SELECT * FROM clen 
+//    WHERE deleted='' AND email!='' AND $cond
+//    $LIMIT");
+  $rm= pdo_qry($dop->query);
   while ($rm && ($c= pdo_fetch_object($rm))) {
     $idc= $c->id_clen;
     $emails= $c->email;
@@ -1362,10 +1400,10 @@ function rz_mai_generuj($id_dopis,$regenerate=0) {  trace();
 //      continue;
 //    }
     $pairs_json= '';
-    if ( $is_vars ) {
+    if ( $dop->vars ) {
 //      $pairs= rz_mai_compute($vars,$c);
       $params= null;
-      $subst= dop_substituce($vars,$params,$c);
+      $subst= dop_substituce($dop->vars,$params,$c);
       $pairs= $subst->strtr;
       $pairs_json= json_encode($pairs,JSON_UNESCAPED_UNICODE);
     }
@@ -1381,7 +1419,7 @@ function rz_mai_generuj($id_dopis,$regenerate=0) {  trace();
           goto end;
         }
         // pokud dopis obsahuje proměnné, personifikuj obsah
-        if ( $is_vars ) {
+        if ( $dop->vars ) {
           $body= strtr($body,$pairs);
         }
         $body= pdo_real_escape_string($body);
