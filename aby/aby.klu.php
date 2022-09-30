@@ -46,10 +46,11 @@ function klub_vyber($cmd,$key=0) {
   while ($rk && (list($data,$nazev)= pdo_fetch_row($rk))) {
     $conds[$data+10]= (object)array(nazev=>"kategorie - $nazev",cond=>" FIND_IN_SET('$data',kategorie)");
   }
-  $conds[100]= (object)array(nazev=>'změny tohoto měsíce',cond=>" month(c.zmena_kdy)=month(now()) and year(c.zmena_kdy)=year(now()) ");
-  $conds[101]= (object)array(nazev=>'změny kým ...',cond=>" c.zmena_kdo=\$user");
-  $conds[102]= (object)array(nazev=>'změny dne ...',cond=>" left(c.zmena_kdy,10)='\$datum'");
-  $conds[103]= (object)array(nazev=>'změny dne ... kým ...',cond=>" c.zmena_kdo=\$user and left(c.zmena_kdy,10)='\$datum'");
+  $conds[100]= (object)array(nazev=>'podezřelé adresy osob',cond=>" (jmeno REGEXP '\\\\\\\\s|\\\\\\\\.' OR prijmeni REGEXP '\\\\\\\\s|\\\\\\\\.')");
+  $conds[101]= (object)array(nazev=>'změny tohoto měsíce',cond=>" month(c.zmena_kdy)=month(now()) and year(c.zmena_kdy)=year(now()) ");
+  $conds[102]= (object)array(nazev=>'změny kým ...',cond=>" c.zmena_kdo=\$user");
+  $conds[103]= (object)array(nazev=>'změny dne ...',cond=>" left(c.zmena_kdy,10)='\$datum'");
+  $conds[104]= (object)array(nazev=>'změny dne ... kým ...',cond=>" c.zmena_kdo=\$user and left(c.zmena_kdy,10)='\$datum'");
   switch($cmd) {
     case 'options':
       $selects= $del= '';
