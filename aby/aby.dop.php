@@ -513,7 +513,13 @@ function mail_new_PHPMailer($i_smtp) {
   $mail->IsHTML(true);
   $mail->Mailer= "smtp";
   foreach ($smtp as $part=>$value) {
-    $mail->$part= $value;
+  	if ($part=="SMTPOptions" && $value=="-")
+      $mail->SMTPOptions = array('ssl' => array(
+        'verify_peer' => false,
+        'verify_peer_name' => false,
+        'allow_self_signed' => true));
+  	else
+      $mail->$part= $value;
   }
 end:  
   return $mail;
@@ -1550,7 +1556,14 @@ function mail2_new_PHPMailer() {
   $mail->IsHTML(true);
   $mail->Mailer= "smtp";
   foreach ($smtp as $part=>$value) {
-    $mail->$part= $value;
+    // překlad pseudo hodnoty SMTPOptions:- vypínající test ssl
+  	if ($part=="SMTPOptions" && $value=="-")
+      $mail->SMTPOptions = array('ssl' => array(
+        'verify_peer' => false,
+        'verify_peer_name' => false,
+        'allow_self_signed' => true));
+  	else
+      $mail->$part= $value;
   }
 end:  
   return $mail;
