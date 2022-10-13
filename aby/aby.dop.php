@@ -1664,7 +1664,9 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
   }
   $mail->From= $from;
   $mail->AddReplyTo($from);
-//   $mail->ConfirmReadingTo= $jarda;
+  // poslat si kopii  - SMTP neumí vložit do odeslané pošty
+  $mail->AddCC= $from;
+  
   $mail->FromName= "$fromname";
   $mail->Subject= $d->nazev;
 //                                         display($mail->Subject);
