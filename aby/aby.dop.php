@@ -1753,7 +1753,7 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
           $mail->AddCC($adresa);
       }
       // poslat si kopii  - SMTP neumí vložit do odeslané pošty
-      $mail->AddCC= $from;
+      $mail->AddCC("darci@grohova.eu",'kopie pro NF');
  //       $mail->AddBCC($klub);
        if ( $TEST ) {
          $ok= 1;
