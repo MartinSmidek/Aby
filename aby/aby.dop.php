@@ -226,10 +226,11 @@ function mail_verify($posilame,$cond,$having,$change_mails=true) {
     // projdi adresy
     foreach(preg_split("/,\s*|;\s*|\s+/",trim($emails," ,;"),-1,PREG_SPLIT_NO_EMPTY) as $email) {
       $chyba= '';
-      if (!emailIsValid($email,$chyba)) {
+      $email= trim($email);
+      if ( $email && $email[0]!='*' && !emailIsValid($email,$chyba)) {
         $ret->errors++;
         $chyby.= "$chyba ";
-        $ret->list.= "<br>ID=$idc $chyba";
+        $ret->list.= "<br>ID=$idc:$mail $chyba";
       }
     }
     $jmeno= str_replace("'",'"',$jmeno);
@@ -1401,7 +1402,7 @@ function rz_mai_generuj($id_dopis,$regenerate=0) {  trace();
     $idc= $c->id_clen;
     $emails= $c->email;
 //    if ($TEST) 
-      $emails= "martin@smidek.eu";
+//      $emails= "martin@smidek.eu";
 //  $ids= rz_mai_ids($d->komu);
 //  $fname= "dopis_$idd.csv";
 //  $fpath= "docs/$fname";
@@ -1428,7 +1429,7 @@ function rz_mai_generuj($id_dopis,$regenerate=0) {  trace();
       $pairs= $subst->strtr;
       $pairs_json= json_encode($pairs,JSON_UNESCAPED_UNICODE);
     }
-                                                        debug($pairs,"idc=$idc: json=$pairs_json");
+//                                                        debug($pairs,"idc=$idc: json=$pairs_json");
     $body= $obsah;
     $emails= explode(',',$emails);
     foreach ($emails as $email) {    
@@ -1436,7 +1437,7 @@ function rz_mai_generuj($id_dopis,$regenerate=0) {  trace();
       if ( $email && $email[0]!='*' ) {
         // vlož do MAIL - pokud nezačíná * a je to validní mail
         if ( !emailIsValid($email,$chyba) ) {
-          $ret->msg.= "V mailech jsou chyby (např. u ID=$idc) - proveď napřed kontrolu";
+          $ret->msg.= "V mailech jsou chyby (např. u ID=$idc:$email:{$email[0]}) - proveď napřed kontrolu";
           goto end;
         }
         // pokud dopis obsahuje proměnné, personifikuj obsah
@@ -1653,10 +1654,7 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
   $d= pdo_fetch_object($res);
   // napojení na mailer
   $html= '';
-//   $klub= "klub@proglas.cz";
-  $martin= "martin@smidek.eu";
-//   $jarda= "cerny.vavrovice@seznam.cz";
-//   $jarda= $martin;
+//  $martin= "martin@smidek.eu";
   // poslání mailů
   $mail= mail2_new_PHPMailer();
   if ( !$mail ) { 
