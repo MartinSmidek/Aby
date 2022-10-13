@@ -1664,9 +1664,6 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
   }
   $mail->From= $from;
   $mail->AddReplyTo($from);
-  // poslat si kopii  - SMTP neumí vložit do odeslané pošty
-  $mail->AddCC= $from;
-  
   $mail->FromName= "$fromname";
   $mail->Subject= $d->nazev;
 //                                         display($mail->Subject);
@@ -1755,7 +1752,9 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
         else                            // na další jako kopie
           $mail->AddCC($adresa);
       }
-//       $mail->AddBCC($klub);
+      // poslat si kopii  - SMTP neumí vložit do odeslané pošty
+      $mail->AddCC= $from;
+ //       $mail->AddBCC($klub);
        if ( $TEST ) {
          $ok= 1;
                                           display("jako odeslaný mail pro $adresa");
