@@ -1556,7 +1556,10 @@ function mail2_new_PHPMailer() {
   $mail->IsHTML(true);
   $mail->Mailer= "smtp";
   foreach ($smtp as $part=>$value) {
-    // překlad pseudo hodnoty SMTPOptions:- vypínající test ssl
+    // překlad pseudo hodnoty SMTPOptions:- 
+    // you can allow insecure connections via the SMTPOptions property 
+    // see https://github.com/PHPMailer/PHPMailer/wiki/Troubleshooting#firewall-redirection
+    // odstavec Updating CA certificates
   	if ($part=="SMTPOptions" && $value=="-")
       $mail->SMTPOptions = array('ssl' => array(
         'verify_peer' => false,
