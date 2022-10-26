@@ -321,17 +321,25 @@ function dop_kon_dupl($rok,$corr) {
   $msg= '';
   $n_del= $n_kop= $n_ruc= 0;
   $qry= mysql_qry("
-    SELECT castka_kdy,castka,zpusob,id_clen,count(*) AS _pocet_,
+    SELECT castka_kdy,castka,zpusob,
+      id_vypis,vu.zkratka,n_vypis,
+      id_projekt,GROUP_CONCAT(DISTINCT LEFT(p.nazev,32)),GROUP_CONCAT(DISTINCT id_projekt),
+      id_clen,count(*) AS _pocet_,
       prijmeni,jmeno,SUM(IF(
-        diky_kdy OR potvrz_kdy OR popis!='' OR stredisko!=0  OR d.darce,1,0)),
+        diky_kdy OR potvrz_kdy OR d.popis!='' OR stredisko!=0  OR d.darce,1,0)),
         GROUP_CONCAT(id_dar)
     FROM dar AS d
     LEFT JOIN clen AS c USING (id_clen)
     LEFT JOIN vypis AS v USING (id_vypis)
+    LEFT JOIN projekt AS p USING (id_projekt)
+    LEFT JOIN _cis AS vu ON druh='b_ucty' AND data=v.nas_ucet 
     WHERE YEAR(castka_kdy)=$rok AND LEFT(d.deleted,1)!='D'
-    GROUP BY castka_kdy,castka,d.id_clen,d.zpusob HAVING _pocet_>1 ORDER BY castka_kdy");
+    GROUP BY castka_kdy,castka,d.id_clen,d.zpusob HAVING _pocet_>1 
+    ORDER BY id_dar -- castka_kdy
+      ");
   while ( $qry 
-    && list($datum,$castka,$zpusob,$idc,$pocet,$prijmeni,$jmeno,$rucne,$idds)= pdo_fetch_row($qry) ) {
+    && list($datum,$castka,$zpusob,$idv,$xv,$nv,$idp,$np,$idps,$idc,$pocet,$prijmeni,$jmeno,$rucne,$idds)
+      = pdo_fetch_row($qry) ) {
     $datum= sql_date1($datum);
     $zpusob= $map_zpusob[$zpusob];
     $clen= klub_ukaz_clena($idc);
@@ -384,12 +392,15 @@ function dop_kon_dupl($rok,$corr) {
         }
       }
     }
-    $msg.= "<tr><td$r>$datum</td><td>$zpusob</td><td$r><b>$castka,-</b></td><td>{$pocet}x</td>
+    $bankou= $zpusob=='bankou' ? "$xv:$nv" : '';
+    $online= $zpusob=='online' ? "($idps):$np" : '';
+    $msg.= "<tr><td$r>$datum</td><td>$zpusob</td><td$r>$bankou</td><td>$online</td>
+      <td$r><b>$castka,-</b></td><td>{$pocet}x</td>
       <td$r>$clen</td><td>$prijmeni $jmeno</td><td>$pozn</td></tr>";
     $err++;
   }
 end:  
-  $html.= $msg=='' ? 'Nebyl zjištěn žádný problém' : "<h3>Podezřelé (stejný dárce, den a cesta) zápisy darů v roce $rok</h3>";
+  $html.= $msg=='' ? 'Nebyl zjištěn žádný problém' : "<h3>Podezřelé (stejný dárce, den a způsob daru) zápisy darů v roce $rok</h3>";
   $html.= $corr ? "$n_del darů bylo smazáno, $n_kop údajů převedeno, ručně zbývá posoudit $n_ruc takových duplicit<hr>" : '';
   $html.= "<table>$msg</table>";
   if ( $err ) $html= "CELKEM JE PODEZŘELÝCH DARŮ: $err<hr>$html";
