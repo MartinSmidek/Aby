@@ -319,7 +319,7 @@ function dop_kon_dupl($rok,$corr) {
   $html= '';
   $err= 0;
   $msg= '';
-  $n_del= $n_kop= $n_ruc= 0;
+  $n_del= $n_kop= $n_ruc= $suma= 0;
   $qry= mysql_qry("
     SELECT castka_kdy,castka,zpusob,
       id_vypis,vu.zkratka,n_vypis,
@@ -342,6 +342,7 @@ function dop_kon_dupl($rok,$corr) {
       = pdo_fetch_row($qry) ) {
     $datum= sql_date1($datum);
     $zpusob= $map_zpusob[$zpusob];
+    $suma+= $castka*($pocet-1);
     $clen= klub_ukaz_clena($idc);
     if ( $rucne ) { // na vyžádání automatická oprava
       $pozn= $rucne; 
@@ -403,7 +404,7 @@ end:
   $html.= $msg=='' ? 'Nebyl zjištěn žádný problém' : "<h3>Podezřelé (stejný dárce, den a způsob daru) zápisy darů v roce $rok</h3>";
   $html.= $corr ? "$n_del darů bylo smazáno, $n_kop údajů převedeno, ručně zbývá posoudit $n_ruc takových duplicit<hr>" : '';
   $html.= "<table>$msg</table>";
-  if ( $err ) $html= "CELKEM JE PODEZŘELÝCH DARŮ: $err<hr>$html";
+  if ( $err ) $html= "CELKEM JE PODEZŘELÝCH DARŮ: $err (v přehledu darů je tedy asi $suma Kč navíc)<hr>$html";
   return $html;
 }
 # ------------------------------------------------------------------------------------- klu_inf_stat
