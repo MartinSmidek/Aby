@@ -458,6 +458,7 @@ function aby_donio_load($csv,$idp,$novy) { trace();
   $res= (object)array('idp'=>0,'err'=>'','war'=>'');
   $typ= 1;
   $data= array();
+  $opakovane= 0;
   $csv_path= "$ezer_path_root/banka/donio/$csv";
   $msg= aby_csv2array($csv_path,$data,999999,'UTF-8');
 //  display($msg);                                            
@@ -482,6 +483,7 @@ function aby_donio_load($csv,$idp,$novy) { trace();
   else {
     query("INSERT INTO projekt (nazev,typ,soubor,md5) VALUES ('$novy',1,'$csv','$md5') ");
     $res->idp= pdo_insert_id();
+    $idp= $res->idp;
   }
   // otestování a případné vytvoření ANONYM
   $anonym= select('id_clen','clen', "prijmeni='♥ANONYM'");
@@ -521,7 +523,8 @@ function aby_donio_load($csv,$idp,$novy) { trace();
         case 'dt': 
           $m= null;
           if (preg_match("~^(\d+\.\d+\.\d+)~",$val,$m)) {
-            $d[$itm]= sql_date($m[1],1); 
+            $kdy= sql_date($m[1],1); 
+            $d[$itm]= $kdy;
           }
           break;
         default: 
@@ -529,18 +532,27 @@ function aby_donio_load($csv,$idp,$novy) { trace();
           break;
       }
     }
-    // přičti částku
-    $suma+= $castka;
-    // najdi kontakt podle emailu nebo vlož nový kontakt
     $email= trim($row['Email']);
     $prijmeni= trim($row['Jméno']);
+    // najdi kontakt podle emailu nebo vlož nový kontakt
     $idc= $email ? select('id_clen','clen', "email='$email' AND deleted='' ") : $anonym;
+    // test duplicity
+    if ($idc) {
+      $je= select('COUNT(*)','dar',
+          "id_clen='$idc' AND zpusob=5 AND id_projekt=$idp AND castka='$castka' AND castka_kdy='$kdy'");
+      if ($je) {
+        $opakovane++;
+        continue;
+      }
+    }
     if (!$idc) {
       $qry= "INSERT INTO clen (zdroj,osoba,prijmeni,email) VALUE ('donio',1,'$prijmeni','$email')";
       query($qry);
       $idc= pdo_insert_id();
       $n_clen++;
     }
+    // přičti částku
+    $suma+= $castka;
     // vytvoření dar
     $attr= array();
     $d['id_clen']= $idc;
@@ -548,12 +560,14 @@ function aby_donio_load($csv,$idp,$novy) { trace();
       $attr[]= "$itm='$val'";
     }
     if (isset($d['castka']) && $d['castka']) {
-      query("INSERT INTO dar SET typ=9,zpusob=5,id_projekt=$res->idp,".implode(',',$attr));
+      query("INSERT INTO dar SET typ=9,zpusob=5,id_projekt=$idp,".implode(',',$attr));
       $n_dar++;
     }
   }
-  query("UPDATE projekt SET suma='$suma' WHERE id_projekt=$res->idp");
-  $res->war= "Bylo vloženo $n_clen lidí a $n_dar darů";
+  query("UPDATE projekt SET suma='$suma' WHERE id_projekt=$idp");
+  $res->war= "Bylo vloženo $n_clen lidí a $n_dar darů."
+      . ($opakovane ? "$opakovane darů již bylo vloženo podle dřívější zprávy." : '');
+  
 end:
   if ($res->err) {
     // problém - smažeme neúspěšný import
