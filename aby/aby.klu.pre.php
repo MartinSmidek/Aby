@@ -479,11 +479,13 @@ function aby_donio_load($csv,$idp,$novy) { trace();
     $res->idp= $idp;
     query("UPDATE projekt SET md5=CONCAT(md5,',','$md5'),soubor=CONCAT(soubor,',','$csv') 
       WHERE id_projekt=$idp");
+    $suma= select('suma','projekt',"id_projekt=$idp");
   }
   else {
     query("INSERT INTO projekt (nazev,typ,soubor,md5) VALUES ('$novy',1,'$csv','$md5') ");
     $res->idp= pdo_insert_id();
     $idp= $res->idp;
+    $suma= 0;
   }
   // otestování a případné vytvoření ANONYM
   $anonym= select('id_clen','clen', "prijmeni='♥ANONYM'");
@@ -502,7 +504,7 @@ function aby_donio_load($csv,$idp,$novy) { trace();
       'Vzkaz'             => "pozn"
   );
   // rozdělíme na clen a dar
-  $n_clen= $n_dar= $suma= 0;
+  $n_clen= $n_dar= 0;
   foreach ($data as $row) {
 //                                                    debug($row);
     // atributy darů
