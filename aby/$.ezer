@@ -224,7 +224,10 @@ table vypis { key_id:'id_vypis'
 }
 table projekt { key_id:'id_projekt'
   number id_projekt     { key:'primary', help:'projekt|jedinečné číslo projektu' }
+  number typ            { help:'1,2 online, 3 ne-online' }
+  number vsym           { help:'variabilní symbol ne-online projektu' }
   text nazev            { help:'pojmenování projektu' }
+  text popis            { help:'popis projektu' }
   number suma           { help:'vybraná částka v Kč' }
   text soubor           { help:'importovaný výpis projektu' }
 }
