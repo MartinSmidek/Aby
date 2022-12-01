@@ -547,45 +547,41 @@ function eko_histogram($export,$od,$do,$vecne,$par,$deleni) { trace();
 //   $html.= nl2br("{$par->deleni}\n$group\n\n$qry");
   return $html;
 }
-# ----------------------------------------------------------------------------------- eko mesic_dary
+# ----------------------------------------------------------------------------------- eko seznam_dary
 # $export=1 způsobí export do Excelu
-function eko_mesic_dary($export,$osoby,$firmy,$od,$do,$vecne,$VS='') { trace();
+function eko_seznam_dary($export,$osoby,$firmy,$od,$do,$vecne,$projekt=13) { trace();
   $html= '';
   $err= '';
   $tab= array();
   $od_sql= sql_date($od,1);
   $do_sql= sql_date($do,1);
   $cond= $vecne ? "zpusob=4" : "zpusob!=4";
+  $HAVING= '';
+  if ($projekt>=0) $HAVING= "HAVING _pro=$projekt";
   $jakych= $vecne ? "věcných" : "finančních";
   $map_osoba= map_cis('k_osoba','zkratka');
   $map_zpusob= map_cis('k_zpusob','hodnota');
   $map_stredisko= map_cis('stredisko','hodnota');
-  $flds= 'id_clen,titul,prijmeni,jmeno,osoba,ulice,obec,psc,castka,_pro,castka_kdy';
-  $flds.= $vecne ? ",popis" : ",zpusob,_ucet";
+  $flds= 'id_clen,titul,prijmeni,jmeno,osoba,ulice,obec,psc,castka,_pro,castka_kdy,vsym';
+  $flds.= $vecne ? ",popis" : ",zpusob,_ucet,typ";
   // osoba nebo firma
   if (!($osoby && $firmy)) {
     $cond.= $osoby ? " AND osoba=1" : " AND osoba=0";
   }
-//  $AND_VS= $symbol= '';
-//  if ( $VS!='' ) {
-//    $symbol= " s variabilním symbolem $VS";
-//    $VS= strtr($VS,array('*'=>'%','?'=>'_'));
-//    $AND_VS= "AND varsym LIKE '$VS'";
-//  }
-  $qry= "SELECT IFNULL(clen.deleted,id_clen) AS _err,
-           id_dar,id_clen,titul,prijmeni,jmeno,osoba,ulice,obec,psc,castka,
-           dar.stredisko AS _pro,castka_kdy,zpusob,dar.popis,IF(zpusob=2,dar.ucet,'') AS _ucet
-         FROM dar
-         LEFT JOIN clen USING(id_clen)
-         -- LEFT JOIN _cis ON dar.varsym=data AND druh='varsym'
-         WHERE NOT left(dar.deleted,1)='D' /*AND NOT left(clen.deleted,1)='D'*/
-           -- AND dar.id_clen!=9999 
-           AND $cond
-           AND castka_kdy BETWEEN '$od_sql' AND '$do_sql' $AND_VS
-           -- AND _cis.zkratka=1
-           AND (dar.typ=9 OR dar.typ=8 AND dar.id_clen) 
-         ORDER BY prijmeni  ";
-  $res= pdo_qry($qry);
+  $res= pdo_qry("
+      SELECT id_dar,zpusob,dar.typ,dar.id_projekt,
+        IF(zpusob=2 AND !ISNULL(p.id_projekt),p.id_projekt,dar.id_projekt) AS _pro,
+        id_clen,titul,prijmeni,jmeno,castka,IF(zpusob=2,dar.ucet,'') AS _ucet,
+        dar.vsym,dar.popis,castka_kdy
+      FROM dar
+      LEFT JOIN clen USING (id_clen)
+      LEFT JOIN projekt AS p ON dar.vsym=p.vsym AND dar.vsym!=0
+      WHERE NOT left(dar.deleted,1)='D'
+        AND $cond AND castka_kdy BETWEEN '$od_sql' AND '$do_sql' 
+        AND dar.typ IN (7,8,9) -- (dar.typ=9 OR dar.typ=8 AND dar.id_clen) 
+      $HAVING      
+      ORDER BY castka_kdy  
+    ");
   $n= 0;
   while ( $res && $d= pdo_fetch_object($res) ) {
     if ( trim($d->_err)!=='' ) {
@@ -613,9 +609,9 @@ function eko_mesic_dary($export,$osoby,$firmy,$od,$do,$vecne,$VS='') { trace();
         case 'osoba':
           $tab[$n][$f]= $map_osoba[$d->$f];
           break;
-        case '_pro':
-          $tab[$n][$f]= $map_stredisko[$d->$f];
-          break;
+//        case '_pro':
+//          $tab[$n][$f]= $map_stredisko[$d->$f];
+//          break;
         case 'castka':
           $tab[$n][$f]= $d->$f;
           $tab['*&sum;'][$f]+= $d->$f;
@@ -629,8 +625,8 @@ function eko_mesic_dary($export,$osoby,$firmy,$od,$do,$vecne,$VS='') { trace();
   $clmn= array(
     'id_clen'=>'č.dárce:10', 'titul'=>'titul:15',
     'prijmeni'=>'příjmení:15', 'jmeno'=>'jméno:15','osoba'=>'typ:5',
-    'ulice'=>'ulice:20', 'obec'=>'obec:20', 'psc'=>'psč:8',
-    'castka'=>'částka:10', '_pro'=>'pro:6','castka_kdy'=>'datum:12');
+//    'ulice'=>'ulice:20', 'obec'=>'obec:20', 'psc'=>'psč:8',
+    'castka'=>'částka:10', '_pro'=>'pro:6','castka_kdy'=>'datum:12','vsym'=>'VS:12');
   if ( $vecne )
     $clmn['popis']= 'popis:40';
   else {
@@ -638,8 +634,16 @@ function eko_mesic_dary($export,$osoby,$firmy,$od,$do,$vecne,$VS='') { trace();
     $clmn['_ucet']= 'účet:23';
   }
   $algn= array('castka'=>'right', '_ucet'=>'right');
-  $titl= "Přehled $jakych darů za období od $od do $do";
-  $html.= "<h2 class='CTitle'>$titl</h2>";
+  switch ($projekt)  {
+    case -1:
+      $titl= "Přehled všech $jakych darů za období od $od do $do"; break;
+    case 0:
+      $titl= "Přehled $jakych darů mimo projekty za období od $od do $do"; break;
+    default:
+      $nazev= select('nazev','projekt',"id_projekt=$projekt");
+      $titl= "Přehled $jakych darů na projekt: <i>$nazev</i> <br>za období od $od do $do"; break;
+  }
+  $html.= "<h2>$titl</h2>";
   // případný export do Excelu
   if ( $export ) {
     $of= ($osoby ? 'o' : '').($firmy ? 'f' : '');
@@ -663,31 +667,35 @@ function eko_projekty_dary($export,$od,$do,$vecne=0) { trace();
   $do_sql= sql_date($do,1);
   $cond= $vecne ? "zpusob=4" : "zpusob!=4";
   $jakych_daru= $vecne ? "věcných darů" : "finančních darů";
-  $platby= 0;
   $tab= array();
-  $qry= "SELECT id_projekt,COUNT(castka) AS _pocet,SUM(castka) AS castky,castka_kdy,nazev
-         FROM dar 
-         LEFT JOIN projekt USING (id_projekt)
-         WHERE NOT left(dar.deleted,1)='D'
-           AND castka_kdy BETWEEN '$od_sql' AND '$do_sql'
-           AND id_clen!=9999 AND $cond
-         GROUP BY id_projekt ORDER BY id_projekt ";
-  $res= pdo_qry($qry);
+  $res= pdo_qry("
+      SELECT IF(zpusob=2 AND !ISNULL(pv.id_projekt),pv.id_projekt,dar.id_projekt) AS _pro,
+        IF(zpusob=2 AND !ISNULL(pv.id_projekt),CONCAT('BAN_',pv.nazev),po.nazev) AS nazev,
+        COUNT(*) AS _pocet,SUM(castka) AS castky
+      FROM dar
+      LEFT JOIN clen USING (id_clen)
+      LEFT JOIN projekt AS pv ON dar.vsym=pv.vsym AND dar.vsym!=0
+      LEFT JOIN projekt AS po ON po.id_projekt=dar.id_projekt
+      WHERE NOT left(dar.deleted,1)='D'
+        AND $cond AND castka_kdy BETWEEN '$od_sql' AND '$do_sql' 
+        AND dar.typ IN (7,8,9) 
+      GROUP BY _pro
+      ORDER BY nazev
+   ");
   $n= 0;
   while ( $res && $d= pdo_fetch_object($res) ) {
+    $nazev= $d->nazev ?: '-- dary mimo projekty';
     // dar
-    $tab[$d->nazev]['pocet']+= $d->_pocet;
+    $tab[$nazev]['pocet']+= $d->_pocet;
     $tab['*&sum;']['pocet']+= $d->_pocet;
-    $tab[$d->nazev]['dar']= $d->castky;
-    if ( $platby ) $tab[$d->nazev]['platba']= '';
-    $tab[$d->nazev]['popis']= $d->nazev ? $d->hodnota : '(VS neuveden)';
+    $tab[$nazev]['dar']+= $d->castky;
+    $tab[$nazev]['popis']= $nazev ? $d->hodnota : '(VS neuveden)';
     $tab['*&sum;']['dar']+= $d->castky;
   }
   $clmn= array('pocet'=>'počet:8','dar'=>'součet darů:12');
-  if ( $platby ) $clmn['platba']= 'součet plateb:12';
 //  $clmn['popis']= 'význam VS:70';
   $algn= array('pocet'=>'right', 'dar'=>'right', 'platba'=>'right');
-  $titl= "Měsíční výnos $jakych_daru podle VS za období od $od do $do";
+  $titl= "Výnosy $jakych_daru podle projektů za období od $od do $do";
   $html.= "<h2 class='CTitle'>$titl</h2>";
   // případný export do Excelu
   if ( $export )
@@ -700,11 +708,12 @@ function eko_projekty_dary($export,$od,$do,$vecne=0) { trace();
 # exportuje tabulku ve formátu XLS
 function tab_xls($tab,$left,$clmn,$align,$titl='sestava',$fname='tmp') { trace();
   global $ezer_version;
-  require_once 'ezer$ezer_version/server/vendor/autoload.php';
+  require_once "ezer$ezer_version/server/vendor/autoload.php";
   $html= '';
   $h= "bcolor=aac0e2c2";
   list($a2,$w)= explode(':',$left);
   $columns= "columns A=$w";
+  $titl= preg_replace("/<[^>]*>/",'',$titl);
   $head= '';
   $n= 3;
   $m= 1;
@@ -781,7 +790,7 @@ function tab_show($tab,$left,$clmn,$align,$class='',$style='') {
   $t.= "</tr>";
   // tělo
   foreach ($tab as $i => $row) if ( substr($i,0,1)!='*' ) {
-    $t.= "<tr><th align='right'>$i</th>";
+    $t.= "<tr><th align='left'>$i</th>";
     foreach ($clmn as $j => $nic) {
       $num= $val= $row[$j];
       $atr= "align='left'";

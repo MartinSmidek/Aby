@@ -3,7 +3,7 @@
 
 panel pre {type:'right', title:"[fa-pie-chart] Přehledy", _sys:'pri'
   var this_item: ezer, this_par:object
-  var this_export: number
+  var this_export: number // resetuje se v menu
   use rp: form _eko [12,4,,] 
   use vz: form right [12,4,,] { 
     check odkazy [-10,4,100,17] {title:'odkazy',style:'color:white', format:'t'
@@ -11,26 +11,29 @@ panel pre {type:'right', title:"[fa-pie-chart] Přehledy", _sys:'pri'
   }
   menu m {type:'left', active:m.uz.dar, format:'f+'
     menu uz {title:'Přehledy',type:'group', _sys:'dar'
-      item dar {title:'[fa-euro] Přehled finančních darů'   
-          par:{typ:'D',off:'uz|his|rok',on:'VS|den',dary:'0',vs:'1',projekty:0}}
-      item {title:'[fa-euro] ... souhrn projektů'   
-          par:{typ:'D',off:'uz|his|rok',on:'VS|den',dary:'0',vs:'1',projekty:1}}
-      item  {title:'[fa-gift] Přehled věcných darů'         
-          par:{typ:'D',off:'uz|his|rok',on:'VS|den',dary:'1',vs:'1'}}
+      item {title:'[fa-euro] Souhrn projektů a jejich výnosů'   
+          par:{typ:'D',off:'uz|his|pro|rok',on:'den',dary:'0',souhrn:1}}
+      item pro {title:'[fa-euro] Seznam fin. darů na projekt'
+          par:{typ:'V',off:'uz|his|rok',on:'pro|den',dary:'0',souhrn:0,projekt:1}}
+      item dar {title:'[fa-euro] Seznam všech finančních darů'   
+          par:{typ:'D',off:'uz|his|pro|rok',on:'den',dary:'0',souhrn:0,projekt:0}}
+      item  {title:'[fa-gift] Přehled všech věcných darů'         
+          par:{typ:'D',off:'uz|his|pro|rok',on:'den',dary:'1',souhrn:0,projekt:0}}
       func onclick (i:ezer) { var tab:text
         clear(); rp.display(1); vz.display(0);
         this_item= i;
         rp.display(0,i.par.off); rp.display(1,i.par.on);
         rp.header(i);
         rp.fill('','... počkejte prosím, provádím výpočet');
-        tab= i.par.projekty
+        tab= i.par.souhrn
           ? php.eko_projekty_dary(this_export,rp.den_od,rp.den_do)
-          : php.eko_mesic_dary(this_export,rp.os,rp.fy,rp.den_od,rp.den_do,i.par.dary);
+          : php.eko_seznam_dary(this_export,rp.os,rp.fy,rp.den_od,rp.den_do,i.par.dary,
+                i.par.projekt ? rp.pro.key() : -1);
         rp.fill('',tab);
         this_export= 0;
       }
       item  {title:'[fa-download] Download kontaktů a darů',                               skill:'m'
-          par:{typ:'D',off:'uz|his|rok|VS|den',on:''}
+          par:{typ:'D',off:'uz|his|rok|pro|den',on:''}
         func onclick (i:ezer) { var tab:text
           clear(); rp.display(1); vz.display(0);
           this_item= i;
@@ -49,7 +52,7 @@ panel pre {type:'right', title:"[fa-pie-chart] Přehledy", _sys:'pri'
 //          par:{deleni:'300,700,1000;1500,2000;3000,4000,10000;20000;50000;100000'}
         func onclick (i:ezer) {
           clear(); rp.display(1); vz.display(0);
-          this_item= i; rp.display(0,'VS|rok|uz'); rp.display(1,'his|den');
+          this_item= i; rp.display(0,'pro|rok|uz'); rp.display(1,'his|den');
           rp.header(i);
           rp.fill('',php.eko_histogram(this_export,rp.den_od,rp.den_do,0,i.par,rp.deleni));
           this_export= 0;
@@ -72,7 +75,7 @@ panel pre {type:'right', title:"[fa-pie-chart] Přehledy", _sys:'pri'
     }
     func onstart () {
       rp.rok= fdate('Y'); this_export= 0;
-      rp.den_od= sql2date(`${rp.rok}-01-01`);
+      rp.den_od= replace(sql2date(`${rp.rok}-01-01`),' ','');
       rp.den_do= now(); 
     }
   }
@@ -90,8 +93,9 @@ panel pre {type:'right', title:"[fa-pie-chart] Přehledy", _sys:'pri'
     label [-79,0,163,30] { tag:'rok', css:'parm', style:'zIndex:1' }
 //    check nuly [-112,6,50,] { tag:'rok', title:'nuly', format:'t', value:'0' }
     field rok [-167,6,50,] { tag:'rok', title:'rok', type:'date', format:'Rrt:y', help:'volba roku' }
-    // VS
-//    field VS [-336,6,45,] { tag:'VS', title:'VS:', format:'rt', help:'variabilní symbol: lze zapisovat pomocí ?,*'}
+    // projekt
+    label [-464,0,288,30] { tag:'pro', css:'parm', style:'zIndex:1' }
+    select pro [-471,6,235,] { tag:'pro', title:'projekt', type:'map0', options:map_projekt.nazev }
     // den
 //    label [-214,0,158,30] { tag:'uz', css:'parm', style:'zIndex:1' }
 //    field uzaverka [-224,6,87,] {tag:'uz', title:'uzávěrka:', type:'date', format:'Rrt', 

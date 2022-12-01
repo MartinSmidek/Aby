@@ -62,12 +62,13 @@ form _dary [,,774,262] {
   view c: table clen {join_type:'LEFT' join:'USING (id_clen)' }
   browse _dary [0,29,300,100] {buf_rows:500, rows:24, qry_rows:1
     show idc { data:d.id_clen }
+    show idd [,,50,] { data:d.id_dar, format:'rs' }
     show datum [,,75,] { title:'datum', data:d.castka_kdy, format:'srq=' }
     show castka [,,70,] { title:'částka', data:d.castka, format:'srq=' }
     show jmeno [,,80,] { title:'dárce', data:c.jmeno, format:'stq*' }
     show jm2 [,,40,] { title:'...', data:d.ucet_popis, format:'stq*' }
-    show email [,,170,] { title:'email', data:c.email, format:'stq*' }
-    show pozn [,,180,] { title:'vzkaz', data:d.pozn, format:'stq*' }
+    show email [,,140,] { title:'email', data:c.email, format:'stq*' }
+    show pozn [,,160,] { title:'vzkaz', data:d.pozn, format:'stq*' }
     func onsubmit() {
       cle.show_clen(idc)
     }
