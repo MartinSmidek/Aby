@@ -47,7 +47,14 @@
       version:'4.6',
       Minimal:{toolbar:[['Bold','Italic','Source']]},
       Letter:{toolbar:[['Format','Bold','Italic','Underline'],['Table'],
-        ['JustifyLeft','JustifyCenter','JustifyRight'],['Source']]}
+        ['JustifyLeft','JustifyCenter','JustifyRight'],['Source']]},
+      Letter2:{toolbar:[['PasteFromWord',
+        '-','Format','Bold','Italic','TextColor','BGColor',
+        '-','JustifyLeft','JustifyCenter','JustifyRight',
+        '-','Link','Unlink','HorizontalRule','Image',
+        '-','NumberedList','BulletedList',
+        '-','Outdent','Indent',
+      '-','Source','ShowBlocks','RemoveFormat']]}
     }"
   );
   $add_options= (object)array(

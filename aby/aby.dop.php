@@ -387,7 +387,7 @@ function mail_pruvodni($cmd,$pruvodni,$clen=null) {
 #   mode=test-reky - pošle zkušební mail s řekou na osobní nastavení
 # popis personifikace viz dop_rep_klu_ids, dop_klu_ids
 # pokud je uvedena položka jiny_darce a jine_rc bude jimi pozměněno potvrzení
-function mail_single($mode,$i_smtp,$dopis,$id_clen,$dary,$rok,$dne,$jiny_darce=null,$jine_rc=null) { trace();
+function mail_single($mode,$i_smtp,$dopis,$id_clen,$dary,$rok,$dne,$jiny_darce=null,$jine_rc=null,$omezeni_daru=1) { trace();
   global $USER;
   $ret= (object)array('_error'=>'','_html'=>'','darce'=>'','rc'=>'');
   $dne= str_replace('.','. ',$dne);
@@ -420,7 +420,7 @@ function mail_single($mode,$i_smtp,$dopis,$id_clen,$dary,$rok,$dne,$jiny_darce=n
     case 'html':  // ------------------------- vrácení mailu jen k zobrazení + generování potvrzení
       // vygenerujeme potvrzení
       $potvr= dop_potvrzeni($id_clen,$rok,$dne,$jiny_darce,$jine_rc,
-        (object)array('clen'=>$clen,'dary'=>$dary,'slozka'=>"mailem_$rok"));
+        (object)array('clen'=>$clen,'dary'=>$dary,'slozka'=>"mailem_$rok"),$omezeni_daru=1);
       $ret->darce= str_replace('<br>',"\n",$potvr->darce);
       $ret->rc= $potvr->rc;
       // zobrazíme mail
@@ -528,8 +528,8 @@ end:
 # --------------------------------------------------------------------------------- mail single_send
 # odeslání mailu - vrátí chybu jinak ''
 function mail_single_send($mail,$to,$subj,$body,$attach=null) { trace();
-  $TEST= 1;
-//  $TEST= 0;
+//  $TEST= 1;
+  $TEST= 0;
   $error= '';
   // From a FromName se nastavuje podle číselníku v mail_new_PHPMailer
   $mail->Subject= $subj;
@@ -709,23 +709,24 @@ function dop_potvrzeni_sablona($druh) { trace();
 # popis viz dop_rep_klu_ids, dop_klu_ids
 # pokud je uvedena položka jiny_darce a jine_rc bude jimi pozměněno potvrzení
 # pokud je voláno jako obsluha mail_proces, tak $in_proces={clen,dary,slozka}
-function dop_potvrzeni($id_clen,$rok,$kdy,$jiny_darce=null,$jine_rc=null,$in_proces=null) { trace();
+function dop_potvrzeni($id_clen,$rok,$kdy,$jiny_darce=null,$jine_rc=null,$in_proces=null,$omezeni_daru=1) { trace();
   global $ezer_path_docs;
   $ret= (object)array('pdf'=>'','html'=>'','darce'=>'','rc'=>'');
   $kdy= str_replace('.','. ',$kdy);
   // osobní údaje člena:
-  $vars= array('rok','castka','darce');
+  $vars= array('rok','castka','darce','dne');
   $clen= $in_proces ? $in_proces->clen : clen_kontakt($id_clen,null,null,true);
   $clen->rok= $rok;
-  $castka= $in_proces ? $in_proces->dary : clen_dar_castka($id_clen,$rok);
+  $clen->dne= $kdy;
+  $castka= $in_proces ? $in_proces->dary : clen_dar_castka($id_clen,$rok,$omezeni_daru);
   $slovy= castka_slovy($castka);
   $castka= number_format($castka,0,',','.');
-  $clen->castka= "$castka,-Kč ($slovy)";
+  $clen->castka= "<b>$castka korun</b> (slovy:$slovy)";
   // pokud jsou nabídnuty jiné hodnoty pro darce a rc, mají přednost
   if ($jiny_darce)
     $ret->darce= $clen->darce= str_replace("\n",'<br>',$jiny_darce);
   else
-    $ret->darce= $clen->darce= "{$clen->jmeno_darce}<br>{$clen->adresa_radek}";
+    $ret->darce= $clen->darce= "<b>{$clen->jmeno_darce}</b><br>{$clen->adresa_radek}";
   if ( $jine_rc ) {
     $ret->rc= $jine_rc;
     $clen->darce.= "<br>$jine_rc";
@@ -734,7 +735,7 @@ function dop_potvrzeni($id_clen,$rok,$kdy,$jiny_darce=null,$jine_rc=null,$in_pro
     $ret->rc= $rc= trim(str_replace(',','',$clen->rc_darce));
     $clen->darce.= "<br>$rc";
   }
-//                                                     debug($clen,"dop_potvrzeni/člen");
+                                                     debug($clen,"dop_potvrzeni/člen");
   // předání parametrů a dopisu k exportu v TCPDF
   $dopis= select("*","dopis","typ='N'");
   // substituce v 'text'
@@ -776,10 +777,10 @@ function dop_potvrzeni($id_clen,$rok,$kdy,$jiny_darce=null,$jine_rc=null,$in_pro
 }
 # ---------------------------------------------------------------------------------- clen dar_castka
 # suma darů v daném roce
-function clen_dar_castka($id_clen,$dan_rok) { trace();
+function clen_dar_castka($id_clen,$dan_rok,$omezeni_daru=1) { trace();
   $qr= mysql_qry("
     SELECT SUM(castka) FROM dar
-    WHERE deleted='' AND id_clen=$id_clen AND YEAR(castka_kdy)=$dan_rok
+    WHERE deleted='' AND id_clen=$id_clen AND YEAR(castka_kdy)=$dan_rok AND $omezeni_daru
   ");
   list($castka)= pdo_fetch_row($qr);
   return $castka;
@@ -885,7 +886,7 @@ function clen_kontakt($K,$tc=null,$ts=null,$adresa_darce=false) { //trace();
   if ( $rc_ic_darce ) {
     // pokud je explicitně uvedeno v 'příjemce potvrzení na 4. řádku
     $x->rc_darce= ", $rc_ic_darce";
-                                                        debug($x,"příjemce potvrzení=$darce[0]");
+//                                                        debug($x,"příjemce potvrzení=$darce[0]");
   }
   // IČ má přednost před RČ
   elseif ( $tc->ico ) {

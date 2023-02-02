@@ -7,7 +7,8 @@
 # ----------------------------------------------------------------------==> . inicializace
 func onfirstfocus() { }
 # ----------------------------------------------------------------------==> . lokální
-const obeslatelny_clen= "LEFT(c.deleted,1)!='D' AND c.umrti='0000-00-00' "
+const obeslatelny_clen= "LEFT(c.deleted,1)!='D' AND c.umrti='0000-00-00' AND c.psc!='' ",
+      omezeni_daru="zpusob IN (2)" // jen transparentní účet
 var posilame:text,              // posilame=potvrzeni|vyzva
     curr_clen:number,
     rok:number,                 // rok potvrzení
@@ -34,8 +35,8 @@ menu m {type:'left', format:'f+', active:*
       case 'potv_mailem':
         d.display(1); r.display(0);
         ii.fill('',
-         `Jsou zobrazeni jen dárci s platnou (doufejme) emailovou adresou.
-          <br>Konkrétního dárce je třeba zvolit kliknutím, dvojklik přejde do Členové `);
+         `Jsou zobrazeni jen dárci <u>přes bankovní účet</u> s platnou <u>fyzickou</u> a emailovou adresou.
+          <br>Konkrétního dárce je třeba zvolit kliknutím, dvojklik přejde do Členové. `);
         Init('mailem');
         break;
       case 'potv_davkou':
@@ -184,7 +185,7 @@ func DavkaInit() { var smtp:object
 func cond_show () { var jak:text
   jak= " c.email!='' AND c.email NOT RLIKE '[\*#]' ";
   cond= `${obeslatelny_clen} AND c.neposilat=0 AND ${jak} 
-         AND d.deleted='' AND YEAR(d.castka_kdy)=${rok} `;
+         AND d.deleted='' AND YEAR(d.castka_kdy)=${rok} AND ${omezeni_daru}`;
   having= d.vcetne ? "dary>0" : "dary>0 AND nepotvrzene>0";
   d.cleni.browse_load(cond,"",having);
   count= d.cleni.browse_count();
@@ -202,7 +203,7 @@ func cond_show () { var jak:text
 form _d [,,200,250] {
   # obecné funkce
   func reselect (idc) { var cond_dary:text
-    cond_dary= ` AND YEAR(castka_kdy)=${rok}`;
+    cond_dary= ` AND YEAR(castka_kdy)=${rok} AND ${omezeni_daru}`;
     dary.browse_load(`LEFT(deleted,1)!='D' AND id_clen=${idc} ${cond_dary}`);
   }
 /* celé zpracování je řízeno stavem tabulky davka 
@@ -339,7 +340,8 @@ form _d [,,200,250] {
   # seznamy členů a darů
   view c: table clen
   view d: table dar {join:'USING (id_clen)'}
-  view cm: table mail {join_type:'LEFT', join:'USING (id_clen)'}
+  view dd: table dopis {join_type:'LEFT', join:"ON dd.typ='pruvodni_mail'"}
+//  view cm: table mail {join_type:'LEFT', join:'USING (id_clen)'}
   browse cleni [4,0,200,240] {tag:'m,d1', rows:11, qry_rows:1, group_by:'id_clen'
     show id_clen [,,45,] { title:'člen', data:c.id_clen, format:'rq=s+' }
     show jmeno [,,48,] { title:'jméno', data:c.jmeno, format:'q*s' }
@@ -347,9 +349,12 @@ form _d [,,200,250] {
     show email [,,100,] { title:'email', data:c.email, format:'tq*s' }
     show dary [,,60,] { title:'&sum; darů', 
       expr:"SUM(d.castka)", format:'q*sr' }
-    show msg [,,90,] { title:'problém', data:cm.msg, format:'tq*s' } 
+    //show msg [,,90,] { title:'problém', data:cm.msg, format:'tq*s' } 
+    show msg [,,90,] { title:'problém', format:'tq*s', 
+      expr:"(SELECT msg FROM mail WHERE mail.id_clen=c.id_clen AND mail.id_dopis=dd.id_dopis)" } 
     show nepotvrzene { expr:"SUM(IF(!d.potvrz_kdy,d.castka,0))" }
     func onrowclick () { curr_clen= id_clen; reselect(curr_clen) }
+    func onsubmit () { if (id_clen) klu.cle.show_clen(id_clen); }
     # -------------------------------------==> . kontextové menu
     menu { type:'context'
       item { title:'ukázat dárce'
@@ -959,7 +964,7 @@ panel EditMail [0,0,660,530] { title:' Úprava textu mailu', type:'popup', css:'
     button  [598,8,,] { title:'Zpět', help:'ukončit editor bez uložení změn'
       func onclick() { panel.hide(0); }
     }
-    edit obsah [0,40,660,480] {type:'html', data:dopis.obsah, par:{toolbar:'EzerMail'} }
+    edit obsah [0,40,660,480] {type:'html', data:dopis.obsah, par:{toolbar:'Letter2'} }
   }
 }
 # ========================================================================================> sendMail
@@ -969,7 +974,7 @@ panel SendMail [0,0,660,530] { title:' Kontrola a odeslání mailu', type:'popup
   use send: form _send [0,0,,]
   func Init (_dopis,_dne,_idc,_dary,_rok) { var ret:object
     dopis= _dopis; dne= _dne; idc= _idc; dary= _dary; rok= _rok;
-    ret= php.mail_single('html',send.smtp.key(),dopis,idc,dary,rok,dne);
+    ret= php.mail_single('html',send.smtp.key(),dopis,idc,dary,rok,dne,'','',omezeni_daru);
     send.jiny_darce= ret.darce;
     send.jine_rc= ret.rc;
     if (ret._error) 
