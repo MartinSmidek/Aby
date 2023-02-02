@@ -7,7 +7,7 @@
 # ----------------------------------------------------------------------==> . inicializace
 func onfirstfocus() { }
 # ----------------------------------------------------------------------==> . lokální
-const obeslatelny_clen= "LEFT(c.deleted,1)!='D' AND c.umrti='0000-00-00' AND c.psc!='' ",
+const obeslatelny_clen= "LEFT(c.deleted,1)!='D' AND c.umrti='0000-00-00' AND c.psc!='' AND c.osoba=1 ",
       omezeni_daru="zpusob IN (2)" // jen transparentní účet
 var posilame:text,              // posilame=potvrzeni|vyzva
     curr_clen:number,
@@ -35,8 +35,8 @@ menu m {type:'left', format:'f+', active:*
       case 'potv_mailem':
         d.display(1); r.display(0);
         ii.fill('',
-         `Jsou zobrazeni jen dárci <u>přes bankovní účet</u> s platnou <u>fyzickou</u> a emailovou adresou.
-          <br>Konkrétního dárce je třeba zvolit kliknutím, dvojklik přejde do Členové. `);
+         `Jsou zobrazeni jen fyzické osoby - dárci <u>přes bankovní účet</u> s platnou <u>poštovní</u> a emailovou adresou.
+          <br>Konkrétního dárce je třeba zvolit kliknutím, dvojklik přejde do <b>Kontakty</b>. `);
         Init('mailem');
         break;
       case 'potv_davkou':
