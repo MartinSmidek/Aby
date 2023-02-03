@@ -8,7 +8,7 @@
 func onfirstfocus() { }
 # ----------------------------------------------------------------------==> . lokální
 const obeslatelny_clen= "LEFT(c.deleted,1)!='D' AND c.umrti='0000-00-00' AND c.psc!='' AND c.osoba=1 ",
-      omezeni_daru="zpusob IN (2)" // jen transparentní účet
+      omezeni_daru="d.zpusob IN (2) AND d.typ=9" // jen transparentní účet
 var posilame:text,              // posilame=potvrzeni|vyzva
     curr_clen:number,
     rok:number,                 // rok potvrzení
@@ -362,13 +362,14 @@ form _d [,,200,250] {
     }
   }
   browse dary [4,250,503,208] { tag:'m,d1', rows:10, 
-    show dne [,,70,] { title:'dne', data:dar.castka_kdy, format:'rfs-' }
-    show zpusob [,,60,] { title:'jak', data:dar.zpusob, map_pipe:cis_zpusob.hodnota }
-    show nucet [,,20,] { title:'ú', data:dar.nas_ucet, map_pipe:cis_ucet.zkratka }
-    show castka [,,65,] { title:'částka', data:dar.castka, format:'rfs' }
-    show ucet [,,150,] { title:'účet', data:dar.ucet, format:'fs' }
-    show datum_p [,,70,] { title:'potvrzeno', data:dar.potvrz_kdy, format:'rfs' }
-    show iddar [,,0,] { data:dar.id_dar, format:'rfs' }
+    view d: table dar
+    show dne [,,70,] { title:'dne', data:d.castka_kdy, format:'rfs-' }
+    show zpusob [,,60,] { title:'jak', data:d.zpusob, map_pipe:cis_zpusob.hodnota }
+    show nucet [,,20,] { title:'ú', data:d.nas_ucet, map_pipe:cis_ucet.zkratka }
+    show castka [,,65,] { title:'částka', data:d.castka, format:'rfs' }
+    show ucet [,,150,] { title:'účet', data:d.ucet, format:'fs' }
+    show datum_p [,,70,] { title:'potvrzeno', data:d.potvrz_kdy, format:'rfs' }
+    show iddar [,,0,] { data:d.id_dar, format:'rfs' }
     func onrowclick () { }
   }
 
