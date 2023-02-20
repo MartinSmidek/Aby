@@ -1165,7 +1165,7 @@ panel Duplicita [0,0,400,190] { title:' Eliminace duplicit', type:'popup', css:'
   func Spoj (_orig,_copy) { var je_firma:number
     orig= _orig; kopie= _copy; 
     Clen.nadpis= '<h1>Originál</h1>'; 
-    show_clen(orig); 
+    Cleni.cleni.browse_seek(`id_clen=${orig}`);
     k.load(kopie); je_firma= !k.osoba.key();
     k.display(1,je_firma ? 'f' : 'o'); 
     k.display(0,je_firma ? 'o' : 'f'); 
@@ -1208,15 +1208,17 @@ panel Duplicita [0,0,400,190] { title:' Eliminace duplicit', type:'popup', css:'
                                       help:'rok narození, pokud neznáme přesnější datum'  }
     field clen_od  [308,137,87,] {tag:'k', type:'date', title:'v Klubu od', data:clen.clen_od, format:'n' }
     # ==> funkce eliminace
-    button [6,0,,] { title:"originál [fa-exchange] kopie" 
+    button [6,0,,] { title:"kopie [fa-exchange] originál" 
       func onclick() { var x:number
         x= orig; orig= kopie; kopie= x; 
-        k.load(kopie); show_clen(orig);
+        k.load(kopie); 
+        Cleni.cleni.browse_seek(`id_clen=${orig}`);
     }}
     button [83,175,,] { title:"[fa-save] Proveď sjednocení" 
       func onclick() { 
         php.klub_spoj(kopie,orig);
         Clen_butt._clen_uloz(1);
+        Cleni.cleni.selected('clear');
         _exit();
     }}
     button [227,175,,] { title:"[fa-undo] Zpět" 
