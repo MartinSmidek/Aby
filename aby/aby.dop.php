@@ -496,7 +496,7 @@ end:
           imap_close($imapStream);
       }
   }
-function mail_new_PHPMailer($i_smtp) {  
+function mail_new_PHPMailer($i_smtp) { trace();
   global $ezer_path_serv;
   // získání parametrizace SMTP
   $smtp_json= select1('hodnota','_cis',"druh='smtp_srv' AND data=$i_smtp");
@@ -1535,7 +1535,7 @@ function dop_extract_vars($obsah) {
 }
 # ------------------------------------------------------------------------------ mail2 new_PHPMailer
 # nastavení parametrů pro SMTP server podle user.options.smtp
-function mail2_new_PHPMailer() {  
+function mail2_new_PHPMailer() {  trace();
   global $ezer_path_serv, $ezer_root;
   // získání parametrizace SMTP
   $idu= $_SESSION[$ezer_root]['user_id'];
@@ -1579,7 +1579,7 @@ end:
 // y.done - počet provedených kroků 
 // y.sent - počet skutečně odeslaných mailů
 // y.error = text chyby, způsobí konec
-function mail2_mai_sending($y) { 
+function mail2_mai_sending($y) { trace();
   global $ezer_root;
   // získání případného omezení použitého SMTP
   $idu= $_SESSION[$ezer_root]['user_id'];
