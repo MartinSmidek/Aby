@@ -1667,9 +1667,9 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
     $result->_error= 1;
     goto end;
   }
-  $mail->From= $from;
-//  $mail->AddReplyTo($from);
-  $mail->FromName= "$fromname";
+//  $mail->From= $from;
+  $mail->AddReplyTo($from);
+//  $mail->FromName= "$fromname";
   $mail->Subject= $d->nazev;
 //                                         display($mail->Subject);
   $attach($mail,$d->prilohy);
