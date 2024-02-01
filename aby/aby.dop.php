@@ -1657,7 +1657,11 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
   $html= '';
 //  $martin= "martin@smidek.eu";
   // poslání mailů
-  $mail= mail2_new_PHPMailer();
+//  $mail= mail2_new_PHPMailer(); 
+  global $ezer_root;
+  $idu= $_SESSION[$ezer_root]['user_id'];
+  $i_smtp= sys_user_get($idu,'opt','smtp') ?: 1;
+  $mail= mail_new_PHPMailer($i_smtp);
   if ( !$mail ) { 
     $result->_html.= "<br><b style='color:#700'>odesílací adresa nelze použít (SMTP)</b>";
     $result->_error= 1;

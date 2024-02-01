@@ -119,10 +119,10 @@ echo <<<__EOD
       <button onclick="op('clear_cg.');">clear CG</button>
       <button onclick="op('phpinfo.');">phpinfo</button>
       <span style='font-size:12px'>COOKIE error_reporting: </span>
-      <button onclick="op('cookie.0');">0</button>
-      <button onclick="op('cookie.1');">1</button>
-      <button onclick="op('cookie.2');">2</button>
-      <button onclick="op('cookie.3');">3</button>
+      <button onclick="op('cookie.0');" title='show nothing'>0</button>
+      <button onclick="op('cookie.1');" title='do not show notices and warnings'>1</button>
+      <button onclick="op('cookie.2');" title='do not show notices'>2</button>
+      <button onclick="op('cookie.3');" title='show all'>3</button>
     </div>
       <div class='dbg' style="position:absolute;top:30px">
         $cms
