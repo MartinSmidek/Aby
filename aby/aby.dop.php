@@ -457,7 +457,7 @@ function mail_single($mode,$i_smtp,$dopis,$id_clen,$dary,$rok,$dne,$jiny_darce=n
       }
       break;
     case 'send':  // ------------------------- ostré zaslání
-      $mail= mail_new_PHPMailer($i_smtp);
+//      $mail= mail_new_PHPMailer($i_smtp);
       $ret->_error= mail_single_send($mail,$email,$nazev,$obsah,$attach);
       if (!$ret->_error) {
         $dnes= date('Y-m-d');
@@ -497,7 +497,7 @@ end:
       }
   }
 function mail_new_PHPMailer($i_smtp) { trace();
-  global $ezer_path_serv;
+  global $phpmailer_path;
   // získání parametrizace SMTP
   $smtp_json= select1('hodnota','_cis',"druh='smtp_srv' AND data=$i_smtp");
   $smtp= json_decode($smtp_json);
@@ -1668,7 +1668,7 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
     goto end;
   }
   $mail->From= $from;
-  $mail->AddReplyTo($from);
+//  $mail->AddReplyTo($from);
   $mail->FromName= "$fromname";
   $mail->Subject= $d->nazev;
 //                                         display($mail->Subject);
@@ -1707,11 +1707,8 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
      }
      else {
       // zkus poslat mail
-      try { 
-        $ok= $mail->Send();       
-      } catch(Exception $e) { 
-        $ok= false; 
-      }
+      display("SEND from={$mail->From} to={$test} subj={$mail->Subject}");
+      try { $ok= $mail->Send(); } catch(Exception $e) { $ok= false; }
     }
     if ( $ok  )
       $html.= "<br><b style='color:#070'>Byl odeslán mail na $test $pro - je zapotřebí zkontrolovat obsah</b>";
@@ -1766,6 +1763,7 @@ function mail2_mai_send($id_dopis,$kolik,$from,$fromname,$test='',$id_mail=0,$fo
        }
        else {
         // zkus poslat mail
+        display("SEND from={$mail->From} to={$adresa} subj={$mail->Subject}");
         try { $ok= $mail->Send(); } catch(Exception $e) { $ok= false; }
       }
       if ( !$ok  ) {
