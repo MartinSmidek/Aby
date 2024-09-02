@@ -569,7 +569,8 @@ function eko_seznam_dary($export,$osoby,$firmy,$od,$do,$vecne,$projekt=13) { tra
     $cond.= $osoby ? " AND osoba=1" : " AND osoba=0";
   }
   $res= pdo_qry("
-      SELECT id_dar,zpusob,dar.typ,dar.id_projekt,
+      SELECT IFNULL(clen.deleted,id_clen) AS _err,
+        id_dar,zpusob,dar.typ,dar.id_projekt,
         IF(zpusob=2 AND !ISNULL(p.id_projekt),p.id_projekt,dar.id_projekt) AS _pro,
         id_clen,titul,prijmeni,jmeno,castka,IF(zpusob=2,dar.ucet,'') AS _ucet,
         dar.vsym,dar.popis,castka_kdy
