@@ -300,7 +300,7 @@ function ch_bank_load_ucty () {
 # načtení souboru CSV z bankovního účtu
 function aby_ban_load($file) {  //trace();
   global $ezer_path_root;
-  $y= (object)array('err'=>'','msg'=>'ok',idv=>0);
+  $y= (object)array('err'=>'','msg'=>'ok','idv'=>0);
   // definice importovaných sloupců
   $flds_2010= array(
       "Datum"             => array(0,'d','castka_kdy'),

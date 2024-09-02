@@ -8,8 +8,8 @@ function report2list($report) { trace();
   $list= array();
   if ( is_array($report->boxes) ) {
     foreach ($report->boxes as $b) {
-      $obj= (object)array(tg=>'box');
-      $obj->atr= (object)array(type=>$b->type,id=>$b->id,l=>$b->left,t=>$b->top,w=>$b->width,h=>$b->height);
+      $obj= (object)array('tg'=>'box');
+      $obj->atr= (object)array('type'=>$b->type,'id'=>$b->id,'l'=>$b->left,'t'=>$b->top,'w'=>$b->width,'h'=>$b->height);
       if ( $b->txt )
         $obj->txt= html2list($b->txt,true);
       if ( $b->style ) {

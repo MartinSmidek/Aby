@@ -41,16 +41,16 @@ end:
 # pro cmd='cond' vrací SQL vybrané podmínky pro daný klíč
 function klub_vyber($cmd,$key=0) {
   $conds= array(); // [key:{nazev,cond},...]
-  $conds[1]= (object)array(nazev=>'všichni',cond=>" 1");
+  $conds[1]= (object)array('nazev'=>'všichni','cond'=>" 1");
   $rk= pdo_query("SELECT data,hodnota FROM _cis WHERE druh='kategorie' ORDER BY zkratka ");
   while ($rk && (list($data,$nazev)= pdo_fetch_row($rk))) {
-    $conds[$data+10]= (object)array(nazev=>"kategorie - $nazev",cond=>" FIND_IN_SET('$data',kategorie)");
+    $conds[$data+10]= (object)array('nazev'=>"kategorie - $nazev",'cond'=>" FIND_IN_SET('$data',kategorie)");
   }
-  $conds[100]= (object)array(nazev=>'podezřelé adresy osob',cond=>" (jmeno REGEXP '\\\\\\\\s|\\\\\\\\.' OR prijmeni REGEXP '\\\\\\\\s|\\\\\\\\.')");
-  $conds[101]= (object)array(nazev=>'změny tohoto měsíce',cond=>" month(c.zmena_kdy)=month(now()) and year(c.zmena_kdy)=year(now()) ");
-  $conds[102]= (object)array(nazev=>'změny kým ...',cond=>" c.zmena_kdo=\$user");
-  $conds[103]= (object)array(nazev=>'změny dne ...',cond=>" left(c.zmena_kdy,10)='\$datum'");
-  $conds[104]= (object)array(nazev=>'změny dne ... kým ...',cond=>" c.zmena_kdo=\$user and left(c.zmena_kdy,10)='\$datum'");
+  $conds[100]= (object)array('nazev'=>'podezřelé adresy osob','cond'=>" (jmeno REGEXP '\\\\\\\\s|\\\\\\\\.' OR prijmeni REGEXP '\\\\\\\\s|\\\\\\\\.')");
+  $conds[101]= (object)array('nazev'=>'změny tohoto měsíce','cond'=>" month(c.zmena_kdy)=month(now()) and year(c.zmena_kdy)=year(now()) ");
+  $conds[102]= (object)array('nazev'=>'změny kým ...','cond'=>" c.zmena_kdo=\$user");
+  $conds[103]= (object)array('nazev'=>'změny dne ...','cond'=>" left(c.zmena_kdy,10)='\$datum'");
+  $conds[104]= (object)array('nazev'=>'změny dne ... kým ...','cond'=>" c.zmena_kdo=\$user and left(c.zmena_kdy,10)='\$datum'");
   switch($cmd) {
     case 'options':
       $selects= $del= '';
@@ -133,7 +133,7 @@ function klub_select_cleny($ids_clen,$caption,$barva='') {
 # --------------------------------------------------------------------------------- klub role_pripni
 # připne osobu k firmě 
 function klub_role_pripni($idf,$ido) {
-  $ret= (object)array(msg=>'',ido=>0);
+  $ret= (object)array('msg'=>'','ido'=>0);
   list($idr,$role)= select('id_role,popis','role',"id_firma=$idf AND id_osoba=$ido");
   if ($idr) {
     $ret->msg= "POZOR tato osoba již má ve firmě roli '$role'";
