@@ -552,7 +552,7 @@ function eko_histogram($export,$od,$do,$vecne,$par,$deleni) { trace();
 function eko_seznam_dary($export,$osoby,$firmy,$od,$do,$vecne,$projekt=13) { trace();
   $html= '';
   $err= '';
-  $tab= array();
+  $tab= array('*&sum;'=>array());
   $od_sql= sql_date($od,1);
   $do_sql= sql_date($do,1);
   $cond= $vecne ? "zpusob=4" : "zpusob!=4";
@@ -572,7 +572,8 @@ function eko_seznam_dary($export,$osoby,$firmy,$od,$do,$vecne,$projekt=13) { tra
       SELECT IFNULL(clen.deleted,id_clen) AS _err,
         id_dar,zpusob,dar.typ,dar.id_projekt,
         IF(zpusob=2 AND !ISNULL(p.id_projekt),p.id_projekt,dar.id_projekt) AS _pro,
-        id_clen,titul,prijmeni,jmeno,castka,IF(zpusob=2,dar.ucet,'') AS _ucet,
+        id_clen,titul,prijmeni,jmeno,osoba,ulice,obec,psc,
+        castka,IF(zpusob=2,dar.ucet,'') AS _ucet,
         dar.vsym,dar.popis,castka_kdy
       FROM dar
       LEFT JOIN clen USING (id_clen)
@@ -615,6 +616,7 @@ function eko_seznam_dary($export,$osoby,$firmy,$od,$do,$vecne,$projekt=13) { tra
 //          break;
         case 'castka':
           $tab[$n][$f]= $d->$f;
+          if (!isset($tab['*&sum;'][$f])) $tab['*&sum;'][$f]= 0;
           $tab['*&sum;'][$f]+= $d->$f;
           break;
         default:
