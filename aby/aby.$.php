@@ -257,7 +257,7 @@ function aby_csv2array($fpath,&$data,$max=0,$encoding='UTF-8',$delimiter='',$npr
     $prefix[]= $s;
   }
   // diskuse oddělovače
-  $del= $delimiter ?: strstr($s,';') ? ';' : (strstr($s,',') ? ',' : '');
+  $del= $delimiter ?: (strstr($s,';') ? ';' : (strstr($s,',') ? ',' : ''));
   if ( !$del ) { $msg.= "v souboru $fpath jsou nestandardní oddělovače"; goto end; }
   $head= str_getcsv($s,$del);
   $n= 0;

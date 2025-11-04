@@ -59,6 +59,7 @@
   );
   $add_options= (object)array(
     'login_interval' => 8*60,           // povolená nečinnost v minutách - 8 hodin
+    'watch_access' => -1,               // nepoužívá se
     'path_files_u'    => "'$abs_root'", // absolutní cesta do kořene aplikace
   );
 
